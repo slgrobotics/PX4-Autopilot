@@ -36,6 +36,8 @@
  * Driver for the MS5611 and MS5607 barometric pressure sensor connected via I2C or SPI.
  */
 
+// - modified by Sergei Grichine Sept 2020
+
 #include "MS5611.hpp"
 #include "ms5611.h"
 
@@ -212,6 +214,10 @@ MS5611::RunImpl()
 	ScheduleDelayed(MS5611_CONVERSION_INTERVAL);
 }
 
+#ifndef REALDEV
+int measureCnt = 0;
+#endif // REALDEV
+
 int
 MS5611::measure()
 {
@@ -220,6 +226,7 @@ MS5611::measure()
 	/*
 	 * In phase zero, request temperature; in other phases, request pressure.
 	 */
+#ifdef REALDEV
 	unsigned addr = (_measure_phase == 0) ? ADDR_CMD_CONVERT_D2 : ADDR_CMD_CONVERT_D1;
 
 	/*
@@ -230,6 +237,10 @@ MS5611::measure()
 	if (OK != ret) {
 		perf_count(_comms_errors);
 	}
+
+#else //REALDEV
+	int ret = OK;
+#endif //REALDEV
 
 	perf_end(_measure_perf);
 
@@ -245,6 +256,7 @@ MS5611::collect()
 
 	/* read the most recent measurement - read offset/size are hardcoded in the interface */
 	const hrt_abstime timestamp_sample = hrt_absolute_time();
+#ifdef REALDEV
 	int ret = _interface->read(0, (void *)&raw, 0);
 
 	if (ret < 0) {
@@ -265,9 +277,25 @@ MS5611::collect()
 		return ret;
 	}
 
+#else // REALDEV
+	// we need to provide a little noise to the measurements, or it will be marked STALE:
+	int i_myrand = timestamp_sample & 0xF;
+	float myrand = ((float)i_myrand) / 1000.0f;   // about 5cm altitude noise amplitude
+
+	// float the lawnmower a couple meters above ground about 20 seconds after start:
+	if (measureCnt < 2000) {
+		measureCnt++;
+
+	} else {
+		myrand += 0.3f; // 0.3f here raises drone altitude up 2.5 meters
+	}
+
+#endif // REALDEV
+
 	/* handle a measurement */
 	if (_measure_phase == 0) {
 
+#ifdef REALDEV
 		/* temperature offset (in ADC units) */
 		int32_t dT = (int32_t)raw - ((int32_t)_prom.c5_reference_temp << 8);
 
@@ -328,19 +356,28 @@ MS5611::collect()
 		}
 
 		_last_temperature = TEMP / 100.0f;
+#else // REALDEV
+		_last_temperature = 25.123f + myrand / 10.0f;
+#endif // REALDEV
 
 	} else {
 		/* pressure calculation, result in Pa */
+#ifdef REALDEV
 		int32_t P = (((raw * _SENS) >> 21) - _OFF) >> 15;
 
 		_last_pressure = P;
+#else // REALDEV
+		raw = 1013.25f;
+
+		_last_pressure = raw - myrand;		/* in millibar */
+#endif // REALDEV
 
 		// publish
 		if (_initialized && PX4_ISFINITE(_last_pressure) && PX4_ISFINITE(_last_temperature)) {
 			sensor_baro_s sensor_baro{};
 			sensor_baro.timestamp_sample = timestamp_sample;
 			sensor_baro.device_id = _interface->get_device_id();
-			sensor_baro.pressure = P;
+			sensor_baro.pressure = _last_pressure;
 			sensor_baro.temperature = _last_temperature;
 			sensor_baro.error_count = perf_event_count(_comms_errors);
 			sensor_baro.timestamp = hrt_absolute_time();

@@ -1,0 +1,8 @@
+# sudo apt-get -y install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+# sudo update-alternatives --install /usr/bin/aarch64-linux-gnu-gcc aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-11 100 --slave /usr/bin/aarch64-linux-gnu-g++ aarch64-linux-gnu-g++ /usr/bin/aarch64-linux-gnu-g++-11
+# sudo update-alternatives --config aarch64-linux-gnu-gcc
+
+# use "make emlid_navio2_arm64 upload"
+
+CONFIG_BOARD_TOOLCHAIN="aarch64-linux-gnu"
+

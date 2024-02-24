@@ -31,6 +31,8 @@
  *
  ****************************************************************************/
 
+//#define DEBUG_MY_PRINT
+
 #include "VehicleMagnetometer.hpp"
 
 #include <px4_platform_common/log.h>
@@ -661,10 +663,36 @@ void VehicleMagnetometer::CheckFailover(const hrt_abstime &time_now_us)
 
 void VehicleMagnetometer::calcMagInconsistency()
 {
+#ifdef DEBUG_MY_PRINT
+	float primary_mag_angle = 0.0f;
+	const hrt_abstime time_now_us = hrt_absolute_time();
+	const hrt_abstime print_interval = 5_s;
+	bool do_print = false;
+
+	if (time_now_us > _last_calib_message + print_interval) {
+		_last_calib_message = time_now_us;
+		do_print = true;
+	}
+
+#endif // DEBUG_MY_PRINT
+
 	if (_selected_sensor_sub_index >= 0) {
 		sensor_preflight_mag_s preflt{};
 
 		const Vector3f primary_mag(_last_data[_selected_sensor_sub_index]); // primary mag field vector
+
+#ifdef DEBUG_MY_PRINT
+
+		if (do_print) {
+			primary_mag_angle = wrap_pi(-atan2f(primary_mag(1), primary_mag(0)));
+
+			PX4_INFO("calcMagInconsistency():");
+			PX4_INFO("    primary mag: %.4f  %.4f  %.4f    flat: %.1f degrees",
+				 (double)primary_mag(0), (double)primary_mag(1), (double)primary_mag(2),
+				 (double)math::degrees<float>(primary_mag_angle));
+		}
+
+#endif // DEBUG_MY_PRINT
 
 		float mag_angle_diff_max = 0.0f; // the maximum angle difference
 		unsigned check_index = 0; // the number of sensors the primary has been checked against
@@ -676,7 +704,27 @@ void VehicleMagnetometer::calcMagInconsistency()
 				// calculate angle to 3D magnetic field vector of the primary sensor
 				Vector3f current_mag{_last_data[i]};
 
-				float angle_error = AxisAnglef(Quatf(current_mag, primary_mag)).angle();
+				AxisAnglef angle_error_3f = AxisAnglef(Quatf(current_mag, primary_mag));
+				float angle_error = angle_error_3f.angle();
+
+#ifdef DEBUG_MY_PRINT
+
+				if (do_print) {
+					float current_mag_angle = wrap_pi(-atan2f(current_mag(1), current_mag(0)));
+
+					PX4_INFO("     second mag: %.4f  %.4f  %.4f    flat: %.1f degrees",
+						 (double)current_mag(0), (double)current_mag(1), (double)current_mag(2),
+						 (double)math::degrees<float>(current_mag_angle));
+
+					PX4_INFO("       error 3D: %.4f  %.4f  %.4f    flat: %.1f degrees",
+						 (double)angle_error_3f(0), (double)angle_error_3f(1), (double)angle_error_3f(2),
+						 (double)math::degrees<float>(wrap_pi(current_mag_angle - primary_mag_angle)));
+
+					// max allowed discrepancy: param show COM_ARM_MAG_ANG
+					PX4_INFO("    angle_error: %f degrees  (see COM_ARM_MAG_ANG)\n", (double)math::degrees<float>(angle_error));
+				}
+
+#endif // DEBUG_MY_PRINT
 
 				// complementary filter to not fail/pass on single outliers
 				_mag_angle_diff[check_index] *= 0.95f;

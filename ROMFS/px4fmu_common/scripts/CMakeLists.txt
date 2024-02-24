@@ -1,6 +1,6 @@
 ############################################################################
 #
-#   Copyright (c) 2018 PX4 Development Team. All rights reserved.
+#   Copyright (c) 2020 PX4 Development Team. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -31,9 +31,10 @@
 #
 ############################################################################
 
-add_subdirectory(scripts)
-add_subdirectory(init.d)
-# TODO: make this configurable from the board config, or better combine
-if("${PX4_BOARD}" MATCHES "sitl")
-	add_subdirectory(init.d-posix)
-endif()
+px4_add_romfs_files(
+	clean.sh
+	create_px4wrk.sh
+	deploy_scripts.sh
+	run.sh
+	update_wrk.sh
+)

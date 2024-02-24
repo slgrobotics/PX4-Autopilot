@@ -33,10 +33,20 @@
 px4_add_module(
 	MODULE modules__rover_pos_control
 	MAIN rover_pos_control
+	COMPILE_FLAGS
+		-DDEBUG_MY_DATA -DDEBUG_MY_PRINT
+#		-DDEBUG_MY_DATA
+#		-DDEBUG_MY_PRINT
+#		-DPUBLISH_THRUST_TORQUE
 	SRCS
 		RoverPositionControl.cpp
+		RoverPositionControlStateMachine.cpp
+		RoverPositionControlPolling.cpp
+		RoverPositionControlPublish.cpp
+		RoverPositionControlTracing.cpp
 		RoverPositionControl.hpp
 	DEPENDS
 		l1
+		RateControl
 		pid
 	)

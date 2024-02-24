@@ -53,6 +53,11 @@
 #include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
 #include <systemlib/err.h>
 
+// - modified by Sergei Grichine Sept 2020
+
+// comment this out if you want BARO simulated:
+//#define REALDEV
+
 #define ADDR_RESET_CMD			0x1E	/* write to this address to reset chip */
 #define ADDR_PROM_SETUP			0xA0	/* address of 8x 2 bytes factory and calibration data */
 

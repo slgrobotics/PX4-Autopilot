@@ -43,60 +43,61 @@ px4_add_romfs_files(
 if(CONFIG_MODULES_SIMULATION_PWM_OUT_SIM)
 	px4_add_romfs_files(
 		# [1000, 1999] Simulation setups
-		1001_rc_quad_x.hil
-		1002_standard_vtol.hil
-		1100_rc_quad_x_sih.hil
-		1101_rc_plane_sih.hil
-		1102_tailsitter_duo_sih.hil
+	1001_rc_quad_x.hil
+	1002_standard_vtol.hil
+	1100_rc_quad_x_sih.hil
+	1101_rc_plane_sih.hil
+	1102_tailsitter_duo_sih.hil
 	)
 endif()
 
 if(CONFIG_MODULES_MC_RATE_CONTROL)
 	px4_add_romfs_files(
 		# [4000, 4999] Quadrotor x
-		4001_quad_x
-		4014_s500
-		4015_holybro_s500
-		4016_holybro_px4vision
-		4017_nxp_hovergames
-		4019_x500_v2
-		4020_holybro_px4vision_v1_5
-		4041_beta75x
-		4050_generic_250
-		4052_holybro_qav250
-		4053_holybro_kopis2
-		4061_atl_mantis_edu
-		4071_ifo
-		4073_ifo-s
-		4500_clover4
-		4901_crazyflie21
+	4001_quad_x
+	4014_s500
+	4015_holybro_s500
+	4016_holybro_px4vision
+	4017_nxp_hovergames
+	4019_x500_v2
+	4020_holybro_px4vision_v1_5
+	4041_beta75x
+	4050_generic_250
+	4052_holybro_qav250
+	4053_holybro_kopis2
+	4061_atl_mantis_edu
+	4071_ifo
+	4073_ifo-s
+	4500_clover4
+	4901_crazyflie21
 
 		# [5000, 5999] Quadrotor +
-		5001_quad_+
+	5001_quad_+
 
 		# [6000, 6999] Hexarotor x
-		6001_hexa_x
-		6002_draco_r
+	6001_hexa_x
+	6002_draco_r
 
 		# [7000, 7999] Hexarotor +
-		7001_hexa_+
+	7001_hexa_+
 
 		# [8000, 8999] Octorotor +
-		8001_octo_x
+	8001_octo_x
 
 		# [9000, 9999] Octorotor +
-		9001_octo_+
+	9001_octo_+
 
-		# [11000, 11999] Hexa Cox
-		11001_hexa_cox
+	# [11000, 11999] Hexa Cox
+	11001_hexa_cox
 
-		# [12000, 12999] Octo Cox
-		12001_octo_cox
+	# [12000, 12999] Octo Cox
+	12001_octo_cox
 
-		# [14000, 14999] MC with tilt
-		14001_generic_mc_with_tilt
 
-		16001_helicopter
+	# [14000, 14999] MC with tilt
+	14001_generic_mc_with_tilt
+
+	16001_helicopter
 
 		24001_dodeca_cox
 	)
@@ -110,10 +111,9 @@ if(CONFIG_MODULES_FW_RATE_CONTROL)
 
 		# [3000, 3999] Flying wing
 		3000_generic_wing
-
-		# [17000, 17999] Autogyro
-		17002_TF-AutoG2
-		17003_TF-G2
+	# [17000, 17999] Autogyro
+	17002_TF-AutoG2
+	17003_TF-G2
 	)
 endif()
 
@@ -137,8 +137,11 @@ endif()
 
 if(CONFIG_MODULES_ROVER_POS_CONTROL)
 	px4_add_romfs_files(
-		50000_generic_ground_vehicle
-		50004_nxpcup_car_dfrobot_gpx
+
+	50000_generic_ground_vehicle
+	50004_nxpcup_car_dfrobot_gpx
+	50005_lawnMower1_config
+	50005_lawnMower1_config.post
 	)
 endif()
 
@@ -150,9 +153,9 @@ endif()
 
 if(CONFIG_MODULES_UUV_ATT_CONTROL)
 	px4_add_romfs_files(
-		# [60000, 61000] (Unmanned) Underwater Robots
-		60000_uuv_generic
-		60001_uuv_hippocampus
-		60002_uuv_bluerov2_heavy
-	)
+	# [60000, 61000] (Unmanned) Underwater Robots
+	60000_uuv_generic
+	60001_uuv_hippocampus
+	60002_uuv_bluerov2_heavy
+)
 endif()

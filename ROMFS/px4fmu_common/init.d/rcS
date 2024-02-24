@@ -15,26 +15,43 @@ set +e
 #
 #------------------------------------------------------------------------------
 
+export MYSCRIPTNAMERCS="`pwd`/$0"
+echo "----------------------------------------------------------------------"
+echo "IP: starting " $MYSCRIPTNAMERCS
+echo "FYI: work dir: `pwd`"
+
+# PX4 commands need the 'px4-' prefix in bash.
+# (px4-alias.sh is expected to be in the PATH)
+# shellcheck disable=SC1091
+. px4-alias.sh
+
+#set -x
+
 #
 # Set default paramter values.
 # Do not add intra word spaces
 # it wastes flash
 #
-set R /
+
+#set R /
+#set R /home/pi/px4wrk/
+set R `pwd`/
+
 set FCONFIG /fs/microsd/etc/config.txt
 set FEXTRAS /fs/microsd/etc/extras.txt
 set FRC /fs/microsd/etc/rc.txt
 set IOFW "/etc/extras/px4_io-v2_default.bin"
 set LOGGER_ARGS ""
 set LOGGER_BUF 8
-set PARAM_FILE ""
-set PARAM_BACKUP_FILE ""
+set PARAM_FILE "${R}/eeprom/parameters_50005"
+set PARAM_BACKUP_FILE "${R}/eeprom/parameters_50005.bak"
 set RC_INPUT_ARGS ""
 set SDCARD_AVAILABLE no
 set SDCARD_EXT_PATH /fs/microsd/ext_autostart
 set SDCARD_FORMAT no
 set STARTUP_TUNE 1
-set VEHICLE_TYPE none
+#set VEHICLE_TYPE none
+set VEHICLE_TYPE rover
 
 #
 # Print full system version.
@@ -111,8 +128,11 @@ fi
 #
 if [ -f $FRC ]
 then
+	echo "FYI: Disable autostart - FRC init script found: $FRC"
 	. $FRC
 else
+
+	echo "IP: autostart"
 
 	#
 	# Set the parameter file the board supports params on
@@ -121,6 +141,7 @@ else
 	if mft query -q -k MTD -s MTD_PARAMETERS -v /fs/mtd_params
 	then
 		set PARAM_FILE /fs/mtd_params
+		echo "FYI: PARAM_FILE on MTD device: $PARAM_FILE"
 	fi
 
 	#
@@ -132,6 +153,7 @@ else
 		param load /fs/mtd_caldata
 	fi
 
+	echo "FYI: PARAM_FILE: $PARAM_FILE"
 	param select $PARAM_FILE
 	if ! param import
 	then
@@ -167,6 +189,7 @@ else
 
 	if [ $SDCARD_AVAILABLE = yes ]
 	then
+		echo "FYI: PARAM_BACKUP_FILE: $PARAM_BACKUP_FILE"
 		param select-backup $PARAM_BACKUP_FILE
 	fi
 
@@ -180,6 +203,7 @@ else
 	#
 	if param greater SYS_AUTOCONFIG 0
 	then
+		echo "FYI: SYS_AUTOCONFIG 1 - resetting most parameters"
 		# Reset params except Airframe, RC calibration, sensor calibration, flight modes, total flight time, and next flight UUID.
 		param reset_all SYS_AUTOSTART RC* CAL_* COM_FLTMODE* LND_FLIGHT* TC_* COM_FLIGHT*
 	fi
@@ -210,8 +234,13 @@ else
 	# Set parameters and env variables for selected SYS_AUTOSTART.
 	#
 	set AUTOSTART_PATH etc/init.d/rc.autostart
+
+	param set SYS_AUTOSTART ${PX4_MODEL_ID}
+
+	echo "FYI: SYS_AUTOSTART $(param show -q SYS_AUTOSTART)"
 	if ! param compare SYS_AUTOSTART 0
 	then
+		echo "FYI: SYS_AUTOSTART $(param show -q SYS_AUTOSTART) - looking to execute AUTOSTART_PATH: ${R}$AUTOSTART_PATH"
 		if param greater SYS_AUTOSTART 1000000
 		then
 			# Use external startup file
@@ -276,7 +305,7 @@ else
 
 	if px4io supported
 	then
-	# Check if PX4IO present and update firmware if needed.
+		echo "IP: Checking if PX4IO present and update firmware if needed..."
 		if [ -f $IOFW ]
 		then
 			if ! px4io checkcrc ${IOFW}
@@ -419,8 +448,12 @@ else
 	#
 	. ${R}etc/init.d/rc.serial
 
-	# Must be started after the serial config is read
-	rc_input start $RC_INPUT_ARGS
+	echo "RC_INPUT_ARGS="${RC_INPUT_ARGS}
+	if [ ! -z "${RC_INPUT_ARGS}" ]
+	then
+		# Must be started after the serial config is read
+		rc_input start $RC_INPUT_ARGS
+	fi
 
 	#
 	# Play the startup tune (if not disabled or there is an error)
@@ -515,6 +548,7 @@ else
 	#
 	# Set additional parameters and env variables for selected AUTOSTART.
 	#
+	echo "FYI: SYS_AUTOSTART $(param show -q SYS_AUTOSTART)"
 	if ! param compare SYS_AUTOSTART 0
 	then
 		. ${R}etc/init.d/rc.autostart.post
@@ -577,3 +611,6 @@ unset VEHICLE_TYPE
 # Boot is complete, inform MAVLink app(s) that the system is now fully up and running.
 #
 mavlink boot_complete
+
+echo "OK: finished " $MYSCRIPTNAMERCS
+echo "----------------------------------------------------------------------"
