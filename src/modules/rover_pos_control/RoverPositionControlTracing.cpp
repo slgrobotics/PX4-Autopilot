@@ -126,7 +126,7 @@ const char *RoverPositionControl::waypoint_type_name(const uint8_t wptype)
 void RoverPositionControl::debugPrint()
 {
 
-	if (hrt_elapsed_time(&_debug_print_last_called) > 0.5f * 1e+6f) {
+	if (hrt_elapsed_time(&_debug_print_last_called) > 500_ms) {
 		if (_control_mode.flag_control_manual_enabled) {
 			if (_control_mode.flag_armed) {
 				debugPrintManual();
@@ -147,7 +147,7 @@ void RoverPositionControl::debugPrint()
 
 void RoverPositionControl::debugPrintArriveDepart()
 {
-	if (hrt_elapsed_time(&_debug_print1_last_called) > 0.1f * 1e+6f) {
+	if (hrt_elapsed_time(&_debug_print1_last_called) > 100_ms) {
 		if (_tracing_lev > 4) {
 			/*
 			PX4_INFO_RAW("------- %s  wp_current_dist: %.2f   wp_previous_dist: %.2f   mission_velocity_setpoint: %.2f   mission_thrust: %.2f\n",
@@ -163,7 +163,7 @@ void RoverPositionControl::debugPrintArriveDepart()
 				     control_state_name(_pos_ctrl_state),
 				     (double)math::degrees(_heading_error), (double)_mission_turning_setpoint, (double)_mission_torque_effort);
 
-			PX4_INFO_RAW("---     misn_vel_sp: %.2f  misn_thrst: %.2f  grd_spd_abs: %.4f  yaw_rate: %.1f\n",
+			PX4_INFO_RAW("---     misn_vel_sp: %.2f  misn_thrst_eff: %.2f  grd_spd_abs: %.4f  yaw_rate: %.1f\n",
 				     (double)_mission_velocity_setpoint, (double)_mission_thrust_effort, (double)_ground_speed_abs,
 				     (double)math::degrees(_z_yaw_rate));
 
@@ -204,6 +204,13 @@ void RoverPositionControl::debugPrintAll()
 		PX4_INFO_RAW("---    dist_trgt: %.2f   trgt_berng: %.2f  nav_berng: %.2f\n",
 			     (double) _dist_target, (double) math::degrees(_target_bearing), (double) math::degrees(_nav_bearing));
 
+		if (_pos_ctrl_state == L1_GOTO_WAYPOINT) {
+			PX4_INFO_RAW("---    XTrack err: %.4f   L1 acc_dmn: %.4f\n",
+				     (double)_crosstrack_error,
+				     (double)_nav_lateral_acceleration_demand);
+
+		}
+
 		PX4_INFO_RAW("---    hdg_er: %.4f  gas: %.2f tool: %.2f alrm: %.1f\n",
 			     (double)math::degrees(_heading_error),
 			     (double)_gas_engine_throttle, (double)_cutter_setpoint, (double)_alarm_dev_level);
@@ -225,7 +232,7 @@ void RoverPositionControl::debugPrintAll()
 	}
 
 	if (_tracing_lev > 1) {
-		PX4_INFO_RAW("---    misn_vel_sp: %.4f   misn_thrst: %.4f   nvste: %d\n",
+		PX4_INFO_RAW("---    misn_vel_sp: %.4f   misn_thrust_eff: %.4f   nav_state: %d\n",
 			     (double)_mission_velocity_setpoint, (double)_mission_thrust_effort,
 			     (int)_vehicle_status.nav_state);
 
@@ -253,7 +260,7 @@ void RoverPositionControl::debugPrintManual()
 			     (double)_ground_speed_abs, (double)_gps_ground_speed_abs, (double)_ekf_ground_speed_abs, (double)_x_vel);
 
 		if (_manual_using_pids) {
-			PX4_INFO_RAW("---     misn_vel_sp: %.2f  _msn_thrust_effort: %.2f  _ground_speed_abs: %.4f\n",
+			PX4_INFO_RAW("---     misn_vel_sp: %.2f  misn_thrust_eff: %.2f  ground_speed_abs: %.4f\n",
 				     (double)_mission_velocity_setpoint, (double)_mission_thrust_effort, (double)_ground_speed_abs);
 
 			PX4_INFO_RAW("---     mission_torq_effort: %.2f   yaw_rate: %.1f\n",

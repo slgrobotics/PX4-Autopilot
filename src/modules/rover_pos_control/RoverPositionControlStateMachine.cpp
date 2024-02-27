@@ -241,7 +241,7 @@ void RoverPositionControl::workStateMachine()
 				// GND_TURN_WAIT
 				float turn_wait_sec = _param_turn_wait.get();
 
-				if (turn_wait_sec < FLT_EPSILON || hrt_elapsed_time(&_turn_goal_last_reached) > turn_wait_sec * 1e+6f) {
+				if (turn_wait_sec < FLT_EPSILON || hrt_elapsed_time(&_turn_goal_last_reached) > turn_wait_sec * 1000_ms) {
 					_turn_goal_last_reached = 0;
 					_wp_dist_at_turn = _wp_current_dist;	// Remember for speed factor calculations
 
@@ -433,10 +433,6 @@ void RoverPositionControl::workStateMachine()
 		resetTorqueControls();
 		resetThrustControls();
 	}
-
-#ifdef DEBUG_MY_PRINT
-	debugPrint();
-#endif // DEBUG_MY_PRINT
 
 }
 
