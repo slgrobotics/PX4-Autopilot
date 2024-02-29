@@ -56,7 +56,7 @@ param set-default RDD_THRUST_SC 1.0
 param set-default RDD_TORQUE_SC 3.0
 
 # Parameters that "just work" in gz sim:
-param set-default GND_L1_SCALER 3
+param set-default GND_LF_SCALER 3
 param set-default GND_LF_P 2
 param set-default GND_LF_D 0
 param set-default GND_LF_I 0

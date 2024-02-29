@@ -506,6 +506,7 @@ private:
 		(ParamFloat<px4::params::GND_LF_D>) _param_line_following_d,
 		(ParamFloat<px4::params::GND_LF_IMAX>) _param_line_following_imax,
 		(ParamFloat<px4::params::GND_LF_MAX>) _param_line_following_max,
+		(ParamFloat<px4::params::GND_LF_SCALER>) _param_lf_scaler,
 		(ParamFloat<px4::params::GND_LF_RATE_SC>) _param_line_following_rate_scaler,
 
 		// PID-controlled speed setpoint, m/s:

@@ -191,8 +191,8 @@ void RoverPositionControl::debugPrintAll()
 				     (double) math::degrees(_heading_error));
 
 			if (_pos_ctrl_state == L1_GOTO_WAYPOINT) {
-				PX4_INFO_RAW("---    XTrack err: %.4f   L1 acc_dmn: %.4f\n",
-					     (double)_crosstrack_error,
+				PX4_INFO_RAW("---    XTrack err: %.1f cm    L1 acc_demand: %.4f\n",
+					     (double)(_crosstrack_error * 100.0f),
 					     (double)_nav_lateral_acceleration_demand);
 
 			}
@@ -205,8 +205,8 @@ void RoverPositionControl::debugPrintAll()
 			     (double) _dist_target, (double) math::degrees(_target_bearing), (double) math::degrees(_nav_bearing));
 
 		if (_pos_ctrl_state == L1_GOTO_WAYPOINT) {
-			PX4_INFO_RAW("---    XTrack err: %.4f   L1 acc_dmn: %.4f\n",
-				     (double)_crosstrack_error,
+			PX4_INFO_RAW("---    XTrack err: %.1f cm    L1 acc_demand: %.4f\n",
+				     (double)(_crosstrack_error * 100.0f),
 				     (double)_nav_lateral_acceleration_demand);
 
 		}

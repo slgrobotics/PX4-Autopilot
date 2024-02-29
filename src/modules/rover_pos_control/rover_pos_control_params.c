@@ -83,7 +83,7 @@ PARAM_DEFINE_FLOAT(GND_L1_DAMPING, 0.8f);
  *
  * @unit norm
  * @min 0.0
- * @max 1.0
+ * @max 10.0
  * @decimal 3
  * @increment 0.005
  * @group Rover Position Control
@@ -161,6 +161,18 @@ PARAM_DEFINE_FLOAT(GND_LF_IMAX, 0.2f);
  * @group Rover Position Control
  */
 PARAM_DEFINE_FLOAT(GND_LF_MAX, 0.5f);
+
+/**
+ *  A multiplier crosstrack_error -> turning_setpoint when under LF control
+ *
+ * @unit norm
+ * @min 0.0
+ * @max 10.0
+ * @decimal 3
+ * @increment 0.005
+ * @group Rover Position Control
+ */
+PARAM_DEFINE_FLOAT(GND_LF_SCALER, 1.0f);
 
 /**
  * When Line Following, allows the use of Rate Controller to produce and scale yaw torque

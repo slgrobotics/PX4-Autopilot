@@ -327,7 +327,7 @@ void RoverPositionControl::workStateMachine()
 
 				if (updateBearings()) {
 
-					if (fabsf(_heading_error) > 1.0f) {
+					if (fabsf(_heading_error) > 1.0f && PX4_ISFINITE(_wp_previous_dist) && _wp_previous_dist > _accel_dist * 1.5f) {
 #ifdef DEBUG_MY_PRINT
 						PX4_INFO("==== Overshot: aceptnce_rad: %.2f  hdng_err: %.2f", (double)_acceptance_radius,
 							 (double)math::degrees(_heading_error));
@@ -592,7 +592,7 @@ float RoverPositionControl::computeTurningSetpoint()
 
 			// Use heading PID based on L1 _crosstrack_error:
 			float max_turning_sp = 3.0f;
-			turning_setpoint = math::constrain(-_crosstrack_error * _param_l1_scaler.get(),	// GND_L1_SCALER
+			turning_setpoint = math::constrain(-_crosstrack_error * _param_lf_scaler.get(),	// GND_LF_SCALER
 							   -max_turning_sp,
 							   max_turning_sp);
 
