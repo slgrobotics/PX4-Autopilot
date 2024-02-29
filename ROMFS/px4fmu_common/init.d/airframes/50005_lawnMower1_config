@@ -104,9 +104,9 @@ param set-default RDD_TORQUE_SC 10.0
 if [ $PX4_ROBOT_NAME = DRAGGER ]
 then
 	# Set Differential Drive Kinematics Library parameters:
-	param set RDD_WHEEL_BASE 0.9
-	param set RDD_WHEEL_RADIUS 0.22
-	param set RDD_WHEEL_SPEED 10.0	# Maximum wheel speed rad/s
+	param set RDD_WHEEL_BASE 0.58
+	param set RDD_WHEEL_RADIUS 0.18
+	param set RDD_WHEEL_SPEED 6.0	# Maximum wheel speed rad/s
 
 	# Dragger, having non-RTK GPS, needs vertical reference - Baro sim.
 	param set SYS_HAS_BARO 1
@@ -128,11 +128,16 @@ then
 	param set EKF2_MULTI_MAG 1
 	param set EKF2_MULTI_MAG 1
 
-	// Dragger max speed is 0.3 m/s as measired on R/C
-	param set GND_SPEED_TRIM 0.18
+	// Dragger max speed is 0.5 m/s as measired on R/C
+	param set GND_SPEED_TRIM 0.45
+
+	param set GND_RATE_P 0.2
+	param set GND_RATE_I 0.0
+	param set GND_RATE_D 0.0
+
 else
 	# Set Differential Drive Kinematics Library parameters:
-	param set RDD_WHEEL_BASE 0.58
+	param set RDD_WHEEL_BASE 0.9
 	param set RDD_WHEEL_RADIUS 0.22
 	param set RDD_WHEEL_SPEED 10.0	# Maximum wheel speed rad/s
 
