@@ -582,7 +582,9 @@ bool RoverPositionControl::updateBearings()
 
 float RoverPositionControl::computeTurningSetpoint()
 {
-	float turning_setpoint = 0.0f;
+	// In most states we just convert Heading error (radians) to Turning Setpoint. It could be scaled later:
+	float turning_setpoint = PX4_ISFINITE(_heading_error) ? _heading_error : 0.0f;
+	float max_turning_sp = 0.5f;
 
 	switch (_pos_ctrl_state) {
 
@@ -591,47 +593,32 @@ float RoverPositionControl::computeTurningSetpoint()
 		if (PX4_ISFINITE(_crosstrack_error) && _param_line_following_p.get() > FLT_EPSILON) {	// GND_LF_P > 0
 
 			// Use heading PID based on L1 _crosstrack_error:
-			float max_turning_sp = 3.0f;
-			turning_setpoint = math::constrain(-_crosstrack_error * _param_lf_scaler.get(),	// GND_LF_SCALER
-							   -max_turning_sp,
-							   max_turning_sp);
+			//max_turning_sp = 3.0f;
+			turning_setpoint = -_crosstrack_error * _param_lf_scaler.get();	// GND_LF_SCALER
 
 			//PX4_INFO_RAW("prev_dist: %.1f   crosstrack err: %.3f   miss trng setpnt: %.3f\n", (double) _wp_previous_dist, (double)_crosstrack_error, (double)turning_setpoint);
-
-			/*
-			if (_crosstrack_error < 0.5f) {
-				// make small adjustments more effective on straight lines:
-				_rate_control.setFeedForwardGain(matrix::Vector3f(0.0f, 0.0f, _param_rate_ff.get()));
-
-			} else {
-				// let the "PID" parameters work alone:
-				_rate_control.setFeedForwardGain(matrix::Vector3f(0.0f, 0.0f, 0.0f));
-			}
-			*/
 
 		} else if (PX4_ISFINITE(_nav_lateral_acceleration_demand)) {
 
 			// Use L1 _nav_lateral_acceleration_demand as it was intended:
 
-			turning_setpoint = math::constrain(_nav_lateral_acceleration_demand * _param_l1_scaler.get(),	// GND_L1_SCALER
-							   -1.0f, 1.0f);
+			turning_setpoint = _nav_lateral_acceleration_demand * _param_l1_scaler.get();	// GND_L1_SCALER
 
 		} else {
 			PX4_WARN("L1_GOTO_WAYPOINT lat_accel_demand is NULL    prev_dist: %.1f  crosstrack err: %.3f\n",
 				 (double) _wp_previous_dist, (double)_crosstrack_error);
+
+			turning_setpoint = 0.0f;
 		}
 
 		break;
 
 	default:
-		// convert Heading error (radians) to Control Effort. It could be scaled later:
-
-		turning_setpoint = math::constrain(_heading_error, -1.0f, 1.0f); // constrain to 1 rad, ~57 degrees - GND_HEADING_SC
-
 		break;
 	}
 
-	return turning_setpoint;
+	//return math::constrain(turning_setpoint, -max_turning_sp, max_turning_sp);
+	return math::sq(math::constrain(turning_setpoint, -max_turning_sp, max_turning_sp)) * sign(turning_setpoint);
 }
 
 float RoverPositionControl::computeTorqueEffort()
@@ -738,7 +725,6 @@ float RoverPositionControl::computeVelocitySetpoint()
 
 			// decrease it when heading error grows (but error is constrained between 0.1 and 0.8 radians):
 			//velocity_sp =  math::interpolate<float>(abs(_heading_error) / 3, 0.1f, 0.8f, smooth_speed, 0.0f);
-
 			velocity_sp = smooth_speed;
 
 			//PX4_INFO_RAW("mission_vel_sp: %.4f   max: %.4f   smooth: %.4f   velocity_sp: %.4f   hdg_err: %.4f\n",
@@ -806,7 +792,9 @@ void RoverPositionControl::adjustThrustAndTorque()
 				computeThrustEffort();	// compute effort from _mission_velocity_setpoint using speed PID. Can be NAN.
 
 		} else {
-			PX4_WARN("_mission_velocity_setpoint=NAN  in adjustThrustAndTorque() - in %s", control_state_name(_pos_ctrl_state));
+			if (_pos_ctrl_state != POS_STATE_IDLE) {
+				PX4_WARN("_mission_velocity_setpoint=NAN  in adjustThrustAndTorque() - in %s", control_state_name(_pos_ctrl_state));
+			}
 
 			_mission_thrust_effort = NAN;
 		}

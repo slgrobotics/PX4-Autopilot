@@ -378,9 +378,9 @@ private:
 	bool _manual_using_pids{false};
 	bool _manual_drive_straight{false};
 
-	// To support Differential Drive module logic, whole body max speed and turn rate:
-	float _rdd_max_speed{0.f};
-	float _rdd_max_angular_velocity{0.f};
+	// To support Differential Drive module logic, whole body max speed and turn rate pre-calculated and stored here:
+	float _rdd_max_speed{0.f};		// = RDD_WHEEL_SPEED * RDD_WHEEL_RADIUS
+	float _rdd_max_angular_velocity{0.f};	// = _rdd_max_speed / (RDD_WHEEL_BASE / 2)
 
 	// Magnetometer sensor - variables and readings:
 	uint32_t _device_id_mag{0};
@@ -564,6 +564,7 @@ private:
 		(ParamFloat<px4::params::RDD_THRUST_SC>) _param_rdd_thrust_scaler,
 		(ParamFloat<px4::params::RDD_TORQUE_SC>) _param_rdd_torque_scaler,
 
+		// Velocity smoothing parameters for speed control:
 		(ParamFloat<px4::params::RDD_MAX_JERK>) _param_rdd_max_jerk,
 		(ParamFloat<px4::params::RDD_MAX_ACCEL>) _param_rdd_max_accel,
 
