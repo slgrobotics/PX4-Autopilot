@@ -41,6 +41,7 @@ px4_add_module(
 	SRCS
 		RoverPositionControl.cpp
 		RoverPositionControlStateMachine.cpp
+		RoverPositionControlCompute.cpp
 		RoverPositionControlPolling.cpp
 		RoverPositionControlPublish.cpp
 		RoverPositionControlTracing.cpp

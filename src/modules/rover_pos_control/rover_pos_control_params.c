@@ -355,7 +355,7 @@ PARAM_DEFINE_FLOAT(GND_SPEED_EMA, 5);
  * @decimal 1
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_ACCEL_DIST, 1.0f);
+PARAM_DEFINE_FLOAT(GND_ACCEL_DIST, 1.5f);
 
 /**
  * Distance to decelerate to a waypoint
@@ -366,7 +366,7 @@ PARAM_DEFINE_FLOAT(GND_ACCEL_DIST, 1.0f);
  * @decimal 1
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_DECEL_DIST, 1.0f);
+PARAM_DEFINE_FLOAT(GND_DECEL_DIST, 1.5f);
 
 /**
  * Arrival minimum speed factor
@@ -420,7 +420,7 @@ PARAM_DEFINE_FLOAT(GND_WP_PRECISN, 0.5f);
  * @increment 0.01
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_TURN_SPEED, 0.15f);
+PARAM_DEFINE_FLOAT(GND_TURN_SPEED, 0.05f);
 
 /**
  * When turning at waypoint, what to consider a success
@@ -496,7 +496,7 @@ PARAM_DEFINE_FLOAT(GND_HEADING_TRIM, 0.8f);
  * @increment 0.1
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_HEADING_RATE, 1.5f);
+PARAM_DEFINE_FLOAT(GND_RATE_SC, 15.0f);
 
 /**
  * When turning at waypoint, set yaw rate setpoint for Rate Control
@@ -523,7 +523,7 @@ PARAM_DEFINE_FLOAT(GND_TURN_RATE, 0.5f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_RATE_P, 0.5f);
+PARAM_DEFINE_FLOAT(GND_RATE_P, 0.25f);
 
 /**
  * Rover Rate Integral Gain
