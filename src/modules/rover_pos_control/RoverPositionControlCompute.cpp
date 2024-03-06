@@ -86,8 +86,8 @@ float RoverPositionControl::computeTurningSetpoint()
 		break;
 	}
 
-	//return math::constrain(turning_setpoint, -max_turning_sp, max_turning_sp);
-	return math::sq(math::constrain(turning_setpoint, -max_turning_sp, max_turning_sp)) * sign(turning_setpoint);
+	return math::constrain(turning_setpoint, -max_turning_sp, max_turning_sp);
+	//return math::sq(math::constrain(turning_setpoint, -max_turning_sp, max_turning_sp)) * sign(turning_setpoint);
 }
 
 float RoverPositionControl::computeTorqueEffort()
@@ -105,38 +105,51 @@ float RoverPositionControl::computeTorqueEffort()
 
 	float torque_effort = NAN;
 
+	float max_yaw_rate = _param_rate_max.get(); // GND_RATE_MAX
+
 	_rates_setpoint.roll = _rates_setpoint.pitch = 0.0f;
 
 	switch (_pos_ctrl_state) {
 
 	case L1_GOTO_WAYPOINT: {
 
-			float lf_rate_scaler = 1.0f;
-			_rates_setpoint.yaw = _rates_setpoint_yaw = NAN;
+			const bool use_lf_pid = _param_line_following_p.get() > FLT_EPSILON;
+			const bool use_rates_controller = _param_lf_use_rates_controller.get() > 0;
 
-			if (_param_line_following_p.get() > FLT_EPSILON) {
+			float setpoint_yaw;
+
+			if (use_lf_pid) {
 				// Use heading PID based on _crosstrack_error, not L1 acceleration demand:
-				torque_effort = pid_calculate(&_line_following_ctrl, 0.0f, -_mission_turning_setpoint * 0.1f, 0.0f,
-							      _dt); // already constrained with GND_LF_MAX
 
-				lf_rate_scaler = _param_line_following_rate_scaler.get(); // GND_LF_RATE_SC
+				const float turning_sp = -_mission_turning_setpoint; // * 0.1f;
+
+				float yaw_rate = pid_calculate(&_line_following_ctrl, 0.0f, turning_sp, 0.0f, _dt);
+
+				setpoint_yaw = math::constrain(yaw_rate * _param_line_following_rate_scaler.get(), // GND_LF_RATE_SC
+							       -max_yaw_rate, max_yaw_rate); // constrained with GND_LF_MAX
 
 			} else {
-				torque_effort = _mission_turning_setpoint; // for the Rate Controller below, when using L1
+				// Use traditional L1 Controller, _nav_lateral_acceleration_demand as it was intended:
+
+				setpoint_yaw = _mission_turning_setpoint; // for the Rate Controller below
 			}
 
-			if (lf_rate_scaler > FLT_EPSILON) {
-				// Use calculated value as input to Rate Controller:
-				_rates_setpoint.yaw = _rates_setpoint_yaw = math::constrain(torque_effort * lf_rate_scaler, // GND_LF_RATE_SC
-						      -_param_heading_trim.get(), _param_heading_trim.get()); // GND_HEADING_TRIM
+			if (use_rates_controller) {
+				// Use calculated value as "yaw rate setpoint" - input to Rate Controller:
+				_rates_setpoint.yaw = _rates_setpoint_yaw = setpoint_yaw;
 
 				torque_effort = control_yaw_rate(_angular_velocity, _rates_setpoint);
+
+			} else {
+				_rates_setpoint_yaw = NAN;
+				torque_effort = setpoint_yaw;
 			}
 		}
 		break;
 
 	case WP_TURNING:
 
+		// Just use constant yaw rate - GND_TURN_RATE:
 		_rates_setpoint.yaw = _rates_setpoint_yaw = sign(_mission_turning_setpoint) *
 				      _param_turn_rate_sp.get(); // GND_TURN_RATE
 
@@ -148,7 +161,7 @@ float RoverPositionControl::computeTorqueEffort()
 
 		_rates_setpoint.yaw = _rates_setpoint_yaw = math::constrain(_mission_turning_setpoint *
 				      _param_heading_rate_scaler.get(),	// GND_RATE_SC
-				      -_param_heading_trim.get(), _param_heading_trim.get()); // GND_HEADING_TRIM
+				      -max_yaw_rate, max_yaw_rate);
 
 		torque_effort = control_yaw_rate(_angular_velocity, _rates_setpoint);
 
@@ -192,8 +205,8 @@ float RoverPositionControl::computeVelocitySetpoint()
 			float smooth_speed = _forwards_velocity_smoothing.getCurrentVelocity();
 
 			// decrease it when heading error grows (but error is constrained between 0.1 and 0.8 radians):
-			//velocity_sp =  math::interpolate<float>(abs(_heading_error) / 3, 0.1f, 0.8f, smooth_speed, 0.0f);
-			velocity_sp = smooth_speed;
+			velocity_sp = abs(_heading_error) > 0.5f ?  math::interpolate<float>(abs(_heading_error) / 3, 0.1f, 0.8f, smooth_speed, 0.0f) : smooth_speed;
+			//velocity_sp = smooth_speed;
 
 			//PX4_INFO_RAW("mission_vel_sp: %.4f   max: %.4f   smooth: %.4f   velocity_sp: %.4f   hdg_err: %.4f\n",
 			//	     (double)_mission_velocity_setpoint, (double)max_velocity, (double)smooth_speed,

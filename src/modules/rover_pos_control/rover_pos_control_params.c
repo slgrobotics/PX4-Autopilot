@@ -175,9 +175,9 @@ PARAM_DEFINE_FLOAT(GND_LF_MAX, 0.5f);
 PARAM_DEFINE_FLOAT(GND_LF_SCALER, 1.0f);
 
 /**
- * When Line Following, allows the use of Rate Controller to produce and scale yaw torque
+ * When Line Following, scales input to Rate Controller
  *
- * If 0, LF PID output becomes torque. Otherwise LF PID output is fed to Rate Controller input, and output is scaled as torque.
+ * LF PID output is scaled as torque effort, which is fed to Yaw Rate Controller input
  *
  * @unit norm
  * @min 0.0
@@ -186,7 +186,16 @@ PARAM_DEFINE_FLOAT(GND_LF_SCALER, 1.0f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_LF_RATE_SC, 2);
+PARAM_DEFINE_FLOAT(GND_LF_RATE_SC, 1.0);
+
+/**
+ * When in Line Following State, use Rate Controller for yaw output
+ *
+ * @min 0
+ * @max 1
+ * @group Rover Position Control
+ */
+PARAM_DEFINE_INT32(GND_LF_USE_RATE, 1);
 
 //===============================================================================================================
 
@@ -484,7 +493,7 @@ PARAM_DEFINE_FLOAT(GND_HEADING_DECL, 0.0f);
  * @increment 0.1
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_HEADING_TRIM, 0.8f);
+PARAM_DEFINE_FLOAT(GND_RATE_TRIM, 0.8f);
 
 /**
  * When departing or arriving, controls yaw rate setpoint for Rate Control

@@ -508,6 +508,7 @@ private:
 		(ParamFloat<px4::params::GND_LF_MAX>) _param_line_following_max,
 		(ParamFloat<px4::params::GND_LF_SCALER>) _param_lf_scaler,
 		(ParamFloat<px4::params::GND_LF_RATE_SC>) _param_line_following_rate_scaler,
+		(ParamInt<px4::params::GND_LF_USE_RATE>) _param_lf_use_rates_controller,
 
 		// PID-controlled speed setpoint, m/s:
 		(ParamFloat<px4::params::GND_SPEED_TRIM>) _param_gndspeed_trim,
@@ -541,7 +542,7 @@ private:
 		(ParamFloat<px4::params::GND_TURN_WAIT>) _param_turn_wait,
 		(ParamFloat<px4::params::GND_TURN_RATE>) _param_turn_rate_sp,
 
-		(ParamFloat<px4::params::GND_HEADING_TRIM>) _param_heading_trim,
+		(ParamFloat<px4::params::GND_RATE_TRIM>) _param_heading_trim,
 		(ParamFloat<px4::params::GND_HEADING_DECL>) _param_heading_err_decl,
 
 		(ParamFloat<px4::params::GND_RATE_P>) _param_rate_p,
