@@ -202,10 +202,10 @@ void RTL::on_inactive()
 		break;
 	}
 
-	// Limit inactive calculation to 1Hz
+	// Limit inactive calculation to 0.5Hz
 	hrt_abstime now{hrt_absolute_time()};
 
-	if ((now - _destination_check_time) > 1_s) {
+	if ((now - _destination_check_time) > 2_s) {
 		_destination_check_time = now;
 		setRtlTypeAndDestination();
 
@@ -604,7 +604,7 @@ void RTL::parameters_update()
 
 bool RTL::hasMissionLandStart() const
 {
-	return _mission_sub.get().land_start_index > 0;
+	return _mission_sub.get().land_start_index >= 0 && _mission_sub.get().land_index >= 0;
 }
 
 bool RTL::hasVtolLandApproach(const PositionYawSetpoint &rtl_position) const
