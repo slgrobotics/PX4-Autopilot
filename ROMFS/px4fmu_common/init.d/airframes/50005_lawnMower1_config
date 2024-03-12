@@ -100,6 +100,8 @@ param set EKF2_REQ_GPS_H 5.0
 param set-default RDD_THRUST_SC 2.5
 param set-default RDD_TORQUE_SC 10.0
 
+echo "IP: configuring GND_* parameters for " $PX4_ROBOT_NAME
+
 # AHRS must have baro input, unless this is set to 0:
 if [ $PX4_ROBOT_NAME = DRAGGER ]
 then
@@ -148,6 +150,9 @@ else
 	# To disable GPS Velocity fusing set this to 3 (default 7). For dual RTK GPS heading set it to 15:
 	#param set EKF2_GPS_CTRL 7
 	param set EKF2_GPS_CTRL 15
+
+	# Decrease right stick horizontal (yaw) response when in Manual mode:
+	param set GND_MAN_YAW_SC 0.25
 fi
 
 # For dual RTK GPS heading:
@@ -198,11 +203,6 @@ param set SENS_BOARD_Z_OFF 0
 # Disable mag inconsistency preflight check on arming:
 param set COM_ARM_MAG_ANG 90
 param set COM_ARM_MAG_STR 2
-
-if [ $PX4_ROBOT_NAME = DRAGGER ]
-then
-	echo "IP: configuring GND_* parameters for " $PX4_ROBOT_NAME
-fi
 
 # Set some device parameters:
 param set IMU_GYRO_RATEMAX 800
