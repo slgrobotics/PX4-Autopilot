@@ -542,7 +542,6 @@ private:
 		(ParamFloat<px4::params::GND_TURN_WAIT>) _param_turn_wait,
 		(ParamFloat<px4::params::GND_TURN_RATE>) _param_turn_rate_sp,
 
-		(ParamFloat<px4::params::GND_RATE_TRIM>) _param_heading_trim,
 		(ParamFloat<px4::params::GND_HEADING_DECL>) _param_heading_err_decl,
 
 		(ParamFloat<px4::params::GND_RATE_P>) _param_rate_p,
@@ -550,8 +549,8 @@ private:
 		(ParamFloat<px4::params::GND_RATE_D>) _param_rate_d,
 		(ParamFloat<px4::params::GND_RATE_FF>) _param_rate_ff,
 		(ParamFloat<px4::params::GND_RATE_IMAX>) _param_rate_imax,
-		(ParamFloat<px4::params::GND_RATE_MAX>) _param_rate_max,
 		(ParamFloat<px4::params::GND_RATE_IMINSPD>) _param_rate_i_minspeed,
+		(ParamFloat<px4::params::GND_RATE_AD_TRIM>) _param_rate_depart_arrive_trim,
 		(ParamFloat<px4::params::GND_RATE_SC>) _param_heading_rate_scaler,
 
 		// R/C yaw scaler to control right stick horizontal movement effect, avoiding too sensitive feel:

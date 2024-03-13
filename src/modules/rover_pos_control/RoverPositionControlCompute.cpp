@@ -105,8 +105,6 @@ float RoverPositionControl::computeTorqueEffort()
 
 	float torque_effort = NAN;
 
-	float max_yaw_rate = _param_rate_max.get(); // GND_RATE_MAX
-
 	_rates_setpoint.roll = _rates_setpoint.pitch = 0.0f;
 
 	switch (_pos_ctrl_state) {
@@ -123,10 +121,9 @@ float RoverPositionControl::computeTorqueEffort()
 
 				const float turning_sp = -_mission_turning_setpoint; // * 0.1f;
 
-				float yaw_rate = pid_calculate(&_line_following_ctrl, 0.0f, turning_sp, 0.0f, _dt);
+				float yaw_rate = pid_calculate(&_line_following_ctrl, 0.0f, turning_sp, 0.0f, _dt); // constrained with GND_LF_MAX
 
-				setpoint_yaw = math::constrain(yaw_rate * _param_line_following_rate_scaler.get(), // GND_LF_RATE_SC
-							       -max_yaw_rate, max_yaw_rate); // constrained with GND_LF_MAX
+				setpoint_yaw = yaw_rate * _param_line_following_rate_scaler.get(); // GND_LF_RATE_SC
 
 			} else {
 				// Use traditional L1 Controller, _nav_lateral_acceleration_demand as it was intended:
@@ -150,20 +147,32 @@ float RoverPositionControl::computeTorqueEffort()
 	case WP_TURNING:
 
 		// Just use constant yaw rate - GND_TURN_RATE:
-		_rates_setpoint.yaw = _rates_setpoint_yaw = sign(_mission_turning_setpoint) *
-				      _param_turn_rate_sp.get(); // GND_TURN_RATE
+		_rates_setpoint.yaw = _rates_setpoint_yaw =
+					      sign(_mission_turning_setpoint) * _param_turn_rate_sp.get(); // GND_TURN_RATE
 
 		torque_effort = control_yaw_rate(_angular_velocity, _rates_setpoint);
 
 		break;
 
+	case WP_DEPARTING:
+	case WP_ARRIVING:
+	case WP_ARRIVED:
+	case POS_STATE_STOPPING: {
+
+			// Departures and Arrivals, use heading error for yaw rate setpoint:
+
+			float max_yaw_rate_setpoint = _param_rate_depart_arrive_trim.get(); // GND_RATE_AD_TRIM
+
+			_rates_setpoint.yaw = _rates_setpoint_yaw = math::constrain(
+						      _mission_turning_setpoint * _param_heading_rate_scaler.get(), // GND_RATE_SC
+						      -max_yaw_rate_setpoint, max_yaw_rate_setpoint); // constrained with GND_RATE_AD_TRIM
+
+			torque_effort = control_yaw_rate(_angular_velocity, _rates_setpoint);
+
+		}
+		break;
+
 	default:
-
-		_rates_setpoint.yaw = _rates_setpoint_yaw = math::constrain(_mission_turning_setpoint *
-				      _param_heading_rate_scaler.get(),	// GND_RATE_SC
-				      -max_yaw_rate, max_yaw_rate);
-
-		torque_effort = control_yaw_rate(_angular_velocity, _rates_setpoint);
 
 		break;
 	}
@@ -205,7 +214,8 @@ float RoverPositionControl::computeVelocitySetpoint()
 			float smooth_speed = _forwards_velocity_smoothing.getCurrentVelocity();
 
 			// decrease it when heading error grows (but error is constrained between 0.1 and 0.8 radians):
-			velocity_sp = abs(_heading_error) > 0.5f ?  math::interpolate<float>(abs(_heading_error) / 3, 0.1f, 0.8f, smooth_speed, 0.0f) : smooth_speed;
+			velocity_sp = abs(_heading_error) > 0.5f ?  math::interpolate<float>(abs(_heading_error) / 3, 0.1f, 0.8f, smooth_speed,
+					0.0f) : smooth_speed;
 			//velocity_sp = smooth_speed;
 
 			//PX4_INFO_RAW("mission_vel_sp: %.4f   max: %.4f   smooth: %.4f   velocity_sp: %.4f   hdg_err: %.4f\n",

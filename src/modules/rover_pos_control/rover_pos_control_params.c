@@ -160,7 +160,7 @@ PARAM_DEFINE_FLOAT(GND_LF_IMAX, 0.2f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_LF_MAX, 0.5f);
+PARAM_DEFINE_FLOAT(GND_LF_MAX, 0.8f);
 
 /**
  *  A multiplier crosstrack_error -> turning_setpoint when under LF control
@@ -493,7 +493,7 @@ PARAM_DEFINE_FLOAT(GND_HEADING_DECL, 0.0f);
  * @increment 0.1
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_RATE_TRIM, 0.8f);
+PARAM_DEFINE_FLOAT(GND_RATE_AD_TRIM, 0.8f);
 
 /**
  * When departing or arriving, controls yaw rate setpoint for Rate Control
@@ -505,7 +505,7 @@ PARAM_DEFINE_FLOAT(GND_RATE_TRIM, 0.8f);
  * @increment 0.1
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_RATE_SC, 15.0f);
+PARAM_DEFINE_FLOAT(GND_RATE_SC, 2.0f);
 
 /**
  * When turning at waypoint, set yaw rate setpoint for Rate Control
@@ -532,7 +532,7 @@ PARAM_DEFINE_FLOAT(GND_TURN_RATE, 0.5f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_RATE_P, 0.25f);
+PARAM_DEFINE_FLOAT(GND_RATE_P, 0.3f);
 
 /**
  * Rover Rate Integral Gain
@@ -544,7 +544,7 @@ PARAM_DEFINE_FLOAT(GND_RATE_P, 0.25f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_RATE_I, 0.0f);
+PARAM_DEFINE_FLOAT(GND_RATE_I, 0.08f);
 
 /**
  * Rover Rate Differential Gain
@@ -556,7 +556,7 @@ PARAM_DEFINE_FLOAT(GND_RATE_I, 0.0f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_RATE_D, 0.0f);
+PARAM_DEFINE_FLOAT(GND_RATE_D, 0.005f);
 
 /**
  * Rover Rate Feed Forward Gain
@@ -581,18 +581,6 @@ PARAM_DEFINE_FLOAT(GND_RATE_FF, 0.3f);
  * @group Rover Position Control
  */
 PARAM_DEFINE_FLOAT(GND_RATE_IMAX, 0.5f);
-
-/**
- * Rover Rate Maximum Output Rate
- *
- * @unit norm
- * @min 0.0
- * @max 1.0
- * @decimal 3
- * @increment 0.005
- * @group Rover Position Control
- */
-PARAM_DEFINE_FLOAT(GND_RATE_MAX, 0.5f);
 
 /**
  * Rover Rate Minimum Speed to compute Integral
