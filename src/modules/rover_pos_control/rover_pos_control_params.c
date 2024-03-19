@@ -63,7 +63,7 @@
  * @increment 0.5
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_L1_PERIOD, 10.0f);
+PARAM_DEFINE_FLOAT(GND_L1_PERIOD, 5.0f);
 
 /**
  * L1 damping
@@ -118,7 +118,7 @@ PARAM_DEFINE_FLOAT(GND_LF_P, 0.5f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_LF_I, 0.4f);
+PARAM_DEFINE_FLOAT(GND_LF_I, 0.1f);
 
 /**
  * Line Following derivative gain
@@ -132,7 +132,7 @@ PARAM_DEFINE_FLOAT(GND_LF_I, 0.4f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_LF_D, 2.0f);
+PARAM_DEFINE_FLOAT(GND_LF_D, 0.0f);
 
 /**
  * Line Following integral maximum value
@@ -163,21 +163,37 @@ PARAM_DEFINE_FLOAT(GND_LF_IMAX, 0.2f);
 PARAM_DEFINE_FLOAT(GND_LF_MAX, 0.8f);
 
 /**
- *  A multiplier crosstrack_error -> turning_setpoint when under LF control
+ * When Line Following, scales PID output to be mixed into the input of Rate Controller
+ *
+ * mixed with L1 and heading_error for precision driving
  *
  * @unit norm
  * @min 0.0
  * @max 10.0
+ * @decimal 2
+ * @increment 0.005
+ * @group Rover Position Control
+ */
+PARAM_DEFINE_FLOAT(GND_LF_PID_SC, 2.0);
+
+/**
+ * Line Following path width
+ *
+ * Outside of this path L1 rules apply, inside - weighted L1 and heading deviation
+ *
+ * @unit norm
+ * @min 0.005
+ * @max 50.0
  * @decimal 3
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_LF_SCALER, 1.0f);
+PARAM_DEFINE_FLOAT(GND_LF_WIDTH, 0.5f);
 
 /**
  * When Line Following, scales input to Rate Controller
  *
- * LF PID output is scaled as torque effort, which is fed to Yaw Rate Controller input
+ * LF output is scaled as torque effort, which is fed to Yaw Rate Controller input
  *
  * @unit norm
  * @min 0.0
@@ -359,19 +375,19 @@ PARAM_DEFINE_FLOAT(GND_SPEED_EMA, 5);
  * Distance to accelerate from a waypoint before using L1 control
  *
  * @unit m
- * @min 1.0
- * @max 100.0
+ * @min 0.0
+ * @max 200.0
  * @decimal 1
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_ACCEL_DIST, 1.5f);
+PARAM_DEFINE_FLOAT(GND_ACCEL_DIST, 0.2f);
 
 /**
  * Distance to decelerate to a waypoint
  *
  * @unit m
  * @min 1.0
- * @max 100.0
+ * @max 200.0
  * @decimal 1
  * @group Rover Position Control
  */

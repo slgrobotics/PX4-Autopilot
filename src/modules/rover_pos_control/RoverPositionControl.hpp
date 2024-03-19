@@ -345,6 +345,9 @@ private:
 	void workStateMachine();
 	void setStateMachineState(const POS_CTRLSTATES desiredState);
 
+	// good for small numbers 0..1 - aggressive around 0, slower to the sides:
+	inline float sqrt_signed(float val)	{ return PX4_ISFINITE(val) ? sqrt(abs(val)) * sign(val) : 0.0f; };
+
 	hrt_abstime _app_started_time{0};
 
 	matrix::Vector2d _curr_wp{0, 0};
@@ -407,6 +410,7 @@ private:
 	float _heading_error{0.0f};		// radians
 	float _ground_speed_abs{0.0f};		// meters per second, selected between EKF and GPS values above
 	float _ground_speed_ns{0.0f};		// just storing ground_speed_2d.norm_squared() here for L1 desired_r calculation
+	float _abbe_error{0.0f};		// meters, heading error at the target point
 
 	// main calculated setpoints:
 	float _mission_velocity_setpoint{0.0f}; // target velocity for PID speed control
@@ -506,8 +510,12 @@ private:
 		(ParamFloat<px4::params::GND_LF_D>) _param_line_following_d,
 		(ParamFloat<px4::params::GND_LF_IMAX>) _param_line_following_imax,
 		(ParamFloat<px4::params::GND_LF_MAX>) _param_line_following_max,
-		(ParamFloat<px4::params::GND_LF_SCALER>) _param_lf_scaler,
+		(ParamFloat<px4::params::GND_LF_PID_SC>) _param_line_following_pid_scaler,
+
+		(ParamFloat<px4::params::GND_LF_WIDTH>) _param_line_following_width,
 		(ParamFloat<px4::params::GND_LF_RATE_SC>) _param_line_following_rate_scaler,
+
+		// Whether to use Yaw Rate Controller while line following:
 		(ParamInt<px4::params::GND_LF_USE_RATE>) _param_lf_use_rates_controller,
 
 		// PID-controlled speed setpoint, m/s:

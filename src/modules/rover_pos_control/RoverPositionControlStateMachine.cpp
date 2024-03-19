@@ -262,8 +262,13 @@ void RoverPositionControl::workStateMachine()
 
 						setStateMachineState(WP_ARRIVING); // Can't use L1 on the first leg
 
-					} else {
+					} else if (_param_accel_dist.get() > FLT_EPSILON) {
 						setStateMachineState(WP_DEPARTING);		// turned towards next waypoint, can depart now
+
+					} else {
+						// special case: GND_ACCEL_DIST = 0 to eliminate Departure state overall
+						_cutter_setpoint = ACTUATOR_ON;
+						setStateMachineState(L1_GOTO_WAYPOINT);
 					}
 
 					resetVelocitySmoothing(); // trajectory computation starts here
@@ -573,6 +578,8 @@ bool RoverPositionControl::updateBearings()
 	_target_bearing = get_bearing_to_next_waypoint(_current_position(0), _current_position(1), _curr_wp(0), _curr_wp(1));
 
 	_heading_error = wrap_pi(_target_bearing - wrap_pi(_current_heading));
+
+	_abbe_error = _wp_current_dist * sin(_heading_error);
 
 	return PX4_ISFINITE(_heading_error);
 }

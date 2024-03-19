@@ -379,19 +379,19 @@ void RoverPositionControl::debugPublishAll()
 		_dbg_array.data[i++] = _current_heading;
 		_dbg_array.data[i++] = _crosstrack_error;	// meters
 		_dbg_array.data[i++] = _mission_torque_effort;
-		_dbg_array.data[i++] = NAN; // TBD
+		_dbg_array.data[i++] = _abbe_error; 		// meters
 
 		// calculated values that become published actuator inputs:
 		_dbg_array.data[i++] = _current_heading;
 		_dbg_array.data[i++] = _heading_error;
 		_dbg_array.data[i++] = _mission_torque_effort;	// result of RateControl
-		_dbg_array.data[i++] = _torque_control;			// what is sent to actuators, smoothed and trimmed
+		_dbg_array.data[i++] = _torque_control;		// what is sent to actuators, smoothed and trimmed
 		_dbg_array.data[i++] = (float)_pos_ctrl_state;
 
 		// When GND_HEADING_P is set to > SIGMA, PID heading error control is in effect:
 		_dbg_array.data[i++] = _current_heading;
 		_dbg_array.data[i++] = _mission_turning_setpoint; // what State Machine thinks of turning - based on heading error
-		_dbg_array.data[i++] = _rates_setpoint_yaw;		  // YAW rate setpoint
+		_dbg_array.data[i++] = _rates_setpoint_yaw;	  // YAW rate setpoint
 		_dbg_array.data[i++] = _mission_torque_effort;	  // result of RateControl
 		_dbg_array.data[i++] = _z_yaw_rate;
 
