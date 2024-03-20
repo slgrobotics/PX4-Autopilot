@@ -108,13 +108,15 @@ float RoverPositionControl::computeTorqueEffort()
 			float setpoint_yaw =
 				_mission_turning_setpoint; // for the Rate Controller below, basically scaled _nav_lateral_acceleration_demand
 
-			float lf_window = _param_line_following_width.get() / 2.0f;	// GND_LF_WIDTH - set to 0 for pure L1 control
+			float lf_corridor_boundary = _param_line_following_width.get() / 2.0f;	// GND_LF_WIDTH - set to 0 for pure L1 control
 
-			if (PX4_ISFINITE(_crosstrack_error) && abs(_crosstrack_error) < lf_window) {
+			bool in_corridor = PX4_ISFINITE(_crosstrack_error) && abs(_crosstrack_error) < lf_corridor_boundary;
+
+			if (in_corridor) {
 
 				// Weighted L1 and heading error control within the GND_LF_WIDTH corridor
 
-				float hdg_err_weight = -1.0f / math::sq(lf_window) * math::sq(_crosstrack_error) +
+				float hdg_err_weight = -1.0f / math::sq(lf_corridor_boundary) * math::sq(_crosstrack_error) +
 						       1.0f; // flat 1 within 0, quadratic to sides till 0
 				float l1_weight = 1.0f - hdg_err_weight; // strong at the border, weak in center
 
@@ -139,19 +141,20 @@ float RoverPositionControl::computeTorqueEffort()
 					setpoint_yaw += pid_adjustment;
 				}
 
-				PX4_INFO_RAW("%.3f/%.3f  err xtrk: %.1f cm  abbe: %.2f m  msn_trng_sp: %.3f  sp_yaw_hdg: %.3f  pid_adj: %.3f  setpoint_yaw: %.3f\n",
+				PX4_INFO_RAW("%.3f/%.3f err xtrk: %.1f cm abbe: %.2f m  msn_trng_sp: %.3f  sp_yaw_hdg: %.3f  pid_adj: %.3f  sp_yaw: %.3f\n",
 					     (double)hdg_err_weight, (double)l1_weight,
 					     (double)(_crosstrack_error * 100.0f), (double)_abbe_error, (double)_mission_turning_setpoint, (double)setpoint_yaw_hdg,
 					     (double)pid_adjustment, (double)setpoint_yaw);
 
-				//PX4_INFO_RAW("%.4f/%.4f  xtrk: %.1f cm   msn_trng_sp: %.3f  setpoint_yaw_hdg: %.3f  pid_adj: %.3f  setpoint_yaw: %.3f\n",
+				//PX4_INFO_RAW("%.4f/%.4f  xtrk: %.1f cm   msn_trng_sp: %.3f  setpoint_yaw_hdg: %.3f  pid_adj: %.3f  sp_yaw: %.3f\n",
 				//		(double)hdg_err_weight, (double)l1_weight,
 				//		(double)(_crosstrack_error * 100.0f), (double)_mission_turning_setpoint, (double)setpoint_yaw_hdg,
 				//		(double)pid_adjustment, (double)setpoint_yaw);
 
 			}
 
-			const bool use_rates_controller = _param_lf_use_rates_controller.get() > 0; // GND_LF_USE_RATE
+			const bool use_rates_controller = !in_corridor
+							  || _param_lf_use_rates_controller.get() > 0; // GND_LF_USE_RATE > 0 or outside corridor
 
 			if (use_rates_controller) {
 
@@ -161,6 +164,7 @@ float RoverPositionControl::computeTorqueEffort()
 				torque_effort = control_yaw_rate(_angular_velocity, _rates_setpoint);
 
 			} else {
+				// only within the corridor:
 				_rates_setpoint_yaw = NAN;
 				torque_effort = setpoint_yaw /
 						10.0f; // experimental factor to leave GND_LF_RATE_SC intact while switching GND_LF_USE_RATE
