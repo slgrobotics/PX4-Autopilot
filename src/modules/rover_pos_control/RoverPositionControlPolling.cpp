@@ -245,8 +245,8 @@ void RoverPositionControl::updateParams()
 	int ema_period = _param_measurements_ema_period.get();	// GND_EMA_M_PERIOD
 	_velocity_measured_ema.init(ema_period);
 
-	// Set up setpoints smoothing:
-	ema_period = _param_speed_sp_ema_period.get();	// GND_SPEED_EMA
+	// Set up velocity setpoint smoothing:
+	ema_period = _param_speed_sp_ema_period.get();	// GND_SPEED_SP_EMA
 	_velocity_setpoint_ema.init(ema_period);
 
 	// Set up outputs smoothing:

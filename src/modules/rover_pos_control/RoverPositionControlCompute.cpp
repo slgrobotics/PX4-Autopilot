@@ -116,12 +116,17 @@ float RoverPositionControl::computeTorqueEffort()
 
 				// Weighted L1 and heading error control within the GND_LF_WIDTH corridor
 
-				float hdg_err_weight = -1.0f / math::sq(lf_corridor_boundary) * math::sq(_crosstrack_error) +
-						       1.0f; // flat 1 within 0, quadratic to sides till 0
-				float l1_weight = 1.0f - hdg_err_weight; // strong at the border, weak in center
+				//float hdg_err_weight = -1.0f / math::sq(lf_corridor_boundary) * math::sq(_crosstrack_error) +
+				//		       1.0f; // flat 1 within 0, quadratic to sides till 0
+				//float l1_weight = 1.0f - hdg_err_weight; // strong at the border, weak in center
+
+				float l1_weight = abs(_crosstrack_error / lf_corridor_boundary); // 0 in center, 1 at the boundary
+
+				float hdg_err_weight = 1.0f - l1_weight; // 1 in center, 0 at the boundary
 
 				// adjust the L1 result with weighted heading error, to improve line following near the line:
-				float setpoint_yaw_hdg = sqrt_signed(_heading_error) * _param_line_following_rate_scaler.get(); // GND_LF_RATE_SC
+				//float setpoint_yaw_hdg = sqrt_signed(_heading_error) * _param_line_following_rate_scaler.get(); // GND_LF_RATE_SC
+				float setpoint_yaw_hdg = _heading_error * _param_line_following_rate_scaler.get(); // GND_LF_RATE_SC
 
 				setpoint_yaw = setpoint_yaw_hdg * hdg_err_weight + setpoint_yaw * l1_weight;
 

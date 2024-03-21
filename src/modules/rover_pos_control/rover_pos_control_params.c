@@ -63,7 +63,7 @@
  * @increment 0.5
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_L1_PERIOD, 5.0f);
+PARAM_DEFINE_FLOAT(GND_L1_PERIOD, 10.0f);
 
 /**
  * L1 damping
@@ -104,7 +104,7 @@ PARAM_DEFINE_FLOAT(GND_L1_SCALER, 1.0f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_LF_P, 0.5f);
+PARAM_DEFINE_FLOAT(GND_LF_P, 0.3f);
 
 /**
  * Line Following Integral gain
@@ -174,7 +174,7 @@ PARAM_DEFINE_FLOAT(GND_LF_MAX, 0.8f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_LF_PID_SC, 2.0);
+PARAM_DEFINE_FLOAT(GND_LF_PID_SC, 0.1);
 
 /**
  * Line Following path width
@@ -188,7 +188,7 @@ PARAM_DEFINE_FLOAT(GND_LF_PID_SC, 2.0);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_LF_WIDTH, 0.5f);
+PARAM_DEFINE_FLOAT(GND_LF_WIDTH, 0.6f);
 
 /**
  * When Line Following, scales input to Rate Controller
@@ -202,7 +202,7 @@ PARAM_DEFINE_FLOAT(GND_LF_WIDTH, 0.5f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_LF_RATE_SC, 1.0);
+PARAM_DEFINE_FLOAT(GND_LF_RATE_SC, 2.0);
 
 /**
  * When in Line Following State, use Rate Controller for yaw output
@@ -255,7 +255,7 @@ PARAM_DEFINE_FLOAT(GND_THR_MIN, -1.0f);
  * @value 1 use RTK gps speed, if available
  * @group Rover Position Control
  */
-PARAM_DEFINE_INT32(GND_SP_MEAS_MODE, 1);
+PARAM_DEFINE_INT32(GND_SP_MEAS_MODE, 0);
 
 /**
  * Control mode for heading measurement
@@ -327,7 +327,7 @@ PARAM_DEFINE_FLOAT(GND_SPEED_D, 0.0f);
 PARAM_DEFINE_FLOAT(GND_SPEED_IMAX, 0.3f);
 
 /**
- * Trim ground speed.
+ * Desired max ground speed on straight runs
  *
  *	1.80 m/s = 4.0 mph
  *	2.20 m/s = 5.0 mph
@@ -343,7 +343,7 @@ PARAM_DEFINE_FLOAT(GND_SPEED_IMAX, 0.3f);
 PARAM_DEFINE_FLOAT(GND_SPEED_TRIM, 1.5f);
 
 /**
- * Maximum ground speed
+ * Maximum output (thrust effort) of speed PID
  *
  *
  * @unit m/s
@@ -356,7 +356,7 @@ PARAM_DEFINE_FLOAT(GND_SPEED_TRIM, 1.5f);
 PARAM_DEFINE_FLOAT(GND_SPEED_MAX, 10.0f);
 
 /**
- * Speed EMA to smooth velocity setpoint
+ * An EMA to smooth velocity setpoint for the speed PID's input
  *
  * Removes quick jolts in velocity setpoint before PID
  *
@@ -364,7 +364,7 @@ PARAM_DEFINE_FLOAT(GND_SPEED_MAX, 10.0f);
  * @max 50
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_SPEED_EMA, 5);
+PARAM_DEFINE_FLOAT(GND_SPEED_SP_EMA, 5);
 
 // -----------------------------------------------------------------------------------------------------------------------------
 // added to support heavy differential drive rover:

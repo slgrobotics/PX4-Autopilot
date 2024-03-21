@@ -520,7 +520,7 @@ private:
 
 		// PID-controlled speed setpoint, m/s:
 		(ParamFloat<px4::params::GND_SPEED_TRIM>) _param_gndspeed_trim,
-		(ParamFloat<px4::params::GND_SPEED_EMA>) _param_speed_sp_ema_period,
+		(ParamFloat<px4::params::GND_SPEED_SP_EMA>) _param_speed_sp_ema_period,
 
 		(ParamInt<px4::params::GND_SP_MEAS_MODE>) _param_speed_measurement_mode,
 		(ParamInt<px4::params::GND_HD_MEAS_MODE>) _param_heading_measurement_mode,
