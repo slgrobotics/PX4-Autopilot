@@ -316,7 +316,7 @@ void RoverPositionControl::adjustThrustAndTorque()
 
 		} else {
 			if (_pos_ctrl_state != POS_STATE_IDLE) {
-				PX4_WARN("_mission_velocity_setpoint=NAN  in adjustThrustAndTorque() - in %s", control_state_name(_pos_ctrl_state));
+				PX4_WARN("%s : _mission_velocity_setpoint=NAN  in adjustThrustAndTorque()", control_state_name(_pos_ctrl_state));
 			}
 
 			_mission_thrust_effort = NAN;
