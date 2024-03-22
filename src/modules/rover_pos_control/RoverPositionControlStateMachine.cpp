@@ -61,6 +61,7 @@ void RoverPositionControl::workStateMachine()
 	_nav_bearing = NAN;
 	_target_bearing = NAN;
 	_crosstrack_error = NAN;
+	_abbe_error = NAN;
 	_heading_error = NAN;
 	_nav_lateral_acceleration_demand = NAN;
 
