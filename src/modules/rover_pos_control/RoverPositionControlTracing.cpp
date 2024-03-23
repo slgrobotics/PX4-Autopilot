@@ -159,9 +159,10 @@ void RoverPositionControl::debugPrintArriveDepart()
 					 (double)math::degrees(_heading_error), (double)(_dt * 1000.0f));
 			*/
 
-			PX4_INFO_RAW("---- %s   hdg_error: %.2f  turn_sp: %.4f  miss_torq_efrt: %.4f\n",
+			PX4_INFO_RAW("---- %s   hdg_error: %.2f  abbe: %.2f m  turn_sp: %.4f  miss_torq_efrt: %.4f\n",
 				     control_state_name(_pos_ctrl_state),
-				     (double)math::degrees(_heading_error), (double)_mission_turning_setpoint, (double)_mission_torque_effort);
+				     (double)math::degrees(_heading_error), (double)_abbe_error, (double)_mission_turning_setpoint,
+				     (double)_mission_torque_effort);
 
 			PX4_INFO_RAW("---     misn_vel_sp: %.2f  misn_thrst_eff: %.2f  grd_spd_abs: %.4f  yaw_rate: %.1f\n",
 				     (double)_mission_velocity_setpoint, (double)_mission_thrust_effort, (double)_ground_speed_abs,
@@ -211,8 +212,8 @@ void RoverPositionControl::debugPrintAll()
 
 		}
 
-		PX4_INFO_RAW("---    hdg_er: %.4f  gas: %.2f tool: %.2f alrm: %.1f\n",
-			     (double)math::degrees(_heading_error),
+		PX4_INFO_RAW("---    hdg_er: %.4f  abbe: %.2f m   gas: %.2f tool: %.2f alrm: %.1f\n",
+			     (double)math::degrees(_heading_error), (double)_abbe_error,
 			     (double)_gas_engine_throttle, (double)_cutter_setpoint, (double)_alarm_dev_level);
 	}
 

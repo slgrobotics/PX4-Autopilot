@@ -120,25 +120,39 @@ float RoverPositionControl::computeTorqueEffort()
 				//		       1.0f; // flat 1 within 0, quadratic to sides till 0
 				//float l1_weight = 1.0f - hdg_err_weight; // strong at the border, weak in center
 
-				float l1_weight = abs(_crosstrack_error / lf_corridor_boundary); // 0 in center, 1 at the boundary
+				//float l1_weight = abs(_crosstrack_error / lf_corridor_boundary); // 0 in center, 1 at the boundary
 
-				float hdg_err_weight = 1.0f - l1_weight; // 1 in center, 0 at the boundary
+				//float hdg_err_weight = 1.0f - l1_weight; // 1 in center, 0 at the boundary
 
 				// adjust the L1 result with weighted heading error, to improve line following near the line:
 				//float setpoint_yaw_hdg = sqrt_signed(_heading_error) * _param_line_following_rate_scaler.get(); // GND_LF_RATE_SC
 				float setpoint_yaw_hdg = _heading_error * _param_line_following_rate_scaler.get(); // GND_LF_RATE_SC
 
-				setpoint_yaw = setpoint_yaw_hdg * hdg_err_weight + setpoint_yaw * l1_weight;
+				//setpoint_yaw = setpoint_yaw_hdg * hdg_err_weight + setpoint_yaw * l1_weight;
 
 				const bool use_lf_pid = _param_line_following_p.get() > FLT_EPSILON;
 				float pid_adjustment = 0.0f;
 
+				setpoint_yaw = 0.0f;
+
 				if (use_lf_pid) {
 
-					// Use heading PID based on :
+					// Use heading PID based on _crosstrack_error:
 
-					float lf_pid_output = pid_calculate(&_line_following_ctrl, 0.0f, _crosstrack_error, 0.0f,
-									    _dt); // constrained with GND_LF_MAX
+					bool is_moving_to_center = _crosstrack_error * _heading_error > 0; // we are moving towards the centerline
+
+					float total_error = 0.0f;
+
+					if (!is_moving_to_center) {
+
+						// we need a correction only if we are moving away from the centerline:
+
+						total_error = _crosstrack_error - setpoint_yaw_hdg *
+							      10.0f; // heading error has reverse sign, this is just adding the two
+						PX4_INFO_RAW("%.3f\n", (double)total_error);
+					}
+
+					float lf_pid_output = pid_calculate(&_line_following_ctrl, 0.0f, total_error, 0.0f, _dt); // constrained with GND_LF_MAX
 
 					pid_adjustment = lf_pid_output * _param_line_following_pid_scaler.get(); // GND_LF_PID_SC
 
@@ -146,10 +160,14 @@ float RoverPositionControl::computeTorqueEffort()
 					setpoint_yaw += pid_adjustment;
 				}
 
-				PX4_INFO_RAW("%.3f/%.3f err xtrk: %.1f cm abbe: %.2f m  msn_trng_sp: %.3f  sp_yaw_hdg: %.3f  pid_adj: %.3f  sp_yaw: %.3f\n",
-					     (double)hdg_err_weight, (double)l1_weight,
+				PX4_INFO_RAW("err xtrk: %.1f cm abbe: %.2f m  msn_trng_sp: %.3f  sp_yaw_hdg: %.3f  pid_adj: %.3f  sp_yaw: %.3f\n",
 					     (double)(_crosstrack_error * 100.0f), (double)_abbe_error, (double)_mission_turning_setpoint, (double)setpoint_yaw_hdg,
 					     (double)pid_adjustment, (double)setpoint_yaw);
+
+				//PX4_INFO_RAW("%.3f/%.3f err xtrk: %.1f cm abbe: %.2f m  msn_trng_sp: %.3f  sp_yaw_hdg: %.3f  pid_adj: %.3f  sp_yaw: %.3f\n",
+				//	     (double)hdg_err_weight, (double)l1_weight,
+				//	     (double)(_crosstrack_error * 100.0f), (double)_abbe_error, (double)_mission_turning_setpoint, (double)setpoint_yaw_hdg,
+				//	     (double)pid_adjustment, (double)setpoint_yaw);
 
 				//PX4_INFO_RAW("%.4f/%.4f  xtrk: %.1f cm   msn_trng_sp: %.3f  setpoint_yaw_hdg: %.3f  pid_adj: %.3f  sp_yaw: %.3f\n",
 				//		(double)hdg_err_weight, (double)l1_weight,

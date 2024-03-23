@@ -580,7 +580,8 @@ bool RoverPositionControl::updateBearings()
 
 	_heading_error = wrap_pi(_target_bearing - wrap_pi(_current_heading));
 
-	_abbe_error = _wp_current_dist * sin(_heading_error);
+	// ~28.6 degrees deviation makes sense, NAN for more:
+	_abbe_error = abs(_heading_error) < 0.5f ? _wp_current_dist * sin(_heading_error) : NAN;
 
 	return PX4_ISFINITE(_heading_error);
 }
