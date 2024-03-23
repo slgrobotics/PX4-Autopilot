@@ -154,7 +154,8 @@ void RoverPositionControl::workStateMachine()
 				// We are closer than GND_WP_PRECISN radius to waypoint, begin stopping phase:
 				setStateMachineState(POS_STATE_STOPPING);
 
-			} else if (PX4_ISFINITE(_dist_target)
+			} else if (!_is_short_leg
+				   && PX4_ISFINITE(_dist_target)
 				   && PX4_ISFINITE(_wp_previous_dist)
 				   && _dist_target > _decel_dist + 0.2f
 				   && fabsf(_heading_error) < 0.1f) {
@@ -244,32 +245,56 @@ void RoverPositionControl::workStateMachine()
 
 				if (turn_wait_sec < FLT_EPSILON || hrt_elapsed_time(&_turn_goal_last_reached) > turn_wait_sec * 1000_ms) {
 					_turn_goal_last_reached = 0;
-					_wp_dist_at_turn = _wp_current_dist;	// Remember for speed factor calculations
-
-					_accel_dist = _param_accel_dist.get();	// GND_ACCEL_DIST
-					_decel_dist = _param_decel_dist.get();	// GND_DECEL_DIST
-
-					if (_wp_dist_at_turn <= _accel_dist + _decel_dist) {
-						// short leg, no L1 segment:
-						_accel_dist = _decel_dist = _wp_dist_at_turn / 2.0f + 0.2f; // with little extra
-					}
 
 					bool is_first_leg = !PX4_ISFINITE(_wp_previous_dist) && PX4_ISFINITE(_wp_current_dist);
+
+					_accel_dist = _param_accel_dist.get();	// GND_ACCEL_DIST (can be 0 to skip Departure phase)
+					_decel_dist = _param_decel_dist.get();	// GND_DECEL_DIST
 
 					if (is_first_leg) {
 						// We are departing from landing point towards the first waypoint.
 
+						_leg_distance = NAN;
+						_accel_dist = 0.0f;
+						_decel_dist = _wp_current_dist + 0.2f;
+
 						PX4_WARN("WP_TURNING - first leg");
 
-						setStateMachineState(WP_ARRIVING); // Can't use L1 on the first leg
+					} else {
 
-					} else if (_param_accel_dist.get() > FLT_EPSILON) {
-						setStateMachineState(WP_DEPARTING);		// turned towards next waypoint, can depart now
+						_leg_distance = get_distance_to_next_waypoint(
+									_pos_sp_triplet.previous.lat, _pos_sp_triplet.previous.lon,
+									_pos_sp_triplet.current.lat, _pos_sp_triplet.current.lon
+								);
+
+					}
+
+					_is_short_leg = !is_first_leg && _leg_distance < (_accel_dist + _decel_dist);
+
+					if (_is_short_leg) {
+
+						PX4_WARN("WP_TURNING - short leg");
+
+						// short leg, no L1 segment:
+						_accel_dist = _decel_dist = _wp_current_dist / 2.0f + 0.2f; // with little extra
+
+					}
+
+					if (is_first_leg || _is_short_leg) {
+						setStateMachineState(WP_ARRIVING); // Can't use L1 on the first leg or short legs
 
 					} else {
-						// special case: GND_ACCEL_DIST = 0 to eliminate Departure state overall
-						_cutter_setpoint = ACTUATOR_ON;
-						setStateMachineState(L1_GOTO_WAYPOINT);
+
+						if (_param_accel_dist.get() > FLT_EPSILON) {
+							setStateMachineState(WP_DEPARTING);		// turned towards next waypoint, can depart now
+
+						} else {
+							// special case: GND_ACCEL_DIST = 0 to eliminate Departure state overall
+							_accel_dist = 0.0f;
+							_decel_dist = _wp_current_dist + 0.2f;
+							_cutter_setpoint = ACTUATOR_ON;
+							setStateMachineState(L1_GOTO_WAYPOINT);
+						}
 					}
 
 					resetVelocitySmoothing(); // trajectory computation starts here

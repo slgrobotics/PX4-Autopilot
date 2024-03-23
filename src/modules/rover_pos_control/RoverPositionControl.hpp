@@ -429,10 +429,11 @@ private:
 
 	// Waypoint navigation variables:
 	float _dist_target{NAN};		// meters
+	float _leg_distance{NAN};		// meters, distance between previous and current waypoints
+	bool _is_short_leg{false};
 	float _wp_current_dist{NAN};  		// meters, initialize to very large
-	float _wp_previous_dist{NAN};		// meters or NAN
-	float _wp_next_dist{NAN};		// meters or NAN
-	float _wp_dist_at_turn{NAN};		// meters
+	float _wp_previous_dist{NAN};		// meters
+	float _wp_next_dist{NAN};		// meters
 	float _accel_dist{100.0f};		// meters
 	float _decel_dist{100.0f};		// meters
 	bool _isSharpTurn{true};		// when turn angle exceeds a threshold, we consider turn sharp

@@ -202,8 +202,9 @@ void RoverPositionControl::debugPrintAll()
 	}
 
 	if (_tracing_lev > 3) {
-		PX4_INFO_RAW("---    dist_trgt: %.2f   trgt_berng: %.2f  nav_berng: %.2f\n",
-			     (double) _dist_target, (double) math::degrees(_target_bearing), (double) math::degrees(_nav_bearing));
+		PX4_INFO_RAW("---    dist_trgt: %.2f   leg: %.2f   trgt_berng: %.2f  nav_berng: %.2f\n",
+			     (double) _dist_target, (double)_leg_distance, (double) math::degrees(_target_bearing),
+			     (double) math::degrees(_nav_bearing));
 
 		if (_pos_ctrl_state == L1_GOTO_WAYPOINT) {
 			PX4_INFO_RAW("---    XTrack err: %.1f cm    L1 acc_demand: %.4f\n",

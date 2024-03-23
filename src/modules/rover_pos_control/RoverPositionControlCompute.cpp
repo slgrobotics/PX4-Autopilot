@@ -141,23 +141,48 @@ float RoverPositionControl::computeTorqueEffort()
 
 					bool is_moving_to_center = _crosstrack_error * _heading_error > 0; // we are moving towards the centerline
 
-					float total_error = 0.0f;
+					/*
+										if (!is_moving_to_center) {
 
-					if (!is_moving_to_center) {
+											// we need a correction only if we are moving away from the centerline:
 
-						// we need a correction only if we are moving away from the centerline:
+											// heading error has reverse sign, this is just adding the two:
+											float total_error = _crosstrack_error - setpoint_yaw_hdg * 10.0f;
 
-						total_error = _crosstrack_error - setpoint_yaw_hdg *
-							      10.0f; // heading error has reverse sign, this is just adding the two
+											PX4_INFO_RAW("%.3f\n", (double)total_error);
+										} else {
+											resetTorqueControls(); // let the vehicle move in the same direction
+										}
+					*/
+
+					// heading error has reverse sign, this is just adding the two:
+					float total_error = _crosstrack_error - setpoint_yaw_hdg * 10.0f;
+
+					if (is_moving_to_center) {
+
+						// we need much weaker correction if we are already moving towards the centerline:
+						//total_error *= 0.01f; // _crosstrack_error;
+
+						//setpoint_yaw = _mission_turning_setpoint; // ok
+						//setpoint_yaw = 0.0f; // not good
+						setpoint_yaw = setpoint_yaw_hdg;
+
+						pid_reset_integral(&_line_following_ctrl);
+
+						//resetTorqueControls();
+
+					} else {
+						//resetTorqueControls();
+
 						PX4_INFO_RAW("%.3f\n", (double)total_error);
+
+						float lf_pid_output = pid_calculate(&_line_following_ctrl, 0.0f, total_error, 0.0f, _dt); // constrained with GND_LF_MAX
+
+						pid_adjustment = lf_pid_output * _param_line_following_pid_scaler.get(); // GND_LF_PID_SC
+
+						// adjust the weighted result with PID result:
+						setpoint_yaw += pid_adjustment;
 					}
-
-					float lf_pid_output = pid_calculate(&_line_following_ctrl, 0.0f, total_error, 0.0f, _dt); // constrained with GND_LF_MAX
-
-					pid_adjustment = lf_pid_output * _param_line_following_pid_scaler.get(); // GND_LF_PID_SC
-
-					// adjust the weighted result with PID result:
-					setpoint_yaw += pid_adjustment;
 				}
 
 				PX4_INFO_RAW("err xtrk: %.1f cm abbe: %.2f m  msn_trng_sp: %.3f  sp_yaw_hdg: %.3f  pid_adj: %.3f  sp_yaw: %.3f\n",
