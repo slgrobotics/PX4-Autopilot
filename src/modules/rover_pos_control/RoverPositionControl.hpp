@@ -407,10 +407,13 @@ private:
 
 	// some values that we calculate locally to decide on throttling thrust near waypoints:
 	float _current_heading{0.0f};		// radians to absolute North, selected between EKF and GPS values above
+	float _current_heading_vel{NAN};	// radians to absolute North, derived from _local_pos.vx/vy
 	float _heading_error{0.0f};		// radians
+	float _heading_error_vel{0.0f};		// radians - from _current_heading_vel above
+	float _abbe_error{0.0f};		// meters, heading error at the target point
+
 	float _ground_speed_abs{0.0f};		// meters per second, selected between EKF and GPS values above
 	float _ground_speed_ns{0.0f};		// just storing ground_speed_2d.norm_squared() here for L1 desired_r calculation
-	float _abbe_error{0.0f};		// meters, heading error at the target point
 
 	// main calculated setpoints:
 	float _mission_velocity_setpoint{0.0f}; // target velocity for PID speed control
@@ -511,10 +514,10 @@ private:
 		(ParamFloat<px4::params::GND_LF_D>) _param_line_following_d,
 		(ParamFloat<px4::params::GND_LF_IMAX>) _param_line_following_imax,
 		(ParamFloat<px4::params::GND_LF_MAX>) _param_line_following_max,
-		(ParamFloat<px4::params::GND_LF_PID_SC>) _param_line_following_pid_scaler,
+		(ParamFloat<px4::params::GND_LF_PID_SC>) _param_line_following_pid_output_scaler,
 
 		(ParamFloat<px4::params::GND_LF_WIDTH>) _param_line_following_width,
-		(ParamFloat<px4::params::GND_LF_RATE_SC>) _param_line_following_rate_scaler,
+		(ParamFloat<px4::params::GND_LF_HDG_SC>) _param_line_following_heading_error_scaler,
 
 		// Whether to use Yaw Rate Controller while line following:
 		(ParamInt<px4::params::GND_LF_USE_RATE>) _param_lf_use_rates_controller,

@@ -191,9 +191,9 @@ PARAM_DEFINE_FLOAT(GND_LF_PID_SC, 0.1);
 PARAM_DEFINE_FLOAT(GND_LF_WIDTH, 0.6f);
 
 /**
- * When Line Following, scales input to Rate Controller
+ * When Line Following, scales heading error to become input to LF PID
  *
- * LF output is scaled as torque effort, which is fed to Yaw Rate Controller input
+ * LF PID output is scaled as torque effort, which is fed to Yaw Rate Controller input
  *
  * @unit norm
  * @min 0.0
@@ -202,7 +202,7 @@ PARAM_DEFINE_FLOAT(GND_LF_WIDTH, 0.6f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_LF_RATE_SC, 2.0);
+PARAM_DEFINE_FLOAT(GND_LF_HDG_SC, 2.0);
 
 /**
  * When in Line Following State, use Rate Controller for yaw output

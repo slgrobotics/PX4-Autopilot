@@ -217,7 +217,13 @@ RoverPositionControl::update_orientation()
 		const Dcmf R_to_body(Quatf(_vehicle_att.q).inversed());
 		const Vector3f vel = R_to_body * Vector3f(_local_pos.vx, _local_pos.vy, _local_pos.vz);
 		_x_vel = vel(0);
+		_current_heading_vel = wrap_pi(atan2f(_local_pos.vy, _local_pos.vx));
+
+	} else {
+		_x_vel = NAN;
+		_current_heading_vel = NAN;
 	}
+
 
 	const matrix::Vector2f gs2d(_ground_speed);
 	_ground_speed_2d = gs2d;

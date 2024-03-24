@@ -599,14 +599,26 @@ void RoverPositionControl::setActControls()
 
 bool RoverPositionControl::updateBearings()
 {
-	// get the direction between the current position and next (target) waypoint:
+	// get the direction errors between the current position and next (target) waypoint:
 
 	_target_bearing = get_bearing_to_next_waypoint(_current_position(0), _current_position(1), _curr_wp(0), _curr_wp(1));
 
-	_heading_error = wrap_pi(_target_bearing - wrap_pi(_current_heading));
+	_heading_error = _heading_error_vel = wrap_pi(_target_bearing - wrap_pi(_current_heading)); // where the robot faces
+
+	if (_x_vel > 0.1f && PX4_ISFINITE(_current_heading_vel)) {
+
+		_heading_error_vel = wrap_pi(_target_bearing - wrap_pi(_current_heading_vel));	// where the robot actually moves
+
+		if (abs(math::degrees(_current_heading_vel - _current_heading)) > 5.0f) {
+			// vehicle crabbing, or EKF or IMU alignment issue:
+			PX4_INFO_RAW("WARN: large discrepancy: heading: vel: %.3f  curr: %.3f delta: %.4f  x_vel: %.2f\n",
+				     (double)math::degrees(_current_heading_vel), (double)math::degrees(_current_heading),
+				     (double)math::degrees(_current_heading_vel - _current_heading), (double)_x_vel);
+		}
+	}
 
 	// ~28.6 degrees deviation makes sense, NAN for more:
-	_abbe_error = abs(_heading_error) < 0.5f ? _wp_current_dist * sin(_heading_error) : NAN;
+	_abbe_error = abs(_heading_error) < 0.5f ? _wp_current_dist * sin(_heading_error) : NAN; // meters at target point
 
 	return PX4_ISFINITE(_heading_error);
 }

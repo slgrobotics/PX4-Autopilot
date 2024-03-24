@@ -61,7 +61,8 @@ param set-default RDD_TORQUE_SC 3.0
 #param set-default GND_LF_P 2
 #param set-default GND_LF_D 0
 #param set-default GND_LF_I 0
-#param set-default GND_LF_RATE_SC 4
+#param set-default GND_LF_HDG_SC 4
+#param set-default GND_LF_PID_SC 1
 #param set-default GND_LF_WIDTH 0.2
 #param set-default GND_RATE_FF 1
 
