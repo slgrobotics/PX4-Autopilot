@@ -603,11 +603,12 @@ bool RoverPositionControl::updateBearings()
 
 	_target_bearing = get_bearing_to_next_waypoint(_current_position(0), _current_position(1), _curr_wp(0), _curr_wp(1));
 
-	_heading_error = _heading_error_vel = wrap_pi(_target_bearing - _current_heading); // where the robot faces
+	// don't touch double wrap!
+	_heading_error = _heading_error_vel = wrap_pi(_target_bearing - wrap_pi(_current_heading)); // where the robot faces
 
 	if (_x_vel > 0.1f && PX4_ISFINITE(_current_heading_vel)) {
 
-		_heading_error_vel = wrap_pi(_target_bearing - _current_heading_vel);	// where the robot actually moves
+		_heading_error_vel = wrap_pi(_target_bearing - wrap_pi(_current_heading_vel));	// where the robot actually moves
 
 		if (abs(math::degrees(_current_heading_vel - _current_heading)) > 5.0f) {
 			// vehicle crabbing, or EKF or IMU alignment issue:
