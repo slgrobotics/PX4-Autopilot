@@ -57,7 +57,8 @@ void RoverPositionControl::publishTorqueSetpoint(const hrt_abstime &timestamp_sa
 	v_torque_sp.timestamp_sample = timestamp_sample;
 	v_torque_sp.xyz[0] = 0;
 	v_torque_sp.xyz[1] = 0;
-	v_torque_sp.xyz[2] = _torque_control;
+	v_torque_sp.xyz[2] = _torque_control
+			     * yaw_responsiveness_factor();	// 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas)
 
 	_vehicle_torque_setpoint_pub.publish(v_torque_sp);
 	*/

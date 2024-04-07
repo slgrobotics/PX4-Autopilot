@@ -729,6 +729,18 @@ PARAM_DEFINE_FLOAT(GND_GTL_ARRIVE, 0.8f);
 PARAM_DEFINE_FLOAT(GND_GTL_STRAIGHT, 1.0f);
 
 /**
+ * Minimum yaw responsiveness when Gas engine throttle is at max
+ *
+ * @unit norm
+ * @min 0.0
+ * @max 1.0
+ * @decimal 2
+ * @increment 0.05
+ * @group Rover Position Control
+ */
+PARAM_DEFINE_FLOAT(GND_GTL_YAWF_MIN, 0.5f);
+
+/**
  * Smoothing EMA period for speed measurements
  *
  * This allows the user to remove jitter from speed measurements

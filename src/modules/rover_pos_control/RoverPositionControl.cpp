@@ -539,11 +539,14 @@ RoverPositionControl::Run()
 #else
 		// Directly publish to actuators, calling DifferentialDriveKinematics:
 
-		float linear_velocity_x = _thrust_control * _param_rdd_thrust_scaler.get();	// RDD_THRUST_SC
-		float yaw_rate = _torque_control * _param_rdd_torque_scaler.get();		// RDD_TORQUE_SC
+		float ddk_linear_velocity_x = _thrust_control * _param_rdd_thrust_scaler.get();	// RDD_THRUST_SC
+
+		float ddk_yaw_rate = _torque_control
+				     * yaw_responsiveness_factor()	// 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas)
+				     * _param_rdd_torque_scaler.get();	// RDD_TORQUE_SC
 
 		// get the wheel speeds from the inverse kinematics class (DifferentialDriveKinematics)
-		_wheel_speeds = _differential_drive_kinematics.computeInverseKinematics(linear_velocity_x, yaw_rate);
+		_wheel_speeds = _differential_drive_kinematics.computeInverseKinematics(ddk_linear_velocity_x, ddk_yaw_rate);
 
 		/*
 			PX4_INFO_RAW("THR %f ->  %f     TRQ %f -> %f  :   %f   %f\n",

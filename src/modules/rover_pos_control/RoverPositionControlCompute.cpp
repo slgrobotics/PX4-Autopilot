@@ -77,9 +77,9 @@ float RoverPositionControl::computeTurningSetpoint()
 	case WP_ARRIVING:
 	case WP_DEPARTING:
 
-		if (_x_vel > 0.1f && PX4_ISFINITE(_heading_error_vel)) {
-			turning_setpoint = _heading_error_vel;
-		}
+		//if (_x_vel > 0.1f && PX4_ISFINITE(_heading_error_vel)) {
+		//	turning_setpoint = _heading_error_vel;
+		//}
 
 		break;
 
@@ -123,6 +123,7 @@ float RoverPositionControl::computeTorqueEffort()
 
 			if (in_corridor) {
 
+				//float h_err = _heading_error;
 				float h_err = _heading_error_vel;
 
 				// Weighted L1 and heading error control within the GND_LF_WIDTH corridor
@@ -172,11 +173,11 @@ float RoverPositionControl::computeTorqueEffort()
 					if (is_moving_to_center) {
 
 						// we need much weaker correction if we are already moving towards the centerline:
-						//total_error *= 0.01f; // _crosstrack_error;
 
+						//setpoint_yaw = total_error * 0.01f; // _crosstrack_error;
 						//setpoint_yaw = _mission_turning_setpoint; // ok
-						setpoint_yaw = 0.0f; // not good
-						//setpoint_yaw = sqrt_signed(h_err) * _param_line_following_heading_error_scaler.get(); // GND_LF_HDG_SC
+						//setpoint_yaw = 0.0f; // not good
+						setpoint_yaw = setpoint_yaw_hdg;
 
 						pid_reset_integral(&_line_following_ctrl);
 

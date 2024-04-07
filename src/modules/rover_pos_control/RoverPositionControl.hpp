@@ -412,6 +412,9 @@ private:
 	float _heading_error_vel{0.0f};		// radians - from _current_heading_vel above
 	float _abbe_error{0.0f};		// meters, heading error at the target point
 
+	// 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas):
+	inline float yaw_responsiveness_factor() { return 1.0f - (1.0f - _param_gas_throttle_yaw_factor_min.get()) * _gas_engine_throttle; };
+
 	float _ground_speed_abs{0.0f};		// meters per second, selected between EKF and GPS values above
 	float _ground_speed_ns{0.0f};		// just storing ground_speed_2d.norm_squared() here for L1 desired_r calculation
 
@@ -595,6 +598,7 @@ private:
 		(ParamFloat<px4::params::GND_GTL_TURN>) _param_gas_throttle_turning,
 		(ParamFloat<px4::params::GND_GTL_ARRIVE>) _param_gas_throttle_arriving,
 		(ParamFloat<px4::params::GND_GTL_STRAIGHT>) _param_gas_throttle_straight,
+		(ParamFloat<px4::params::GND_GTL_YAWF_MIN>) _param_gas_throttle_yaw_factor_min,
 
 		(ParamInt<px4::params::CA_R_REV>) _param_r_rev
 	)
