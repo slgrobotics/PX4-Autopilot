@@ -186,7 +186,7 @@ float RoverPositionControl::computeTorqueEffort()
 					} else {
 						//resetTorqueControls();
 
-						PX4_INFO_RAW("%.3f\n", (double)total_error);
+						PX4_INFO_RAW("%.3f   %.3f\n", (double)total_error, (double)yaw_responsiveness_factor());
 
 						float lf_pid_output = pid_calculate(&_line_following_ctrl, 0.0f, total_error, 0.0f, _dt); // constrained with GND_LF_MAX
 
@@ -197,9 +197,9 @@ float RoverPositionControl::computeTorqueEffort()
 					}
 				}
 
-				PX4_INFO_RAW("err xtrk: %.1f cm abbe: %.2f m  msn_trng_sp: %.3f  sp_yaw_hdg: %.3f  pid_adj: %.3f  sp_yaw: %.3f\n",
-					     (double)(_crosstrack_error * 100.0f), (double)_abbe_error, (double)_mission_turning_setpoint, (double)setpoint_yaw_hdg,
-					     (double)pid_adjustment, (double)setpoint_yaw);
+				//PX4_INFO_RAW("err xtrk: %.1f cm abbe: %.2f m  msn_trng_sp: %.3f  sp_yaw_hdg: %.3f  pid_adj: %.3f  sp_yaw: %.3f\n",
+				//	     (double)(_crosstrack_error * 100.0f), (double)_abbe_error, (double)_mission_turning_setpoint, (double)setpoint_yaw_hdg,
+				//	     (double)pid_adjustment, (double)setpoint_yaw);
 
 				//PX4_INFO_RAW("%.3f/%.3f err xtrk: %.1f cm abbe: %.2f m  msn_trng_sp: %.3f  sp_yaw_hdg: %.3f  pid_adj: %.3f  sp_yaw: %.3f\n",
 				//	     (double)hdg_err_weight, (double)l1_weight,

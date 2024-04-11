@@ -380,7 +380,7 @@ PARAM_DEFINE_FLOAT(GND_SPEED_SP_EMA, 5);
  * @decimal 1
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_ACCEL_DIST, 0.2f);
+PARAM_DEFINE_FLOAT(GND_ACCEL_DIST, 1.0f);
 
 /**
  * Distance to decelerate to a waypoint
@@ -391,7 +391,7 @@ PARAM_DEFINE_FLOAT(GND_ACCEL_DIST, 0.2f);
  * @decimal 1
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_DECEL_DIST, 1.5f);
+PARAM_DEFINE_FLOAT(GND_DECEL_DIST, 1.0f);
 
 /**
  * Arrival minimum speed factor

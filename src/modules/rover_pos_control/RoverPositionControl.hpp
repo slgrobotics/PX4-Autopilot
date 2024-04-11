@@ -315,8 +315,8 @@ private:
 	// added to support heavy differential drive rover:
 
 #ifdef PUBLISH_THRUST_TORQUE
-	void publishTorqueSetpoint(const hrt_abstime &timestamp_sample);
-	void publishThrustSetpoint(const hrt_abstime &timestamp_sample);
+	void publishTorqueSetpoint(const hrt_abstime &timestamp_sample, float torque);
+	void publishThrustSetpoint(const hrt_abstime &timestamp_sample, float thrust);
 	void publishAuxActuators(const hrt_abstime &timestamp_sample);
 #else
 	//void publishWheelMotors(const hrt_abstime &timestamp_sample);

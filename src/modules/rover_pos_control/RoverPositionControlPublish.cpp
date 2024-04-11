@@ -49,7 +49,7 @@
 
 #ifdef PUBLISH_THRUST_TORQUE
 
-void RoverPositionControl::publishTorqueSetpoint(const hrt_abstime &timestamp_sample)
+void RoverPositionControl::publishTorqueSetpoint(const hrt_abstime &timestamp_sample, float torque)
 {
 	/*
 	vehicle_torque_setpoint_s v_torque_sp = {};
@@ -57,20 +57,19 @@ void RoverPositionControl::publishTorqueSetpoint(const hrt_abstime &timestamp_sa
 	v_torque_sp.timestamp_sample = timestamp_sample;
 	v_torque_sp.xyz[0] = 0;
 	v_torque_sp.xyz[1] = 0;
-	v_torque_sp.xyz[2] = _torque_control
-			     * yaw_responsiveness_factor();	// 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas)
+	v_torque_sp.xyz[2] = torque;
 
 	_vehicle_torque_setpoint_pub.publish(v_torque_sp);
 	*/
 }
 
-void RoverPositionControl::publishThrustSetpoint(const hrt_abstime &timestamp_sample)
+void RoverPositionControl::publishThrustSetpoint(const hrt_abstime &timestamp_sample, float thrust)
 {
 	/*
 	vehicle_thrust_setpoint_s v_thrust_sp = {};
 	v_thrust_sp.timestamp = _now = hrt_absolute_time();
 	v_thrust_sp.timestamp_sample = timestamp_sample;
-	v_thrust_sp.xyz[0] = _thrust_control;
+	v_thrust_sp.xyz[0] = thrust;
 	v_thrust_sp.xyz[1] = 0.0f;
 	v_thrust_sp.xyz[2] = 0.0f;
 

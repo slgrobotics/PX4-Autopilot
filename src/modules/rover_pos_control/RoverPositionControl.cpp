@@ -531,8 +531,10 @@ RoverPositionControl::Run()
 
 #ifdef PUBLISH_THRUST_TORQUE
 		// Body Torque and Thrust for mixing by Control Allocator:
-		publishTorqueSetpoint(timestamp_sample);
-		publishThrustSetpoint(timestamp_sample);
+		publishTorqueSetpoint(timestamp_sample, _torque_control
+				      * yaw_responsiveness_factor());	// 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas));
+
+		publishThrustSetpoint(timestamp_sample, _thrust_control);
 
 		// "Servo" channels - Gas Engine Throttle, Cutter, Strobe, Horn, Alarm:
 		publishAuxActuators(timestamp_sample);
