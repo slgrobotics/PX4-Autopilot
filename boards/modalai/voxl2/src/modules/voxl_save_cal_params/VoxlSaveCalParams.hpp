@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2020 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2024 ModalAI, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,51 +31,43 @@
  *
  ****************************************************************************/
 
-/**
- * Selector error reduce threshold
- *
- * EKF2 instances have to be better than the selected by at least this amount before their relative score can be reduced.
- *
- * @group EKF2
- */
-PARAM_DEFINE_FLOAT(EKF2_SEL_ERR_RED, 0.2f);
+#pragma once
 
-/**
- * Selector angular rate threshold
- *
- * EKF2 selector angular rate error threshold for comparing gyros. Angular rate vector differences larger than this will result in accumulated angular error.
- *
- * @group EKF2
- * @unit deg/s
- */
-PARAM_DEFINE_FLOAT(EKF2_SEL_IMU_RAT, 7.0f);
+#include <px4_platform_common/defines.h>
+#include <px4_platform_common/module.h>
+#include <px4_platform_common/module_params.h>
+#include <px4_platform_common/posix.h>
+#include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
+#include <uORB/Publication.hpp>
+#include <uORB/PublicationMulti.hpp>
+#include <uORB/SubscriptionInterval.hpp>
+#include <uORB/SubscriptionCallback.hpp>
+#include <uORB/topics/parameter_set_value_request.h>
 
-/**
- * Selector angular threshold.
- *
- * EKF2 selector maximum accumulated angular error threshold for comparing gyros. Accumulated angular error larger than this will result in the sensor being declared faulty.
- *
- * @group EKF2
- * @unit deg
- */
-PARAM_DEFINE_FLOAT(EKF2_SEL_IMU_ANG, 15.0f);
+using namespace time_literals;
 
-/**
- * Selector acceleration threshold
- *
- * EKF2 selector acceleration error threshold for comparing accelerometers. Acceleration vector differences larger than this will result in accumulated velocity error.
- *
- * @group EKF2
- * @unit m/s^2
- */
-PARAM_DEFINE_FLOAT(EKF2_SEL_IMU_ACC, 1.0f);
+class VoxlSaveCalParams : public ModuleBase<VoxlSaveCalParams>, public ModuleParams,
+	public px4::WorkItem
+{
+public:
+	VoxlSaveCalParams();
+	~VoxlSaveCalParams() = default;
 
-/**
- * Selector angular threshold.
- *
- * EKF2 selector maximum accumulated velocity threshold for comparing accelerometers. Accumulated velocity error larger than this will result in the sensor being declared faulty.
- *
- * @group EKF2
- * @unit m/s
- */
-PARAM_DEFINE_FLOAT(EKF2_SEL_IMU_VEL, 2.0f);
+	/** @see ModuleBase */
+	static int task_spawn(int argc, char *argv[]);
+
+	/** @see ModuleBase */
+	static int custom_command(int argc, char *argv[]);
+
+	/** @see ModuleBase */
+	static int print_usage(const char *reason = nullptr);
+
+	bool init();
+
+private:
+	void Run() override;
+
+	void save_calibration_parameter_to_file(const char *name, param_type_t type, param_value_u value);
+
+	uORB::SubscriptionCallbackWorkItem _parameter_primary_set_value_request_sub{this, ORB_ID(parameter_primary_set_value_request)};
+};
