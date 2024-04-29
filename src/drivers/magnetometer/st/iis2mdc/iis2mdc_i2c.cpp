@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2020 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2024 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,40 +31,67 @@
  *
  ****************************************************************************/
 
-#include <pthread.h>
+#include "iis2mdc.h"
+#include <drivers/device/i2c.h>
 
-#include <drivers/drv_hrt.h>
-#include <px4_platform_common/posix.h>
-#include <px4_platform_common/events.h>
-#include <uORB/uORB.h>
-
-static orb_advert_t orb_event_pub = nullptr;
-static pthread_mutex_t publish_event_mutex = PTHREAD_MUTEX_INITIALIZER;
-static uint16_t event_sequence{events::initial_event_sequence};
-
-namespace events
+class IIS2MDC_I2C : public device::I2C
 {
+public:
+	IIS2MDC_I2C(const I2CSPIDriverConfig &config);
+	virtual ~IIS2MDC_I2C() = default;
 
-void send(event_s &event)
+	virtual int read(unsigned address, void *data, unsigned count) override;
+	virtual int write(unsigned address, void *data, unsigned count) override;
+
+protected:
+	virtual int probe();
+};
+
+IIS2MDC_I2C::IIS2MDC_I2C(const I2CSPIDriverConfig &config) :
+	I2C(config)
 {
-	event.timestamp = hrt_absolute_time();
-
-	// We need some synchronization here because:
-	// - modifying orb_event_pub
-	// - the update of event_sequence needs to be atomic
-	// - we need to ensure ordering of the sequence numbers: the sequence we set here
-	//   has to be the one published next.
-	pthread_mutex_lock(&publish_event_mutex);
-	event.event_sequence = ++event_sequence; // Set the sequence here so we're able to detect uORB queue overflows
-
-	if (orb_event_pub != nullptr) {
-		orb_publish(ORB_ID(event), orb_event_pub, &event);
-
-	} else {
-		orb_event_pub = orb_advertise(ORB_ID(event), &event);
-	}
-
-	pthread_mutex_unlock(&publish_event_mutex);
 }
 
-} /* namespace events */
+int IIS2MDC_I2C::probe()
+{
+	uint8_t data = 0;
+
+	if (read(IIS2MDC_ADDR_WHO_AM_I, &data, 1)) {
+		DEVICE_DEBUG("read_reg fail");
+		return -EIO;
+	}
+
+	if (data != IIS2MDC_WHO_AM_I) {
+		DEVICE_DEBUG("IIS2MDC bad ID: %02x", data);
+		return -EIO;
+	}
+
+	_retries = 1;
+
+	return OK;
+}
+
+int IIS2MDC_I2C::read(unsigned address, void *data, unsigned count)
+{
+	uint8_t cmd = address;
+	return transfer(&cmd, 1, (uint8_t *)data, count);
+}
+
+int IIS2MDC_I2C::write(unsigned address, void *data, unsigned count)
+{
+	uint8_t buf[32];
+
+	if (sizeof(buf) < (count + 1)) {
+		return -EIO;
+	}
+
+	buf[0] = address;
+	memcpy(&buf[1], data, count);
+
+	return transfer(&buf[0], count + 1, nullptr, 0);
+}
+
+device::Device *IIS2MDC_I2C_interface(const I2CSPIDriverConfig &config)
+{
+	return new IIS2MDC_I2C(config);
+}
