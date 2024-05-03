@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2019-2023 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2020-2023 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,48 +32,53 @@
  ****************************************************************************/
 
 /**
- * Downsamples IMU data to a lower rate such that EKF predicition can happen less frequent
- * @author Kamil Ritz <ka.ritz@hotmail.com>
+ * @file Sensor.hpp
+ * Abstract class for sensors
+ *
+ * @author Mathieu Bresciani <brescianimathieu@gmail.com>
+ *
  */
-#ifndef EKF_IMU_DOWN_SAMPLER_HPP
-#define EKF_IMU_DOWN_SAMPLER_HPP
 
-#include <mathlib/mathlib.h>
-#include <matrix/math.hpp>
+#ifndef EKF_SENSOR_HPP
+#define EKF_SENSOR_HPP
 
-#include "common.h"
+#include <cstdint>
 
-using namespace estimator;
+namespace estimator
+{
+namespace sensor
+{
 
-class ImuDownSampler
+class Sensor
 {
 public:
-	explicit ImuDownSampler(int32_t &target_dt_us);
-	~ImuDownSampler() = default;
+	virtual ~Sensor() {};
 
-	bool update(const imuSample &imu_sample_new);
+	/*
+	 * run sanity checks on the current data
+	 * this has to be called immediately after
+	 * setting new data
+	 */
+	virtual void runChecks() {};
 
-	imuSample getDownSampledImuAndTriggerReset()
-	{
-		imuSample imu{_imu_down_sampled};
-		reset();
-		return imu;
-	}
+	/*
+	 * return true if the sensor is healthy
+	 */
+	virtual bool isHealthy() const = 0;
 
-private:
-	void reset();
+	/*
+	 * return true if the delayed sample is healthy
+	 * and can be fused in the estimator
+	 */
+	virtual bool isDataHealthy() const = 0;
 
-	imuSample _imu_down_sampled{};
-	Quatf _delta_angle_accumulated{};
-
-	int _accumulated_samples{0};
-	int _required_samples{1};
-
-	int32_t &_target_dt_us;
-
-	float _target_dt_s{0.010f};
-	float _min_dt_s{0.005f};
-
-	float _delta_ang_dt_avg{0.005f};
+	/*
+	 * return true if the sensor data rate is
+	 * stable and high enough
+	 */
+	virtual bool isRegularlySendingData() const = 0;
 };
-#endif // !EKF_IMU_DOWN_SAMPLER_HPP
+
+} // namespace sensor
+} // namespace estimator
+#endif // !EKF_SENSOR_HPP

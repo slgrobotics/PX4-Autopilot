@@ -49,9 +49,9 @@
 # include "yaw_estimator/EKFGSF_yaw.h"
 #endif // CONFIG_EKF2_GNSS
 
-#include "bias_estimator.hpp"
-#include "height_bias_estimator.hpp"
-#include "position_bias_estimator.hpp"
+#include "bias_estimator/bias_estimator.hpp"
+#include "bias_estimator/height_bias_estimator.hpp"
+#include "bias_estimator/position_bias_estimator.hpp"
 
 #include <ekf_derivation/generated/state.h>
 
@@ -63,7 +63,7 @@
 #include "aid_sources/ZeroVelocityUpdate.hpp"
 
 #if defined(CONFIG_EKF2_AUX_GLOBAL_POSITION)
-# include "aux_global_position.hpp"
+# include "aid_sources/aux_global_position/aux_global_position.hpp"
 #endif // CONFIG_EKF2_AUX_GLOBAL_POSITION
 
 enum class Likelihood { LOW, MEDIUM, HIGH };
@@ -265,11 +265,12 @@ public:
 	// get the 1-sigma horizontal and vertical velocity uncertainty
 	void get_ekf_vel_accuracy(float *ekf_evh, float *ekf_evv) const;
 
-	// get the vehicle control limits required by the estimator to keep within sensor limitations
+	// Returns the following vehicle control limits required by the estimator to keep within sensor limitations.
+	//  vxy_max : Maximum ground relative horizontal speed (meters/sec). NaN when limiting is not needed.
+	//  vz_max : Maximum ground relative vertical speed (meters/sec). NaN when limiting is not needed.
+	//  hagl_min : Minimum height above ground (meters). NaN when limiting is not needed.
+	// hagl_max : Maximum height above ground (meters). NaN when limiting is not needed.
 	void get_ekf_ctrl_limits(float *vxy_max, float *vz_max, float *hagl_min, float *hagl_max) const;
-
-	// Reset all IMU bias states and covariances to initial alignment values.
-	void resetImuBias();
 
 	void resetGyroBias();
 	void resetGyroBiasCov();
@@ -390,7 +391,7 @@ public:
 	void get_innovation_test_status(uint16_t &status, float &mag, float &vel, float &pos, float &hgt, float &tas,
 					float &hagl, float &beta) const;
 
-	// return a bitmask integer that describes which state estimates can be used for flight control
+	// return a bitmask integer that describes which state estimates are valid
 	void get_ekf_soln_status(uint16_t *status) const;
 
 	HeightSensor getHeightSensorRef() const { return _height_sensor_ref; }
@@ -947,10 +948,6 @@ private:
 	// and a scalar innovation value
 	void fuse(const VectorState &K, float innovation);
 
-#if defined(CONFIG_EKF2_BARO_COMPENSATION)
-	float compensateBaroForDynamicPressure(float baro_alt_uncompensated) const;
-#endif // CONFIG_EKF2_BARO_COMPENSATION
-
 	// calculate the earth rotation vector from a given latitude
 	Vector3f calcEarthRateNED(float lat_rad) const;
 
@@ -1079,6 +1076,11 @@ private:
 	void stopBaroHgtFusion();
 
 	void updateGroundEffect();
+
+# if defined(CONFIG_EKF2_BARO_COMPENSATION)
+	float compensateBaroForDynamicPressure(float baro_alt_uncompensated) const;
+# endif // CONFIG_EKF2_BARO_COMPENSATION
+
 #endif // CONFIG_EKF2_BAROMETER
 
 #if defined(CONFIG_EKF2_GRAVITY_FUSION)

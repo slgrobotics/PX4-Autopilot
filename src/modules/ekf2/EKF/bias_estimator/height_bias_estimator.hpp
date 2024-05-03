@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2020-2023 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2022 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,53 +32,47 @@
  ****************************************************************************/
 
 /**
- * @file Sensor.hpp
- * Abstract class for sensors
- *
- * @author Mathieu Bresciani <brescianimathieu@gmail.com>
- *
+ * @file height_bias_estimator.hpp
  */
 
-#ifndef EKF_SENSOR_HPP
-#define EKF_SENSOR_HPP
+#ifndef EKF_HEIGHT_BIAS_ESTIMATOR_HPP
+#define EKF_HEIGHT_BIAS_ESTIMATOR_HPP
 
-#include "common.h"
+#include "bias_estimator.hpp"
+#include "../common.h"
 
-namespace estimator
-{
-namespace sensor
-{
-
-class Sensor
+class HeightBiasEstimator: public BiasEstimator
 {
 public:
-	virtual ~Sensor() {};
+	HeightBiasEstimator(HeightSensor sensor, const HeightSensor &sensor_ref):
+		BiasEstimator(0.f, 0.f),
+		_sensor(sensor),
+		_sensor_ref(sensor_ref)
+	{}
+	virtual ~HeightBiasEstimator() = default;
 
-	/*
-	 * run sanity checks on the current data
-	 * this has to be called immediately after
-	 * setting new data
-	 */
-	virtual void runChecks() {};
+	void setFusionActive() { _is_sensor_fusion_active = true; }
+	void setFusionInactive() { _is_sensor_fusion_active = false; }
 
-	/*
-	 * return true if the sensor is healthy
-	 */
-	virtual bool isHealthy() const = 0;
+	virtual void predict(float dt) override
+	{
+		if ((_sensor_ref != _sensor) && _is_sensor_fusion_active) {
+			BiasEstimator::predict(dt);
+		}
+	}
 
-	/*
-	 * return true if the delayed sample is healthy
-	 * and can be fused in the estimator
-	 */
-	virtual bool isDataHealthy() const = 0;
+	virtual void fuseBias(float bias, float bias_var) override
+	{
+		if ((_sensor_ref != _sensor) && _is_sensor_fusion_active) {
+			BiasEstimator::fuseBias(bias, bias_var);
+		}
+	}
 
-	/*
-	 * return true if the sensor data rate is
-	 * stable and high enough
-	 */
-	virtual bool isRegularlySendingData() const = 0;
+private:
+	const HeightSensor _sensor;
+	const HeightSensor &_sensor_ref;
+
+	bool _is_sensor_fusion_active{false}; // TODO: replace by const ref and remove setter when migrating _control_status.flags from union to bool
 };
 
-} // namespace sensor
-} // namespace estimator
-#endif // !EKF_SENSOR_HPP
+#endif // !EKF_HEIGHT_BIAS_ESTIMATOR_HPP

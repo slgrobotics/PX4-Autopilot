@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2022 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2019-2023 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,47 +32,48 @@
  ****************************************************************************/
 
 /**
- * @file height_bias_estimator.hpp
+ * Downsamples IMU data to a lower rate such that EKF predicition can happen less frequent
+ * @author Kamil Ritz <ka.ritz@hotmail.com>
  */
+#ifndef EKF_IMU_DOWN_SAMPLER_HPP
+#define EKF_IMU_DOWN_SAMPLER_HPP
 
-#ifndef EKF_HEIGHT_BIAS_ESTIMATOR_HPP
-#define EKF_HEIGHT_BIAS_ESTIMATOR_HPP
+#include <mathlib/mathlib.h>
+#include <matrix/math.hpp>
 
-#include "bias_estimator.hpp"
-#include "common.h"
+#include "../common.h"
 
-class HeightBiasEstimator: public BiasEstimator
+using namespace estimator;
+
+class ImuDownSampler
 {
 public:
-	HeightBiasEstimator(HeightSensor sensor, const HeightSensor &sensor_ref):
-		BiasEstimator(0.f, 0.f),
-		_sensor(sensor),
-		_sensor_ref(sensor_ref)
-	{}
-	virtual ~HeightBiasEstimator() = default;
+	explicit ImuDownSampler(int32_t &target_dt_us);
+	~ImuDownSampler() = default;
 
-	void setFusionActive() { _is_sensor_fusion_active = true; }
-	void setFusionInactive() { _is_sensor_fusion_active = false; }
+	bool update(const imuSample &imu_sample_new);
 
-	virtual void predict(float dt) override
+	imuSample getDownSampledImuAndTriggerReset()
 	{
-		if ((_sensor_ref != _sensor) && _is_sensor_fusion_active) {
-			BiasEstimator::predict(dt);
-		}
-	}
-
-	virtual void fuseBias(float bias, float bias_var) override
-	{
-		if ((_sensor_ref != _sensor) && _is_sensor_fusion_active) {
-			BiasEstimator::fuseBias(bias, bias_var);
-		}
+		imuSample imu{_imu_down_sampled};
+		reset();
+		return imu;
 	}
 
 private:
-	const HeightSensor _sensor;
-	const HeightSensor &_sensor_ref;
+	void reset();
 
-	bool _is_sensor_fusion_active{false}; // TODO: replace by const ref and remove setter when migrating _control_status.flags from union to bool
+	imuSample _imu_down_sampled{};
+	Quatf _delta_angle_accumulated{};
+
+	int _accumulated_samples{0};
+	int _required_samples{1};
+
+	int32_t &_target_dt_us;
+
+	float _target_dt_s{0.010f};
+	float _min_dt_s{0.005f};
+
+	float _delta_ang_dt_avg{0.005f};
 };
-
-#endif // !EKF_HEIGHT_BIAS_ESTIMATOR_HPP
+#endif // !EKF_IMU_DOWN_SAMPLER_HPP
