@@ -57,9 +57,6 @@ BMI088_Accelerometer::~BMI088_Accelerometer()
 {
 	perf_free(_bad_register_perf);
 	perf_free(_bad_transfer_perf);
-	perf_free(_fifo_empty_perf);
-	perf_free(_fifo_overflow_perf);
-	perf_free(_fifo_reset_perf);
 	perf_free(_drdy_missed_perf);
 }
 
@@ -72,13 +69,10 @@ void BMI088_Accelerometer::print_status()
 {
 	I2CSPIDriverBase::print_status();
 
-	PX4_INFO("Sampling interval: %d us (%.1f Hz)", _fifo_empty_interval_us, 1e6 / _fifo_empty_interval_us);
+	PX4_INFO("Sampling interval: %d us (%.1f Hz)", _sampling_interval_us, 1e6 / _sampling_interval_us);
 
 	perf_print_counter(_bad_register_perf);
 	perf_print_counter(_bad_transfer_perf);
-	perf_print_counter(_fifo_empty_perf);
-	perf_print_counter(_fifo_overflow_perf);
-	perf_print_counter(_fifo_reset_perf);
 	perf_print_counter(_drdy_missed_perf);
 }
 
@@ -168,7 +162,7 @@ void BMI088_Accelerometer::RunImpl()
 			// if configure succeeded then start reading data
 			_state = STATE::DATA_READ;
 
-			//ScheduleOnInterval(_fifo_empty_interval_us, _fifo_empty_interval_us);
+			//ScheduleOnInterval(_sampling_interval_us, _sampling_interval_us);
 			ScheduleDelayed(10_ms);
 
 
@@ -326,59 +320,6 @@ bool BMI088_Accelerometer::SelfTest()
 
 	usleep(100000);
 	PX4_WARN("Sensor ErrReg: 0x%02x", CheckSensorErrReg());
-
-	/*
-	// Positive sel-test polarity
-	if (RegisterWrite(Register::ACC_SELF_TEST, 0x0D) == PX4_OK) {
-		PX4_WARN("Self-test positive mode set success");
-		PX4_WARN("ACC_SELF_TEST(0x0D): 0x%02x", RegisterRead(Register::ACC_SELF_TEST));
-	}
-
-	usleep(100000);
-	PX4_WARN("Sensor ErrReg: 0x%02x", CheckSensorErrReg());
-
-	float *accel_mss = ReadAccelDataFIFO();
-	PX4_WARN("Positive value");
-	PX4_WARN("X %f", (double)accel_mss[0]);
-	PX4_WARN("Y %f", (double)accel_mss[1]);
-	PX4_WARN("Z %f", (double)accel_mss[2]);
-
-	// Negative sel-test polarity
-	if (RegisterWrite(Register::ACC_SELF_TEST, 0x09) == PX4_OK) {
-		PX4_WARN("Self-test negative mode set success");
-		PX4_WARN("ACC_SELF_TEST(0x09): 0x%02x", RegisterRead(Register::ACC_SELF_TEST));
-	}
-
-	usleep(600000);
-	PX4_WARN("Sensor ErrReg: 0x%02x", CheckSensorErrReg());
-	float *accel_mss2 = ReadAccelDataFIFO();
-	PX4_WARN("Negative value");
-	PX4_WARN("X %f", (double)accel_mss2[0]);
-	PX4_WARN("Y %f", (double)accel_mss2[1]);
-	PX4_WARN("Z %f", (double)accel_mss2[2]);
-
-	// Calculate difference between positive and negative sef-test response
-	float diff_x = accel_mss[0] - accel_mss2[0];
-	float diff_y = accel_mss[1] - accel_mss2[1];
-	float diff_z = accel_mss[2] - accel_mss2[2];
-
-	PX4_WARN("Diff value");
-	PX4_WARN("diff_x %f", (double)diff_x);
-	PX4_WARN("diff_y %f", (double)diff_y);
-	PX4_WARN("diff_z %f", (double)diff_z);
-
-	if (diff_x >= 1000) {
-		PX4_WARN("X Axis self-test success");
-	}
-
-	if (diff_y >= 1000) {
-		PX4_WARN("Y Axis self-test success");
-	}
-
-	if (diff_z >= 500) {
-		PX4_WARN("Z Axis self-test success");
-	}
-	*/
 
 	// Disable self-test
 	RegisterWrite(Register::ACC_SELF_TEST, 0x00);

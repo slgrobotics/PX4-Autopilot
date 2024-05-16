@@ -83,7 +83,7 @@ void BMI088_Gyroscope::print_status()
 {
 	I2CSPIDriverBase::print_status();
 
-	PX4_INFO("FIFO empty interval: %d us (%.1f Hz)", _fifo_empty_interval_us, 1e6 / _fifo_empty_interval_us);
+	PX4_INFO("FIFO empty interval: %d us (%.1f Hz)", _sampling_interval_us, 1e6 / _sampling_interval_us);
 
 	perf_print_counter(_bad_register_perf);
 	perf_print_counter(_bad_transfer_perf);
@@ -174,7 +174,7 @@ void BMI088_Gyroscope::RunImpl()
 
 			} else {
 				_data_ready_interrupt_enabled = false;
-				ScheduleOnInterval(_fifo_empty_interval_us, _fifo_empty_interval_us);
+				ScheduleOnInterval(_sampling_interval_us, _sampling_interval_us);
 			}
 
 			FIFOReset();
@@ -244,19 +244,19 @@ void BMI088_Gyroscope::ConfigureSampleRate(int sample_rate)
 
 	// round down to nearest FIFO sample dt * SAMPLES_PER_TRANSFER
 	const float min_interval = FIFO_SAMPLE_DT;
-	_fifo_empty_interval_us = math::max(roundf((1e6f / (float)sample_rate) / min_interval) * min_interval, min_interval);
+	_sampling_interval_us = math::max(roundf((1e6f / (float)sample_rate) / min_interval) * min_interval, min_interval);
 
 	PX4_INFO_RAW("BMI088_Gyroscope::ConfigureSampleRate()  _fifo_empty_interval_us: %d  FIFO_MAX_SAMPLES: %d\n",
-		     _fifo_empty_interval_us, (int)FIFO_MAX_SAMPLES);
+		     _sampling_interval_us, (int)FIFO_MAX_SAMPLES);
 
-	_fifo_samples = math::min((float)_fifo_empty_interval_us / (1e6f / RATE), (float)FIFO_MAX_SAMPLES);
+	_fifo_samples = math::min((float)_sampling_interval_us / (1e6f / RATE), (float)FIFO_MAX_SAMPLES);
 
 	PX4_INFO_RAW("BMI088_Gyroscope::ConfigureSampleRate()  _fifo_samples: %d\n", _fifo_samples);
 
 	// recompute FIFO empty interval (us) with actual sample limit
-	_fifo_empty_interval_us = _fifo_samples * (1e6f / RATE);
+	_sampling_interval_us = _fifo_samples * (1e6f / RATE);
 
-	PX4_INFO_RAW("BMI088_Gyroscope::ConfigureSampleRate()  _fifo_empty_interval_us: %d\n", _fifo_empty_interval_us);
+	PX4_INFO_RAW("BMI088_Gyroscope::ConfigureSampleRate()  _fifo_empty_interval_us: %d\n", _sampling_interval_us);
 
 	ConfigureFIFOWatermark(_fifo_samples);
 }

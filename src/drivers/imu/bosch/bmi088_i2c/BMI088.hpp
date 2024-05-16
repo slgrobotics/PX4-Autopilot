@@ -83,8 +83,8 @@ protected:
 		DATA_READ,
 	} _state{STATE::SELFTEST};
 
-	//uint16_t _fifo_empty_interval_us{2500}; // 2500 us / 400 Hz transfer interval (220 Hz actually)
-	//uint16_t _fifo_empty_interval_us{5000}; // 5000 us / 200 Hz transfer interval (150 Hz actually)
-	uint16_t _fifo_empty_interval_us{500}; // 5000 us / 200 Hz transfer interval (320 Hz actually)
+	//uint16_t _sampling_interval_us{2500}; // 2500 us / 400 Hz transfer interval (220 Hz actually)
+	//uint16_t _sampling_interval_us{5000}; // 5000 us / 200 Hz transfer interval (150 Hz actually)
+	uint16_t _sampling_interval_us{500}; // 5000 us / 200 Hz transfer interval (320 Hz actually)
 
 };

@@ -112,7 +112,7 @@ private:
 	perf_counter_t _fifo_reset_perf{perf_alloc(PC_COUNT, MODULE_NAME"_gyro: FIFO reset")};
 	perf_counter_t _drdy_missed_perf{nullptr};
 
-	uint8_t _fifo_samples{static_cast<uint8_t>(_fifo_empty_interval_us / (1000000 / RATE))};
+	uint8_t _fifo_samples{static_cast<uint8_t>(_sampling_interval_us / (1000000 / RATE))};
 
 	uint8_t _checked_register{0};
 	static constexpr uint8_t size_register_cfg{8};
