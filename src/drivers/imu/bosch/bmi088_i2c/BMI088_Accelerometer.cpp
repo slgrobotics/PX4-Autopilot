@@ -47,7 +47,7 @@ BMI088_Accelerometer::BMI088_Accelerometer(const I2CSPIDriverConfig &config) :
 		_drdy_missed_perf = perf_alloc(PC_COUNT, MODULE_NAME"_accel: DRDY missed");
 	}
 
-	ConfigureSampleRate(1600);
+	//ConfigureSampleRate(1600);
 }
 
 BMI088_Accelerometer::~BMI088_Accelerometer()
@@ -62,7 +62,7 @@ BMI088_Accelerometer::~BMI088_Accelerometer()
 
 void BMI088_Accelerometer::exit_and_cleanup()
 {
-	DataReadyInterruptDisable();
+	//DataReadyInterruptDisable();
 	I2CSPIDriverBase::exit_and_cleanup();
 }
 
@@ -162,6 +162,7 @@ void BMI088_Accelerometer::RunImpl()
 			// if configure succeeded then start reading from FIFO
 			_state = STATE::FIFO_READ;
 
+			/*
 			if (DataReadyInterruptConfigure()) {
 				_data_ready_interrupt_enabled = true;
 
@@ -172,8 +173,12 @@ void BMI088_Accelerometer::RunImpl()
 				_data_ready_interrupt_enabled = false;
 				ScheduleOnInterval(_fifo_empty_interval_us, _fifo_empty_interval_us);
 			}
+			*/
 
-			FIFOReset();
+			_data_ready_interrupt_enabled = false;
+			ScheduleOnInterval(_fifo_empty_interval_us, _fifo_empty_interval_us);
+
+			//FIFOReset();
 
 		} else {
 			// CONFIGURE not complete
@@ -226,6 +231,7 @@ void BMI088_Accelerometer::ConfigureAccel()
 	}
 }
 
+/*
 void BMI088_Accelerometer::ConfigureSampleRate(int sample_rate)
 {
 	// round down to nearest FIFO sample dt * SAMPLES_PER_TRANSFER
@@ -263,6 +269,7 @@ void BMI088_Accelerometer::ConfigureFIFOWatermark(uint8_t samples)
 		}
 	}
 }
+*/
 
 bool BMI088_Accelerometer::Configure()
 {
@@ -286,19 +293,23 @@ bool BMI088_Accelerometer::Configure()
 	return success;
 }
 
+/*
 int BMI088_Accelerometer::DataReadyInterruptCallback(int irq, void *context, void *arg)
 {
+	PX4_INFO_RAW("DataReadyInterruptCallback()\n");
 	static_cast<BMI088_Accelerometer *>(arg)->DataReady();
 	return 0;
 }
 
 void BMI088_Accelerometer::DataReady()
 {
+	PX4_INFO_RAW("DataReady()\n");
 	ScheduleNow();
 }
 
 bool BMI088_Accelerometer::DataReadyInterruptConfigure()
 {
+	PX4_INFO_RAW("DataReadyInterruptConfigure()\n");
 	if (_drdy_gpio == 0) {
 		return false;
 	}
@@ -309,12 +320,14 @@ bool BMI088_Accelerometer::DataReadyInterruptConfigure()
 
 bool BMI088_Accelerometer::DataReadyInterruptDisable()
 {
+	PX4_INFO_RAW("DataReadyInterruptDisable()\n");
 	if (_drdy_gpio == 0) {
 		return false;
 	}
 
 	return px4_arch_gpiosetevent(_drdy_gpio, false, false, false, nullptr, nullptr) == 0;
 }
+*/
 
 bool BMI088_Accelerometer::RegisterCheck(const register_config_t &reg_cfg)
 {
@@ -346,6 +359,7 @@ void BMI088_Accelerometer::RegisterSetAndClearBits(Register reg, uint8_t setbits
 	}
 }
 
+/*
 uint16_t BMI088_Accelerometer::FIFOReadCount()
 {
 	// FIFO length registers FIFO_LENGTH_1 and FIFO_LENGTH_0 contain the 14 bit FIFO byte
@@ -547,7 +561,7 @@ bool BMI088_Accelerometer::SimpleFIFORead(const hrt_abstime &timestamp_sample)
 					continue;
 				}
 
-				/*
+				/ *
 				const int16_t tX[3] = {1, 0, 0};
 				const int16_t tY[3] = {0, -1, 0};
 				const int16_t tZ[3] = {0, 0, -1};
@@ -564,7 +578,7 @@ bool BMI088_Accelerometer::SimpleFIFORead(const hrt_abstime &timestamp_sample)
 				accel.y[accel.samples] = y;
 				accel.z[accel.samples] = z;
 				accel.samples++;
-				*/
+				* /
 
 				accel.x[accel.samples] = xyz[0];
 				accel.y[accel.samples] = -xyz[1];
@@ -621,7 +635,9 @@ void BMI088_Accelerometer::FIFOReset()
 	// reset while FIFO is disabled
 	_drdy_timestamp_sample.store(0);
 }
+*/
 
+/*
 void BMI088_Accelerometer::UpdateTemperature()
 {
 	// stored in an 11-bit value in 2’s complement format
@@ -657,6 +673,7 @@ void BMI088_Accelerometer::UpdateTemperature()
 		perf_count(_bad_transfer_perf);
 	}
 }
+*/
 
 bool BMI088_Accelerometer::SelfTest()
 {
@@ -718,49 +735,49 @@ bool BMI088_Accelerometer::SelfTest()
 	usleep(100000);
 	PX4_WARN("Sensor ErrReg: 0x%02x", CheckSensorErrReg());
 
-	float *accel_mss = ReadAccelDataFIFO();
-	PX4_WARN("Positive value");
-	PX4_WARN("X %f", (double)accel_mss[0]);
-	PX4_WARN("Y %f", (double)accel_mss[1]);
-	PX4_WARN("Z %f", (double)accel_mss[2]);
+	/*
+		float *accel_mss = ReadAccelDataFIFO();
+		PX4_WARN("Positive value");
+		PX4_WARN("X %f", (double)accel_mss[0]);
+		PX4_WARN("Y %f", (double)accel_mss[1]);
+		PX4_WARN("Z %f", (double)accel_mss[2]);
 
-	// Negative sel-test polarity
-	if (RegisterWrite(Register::ACC_SELF_TEST, 0x09) == PX4_OK) {
-		PX4_WARN("Self-test negative mode set success");
-		PX4_WARN("ACC_SELF_TEST(0x09): 0x%02x", RegisterRead(Register::ACC_SELF_TEST));
-	}
+		// Negative sel-test polarity
+		if (RegisterWrite(Register::ACC_SELF_TEST, 0x09) == PX4_OK) {
+			PX4_WARN("Self-test negative mode set success");
+			PX4_WARN("ACC_SELF_TEST(0x09): 0x%02x", RegisterRead(Register::ACC_SELF_TEST));
+		}
 
-	usleep(600000);
-	PX4_WARN("Sensor ErrReg: 0x%02x", CheckSensorErrReg());
-	float *accel_mss2 = ReadAccelDataFIFO();
-	PX4_WARN("Negative value");
-	PX4_WARN("X %f", (double)accel_mss2[0]);
-	PX4_WARN("Y %f", (double)accel_mss2[1]);
-	PX4_WARN("Z %f", (double)accel_mss2[2]);
+		usleep(600000);
+		PX4_WARN("Sensor ErrReg: 0x%02x", CheckSensorErrReg());
+		float *accel_mss2 = ReadAccelDataFIFO();
+		PX4_WARN("Negative value");
+		PX4_WARN("X %f", (double)accel_mss2[0]);
+		PX4_WARN("Y %f", (double)accel_mss2[1]);
+		PX4_WARN("Z %f", (double)accel_mss2[2]);
 
-	// Calculate difference between positive and negative sef-test response
-	float diff_x = accel_mss[0] - accel_mss2[0];
-	float diff_y = accel_mss[1] - accel_mss2[1];
-	float diff_z = accel_mss[2] - accel_mss2[2];
+		// Calculate difference between positive and negative sef-test response
+		float diff_x = accel_mss[0] - accel_mss2[0];
+		float diff_y = accel_mss[1] - accel_mss2[1];
+		float diff_z = accel_mss[2] - accel_mss2[2];
 
-	PX4_WARN("Diff value");
-	PX4_WARN("diff_x %f", (double)diff_x);
-	PX4_WARN("diff_y %f", (double)diff_y);
-	PX4_WARN("diff_z %f", (double)diff_z);
+		PX4_WARN("Diff value");
+		PX4_WARN("diff_x %f", (double)diff_x);
+		PX4_WARN("diff_y %f", (double)diff_y);
+		PX4_WARN("diff_z %f", (double)diff_z);
 
+		if (diff_x >= 1000) {
+			PX4_WARN("X Axis self-test success");
+		}
 
-	if (diff_x >= 1000) {
-		PX4_WARN("X Axis self-test success");
-	}
+		if (diff_y >= 1000) {
+			PX4_WARN("Y Axis self-test success");
+		}
 
-	if (diff_y >= 1000) {
-		PX4_WARN("Y Axis self-test success");
-	}
-
-	if (diff_z >= 500) {
-		PX4_WARN("Z Axis self-test success");
-	}
-
+		if (diff_z >= 500) {
+			PX4_WARN("Z Axis self-test success");
+		}
+	*/
 
 	// Disable self-test
 	RegisterWrite(Register::ACC_SELF_TEST, 0x00);
@@ -774,6 +791,7 @@ bool BMI088_Accelerometer::SelfTest()
 	return true;
 }
 
+/*
 float *BMI088_Accelerometer::ReadAccelData()
 {
 	PX4_INFO_RAW("BMI088_Accelerometer::ReadAccelData()\n");
@@ -815,18 +833,18 @@ float *BMI088_Accelerometer::ReadAccelDataFIFO()
 	uint8_t buffer[50] = {0};
 
 	PX4_WARN("FIFO mode is stop-at-full");
-	/* Desired FIFO mode is stop-at-full: set bit #0 to 1 in 0x48. Bit #1 must always be one! */
+	// Desired FIFO mode is stop-at-full: set bit #0 to 1 in 0x48. Bit #1 must always be one!
 	buffer[0] = 0x00 | 0x02;
 	RegisterWrite(Register::FIFO_CONFIG_0, buffer[0]);
 	PX4_WARN("FIFO_CONFIG_0(0x%02x): 0x%02x", buffer[0], RegisterRead(Register::FIFO_CONFIG_0));
 
 	PX4_WARN("Downsampling factor 2**4 = 16");
-	/* Downsampling factor 2**4 = 16: write 4 into bit #4-6 of reg. 0x45. Bit #7 must always be one! */
+	// Downsampling factor 2**4 = 16: write 4 into bit #4-6 of reg. 0x45. Bit #7 must always be one!
 	buffer[0] = 0x10 | 0x80;
 	RegisterWrite(Register::FIFO_DOWN_SAMPLING, buffer[0]);
 	PX4_WARN("FIFO_DOWN_SAMPLING(0x%02x): 0x%02x", buffer[0], RegisterRead(Register::FIFO_DOWN_SAMPLING));
 
-	/* Set water mark to 42 bytes (aka 6 frames, each 7 bytes: 1 byte header + 6 bytes accel data) */
+	// Set water mark to 42 bytes (aka 6 frames, each 7 bytes: 1 byte header + 6 bytes accel data)
 	// uint16_t wml = 42;
 	// buffer[0] = (uint8_t) wml & 0xff;
 	// buffer[1] = (uint8_t) (wml >> 8) & 0xff;
@@ -835,7 +853,7 @@ float *BMI088_Accelerometer::ReadAccelDataFIFO()
 	// transfer(cmd, sizeof(cmd), nullptr, 0);
 	// PX4_WARN("FIFO_WTM_0(0x%02x): 0x%02x",cmd[0], RegisterRead(Register::FIFO_WTM_0));
 
-	/* Enable the actual FIFO functionality: write 0x50 to 0x49. Bit #4 must always be one! */
+	// Enable the actual FIFO functionality: write 0x50 to 0x49. Bit #4 must always be one!
 	buffer[0] = 0x10 | 0x40;
 	RegisterWrite(Register::FIFO_CONFIG_1, buffer[0]);
 	PX4_WARN("FIFO_CONFIG_1(0x%02x): 0x%02x", buffer[0], RegisterRead(Register::FIFO_CONFIG_1));
@@ -865,9 +883,9 @@ float *BMI088_Accelerometer::ReadAccelDataFIFO()
 	PX4_WARN("bmi08x_accel %d", bmi08x_accel.x);
 	transfer(&buffer[0], 1, &buffer_data[0], custom_size);
 
-	/* This is a super-simple FIFO parsing loop, hoping it will only find valid accel data packets */
+	// This is a super-simple FIFO parsing loop, hoping it will only find valid accel data packets
 	for (int i = 1; i < custom_size;) {
-		/* Header of acceleration sensor data frame: 100001xxb, where x is INT1/INT2 tag, ignored here */
+		// Header of acceleration sensor data frame: 100001xxb, where x is INT1/INT2 tag, ignored here
 		if (buffer_data[i] == (0x84 & 0x8c)) {
 			UnpackSensorData(&bmi08x_accel, &buffer_data[i + 1]);
 			PX4_WARN("Frame: %03d ax:%f ay:%f az:%f", i / 6, (double)bmi08x_accel.x, (double)bmi08x_accel.y,
@@ -887,26 +905,28 @@ float *BMI088_Accelerometer::ReadAccelDataFIFO()
 
 	return accel_mg;
 }
+*/
 
 uint8_t  BMI088_Accelerometer::CheckSensorErrReg()
 {
 	return RegisterRead(Register::ACC_ERR_REG);
 }
 
+/*
 void BMI088_Accelerometer::UnpackSensorData(struct FIFO::bmi08x_sensor_data *sens_data, uint8_t *buffer)
 {
 	uint16_t data_lsb;
 	uint16_t data_msb;
 	uint16_t start_idx = 0;
-	/* Gyro raw x data */
+	// Gyro raw x data
 	data_lsb = buffer[start_idx++];
 	data_msb = buffer[start_idx++];
 	sens_data->x = (int16_t)((data_msb << 8) | data_lsb);
-	/* Gyro raw y data */
+	// Gyro raw y data
 	data_lsb = buffer[start_idx++];
 	data_msb = buffer[start_idx++];
 	sens_data->y = (int16_t)((data_msb << 8) | data_lsb);
-	/* Gyro raw z data */
+	// Gyro raw z data
 	data_lsb = buffer[start_idx++];
 	data_msb = buffer[start_idx++];
 	sens_data->z = (int16_t)((data_msb << 8) | data_lsb);
@@ -919,6 +939,7 @@ float *BMI088_Accelerometer::SensorDataTomg(float *data)
 	data[2] = (float) data[2] / 32768.0f * 1000.0f * powf(2.0f, 24.0f + 1.0f) * 1.50f;
 	return data;
 }
+*/
 
 bool BMI088_Accelerometer::NormalRead(const hrt_abstime &timestamp_sample)
 {

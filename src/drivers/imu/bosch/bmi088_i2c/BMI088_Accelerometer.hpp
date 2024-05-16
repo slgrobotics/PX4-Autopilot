@@ -56,11 +56,12 @@ private:
 
 	// Sensor Configuration
 	// static constexpr uint32_t RATE{1600}; // 1600 Hz
-	static constexpr uint32_t RATE{1600}; // 1600 Hz
-	static constexpr float FIFO_SAMPLE_DT{1e6f / RATE};
+	//static constexpr uint32_t RATE{1600}; // 1600 Hz
+	//static constexpr float FIFO_SAMPLE_DT{1e6f / RATE};
 
-	static constexpr int32_t FIFO_MAX_SAMPLES{math::min(FIFO::SIZE / sizeof(FIFO::DATA), sizeof(sensor_accel_fifo_s::x) / sizeof(sensor_accel_fifo_s::x[0]))};
+	//static constexpr int32_t FIFO_MAX_SAMPLES{math::min(FIFO::SIZE / sizeof(FIFO::DATA), sizeof(sensor_accel_fifo_s::x) / sizeof(sensor_accel_fifo_s::x[0]))};
 
+	/*
 	// Transfer data
 	struct FIFOTransferBuffer {
 		uint8_t cmd{static_cast<uint8_t>(Register::FIFO_LENGTH_0)};
@@ -75,6 +76,7 @@ private:
 	};
 	// ensure no struct padding
 	static_assert(sizeof(FIFOTransferBuffer) == (4 + FIFO_MAX_SAMPLES *sizeof(FIFO::DATA)));
+	*/
 
 	struct register_config_t {
 		Register reg;
@@ -86,13 +88,15 @@ private:
 
 	bool Configure();
 	void ConfigureAccel();
-	void ConfigureSampleRate(int sample_rate = 0);
-	void ConfigureFIFOWatermark(uint8_t samples);
+	//void ConfigureSampleRate(int sample_rate = 0);
+	//void ConfigureFIFOWatermark(uint8_t samples);
 
+	/*
 	static int DataReadyInterruptCallback(int irq, void *context, void *arg);
 	void DataReady();
 	bool DataReadyInterruptConfigure();
 	bool DataReadyInterruptDisable();
+	*/
 
 	bool RegisterCheck(const register_config_t &reg_cfg);
 
@@ -100,18 +104,20 @@ private:
 	uint8_t RegisterWrite(Register reg, uint8_t value);
 	void RegisterSetAndClearBits(Register reg, uint8_t setbits, uint8_t clearbits);
 
+	/*
 	uint16_t FIFOReadCount();
 	bool FIFORead(const hrt_abstime &timestamp_sample, uint8_t samples);
 	void FIFOReset();
+	*/
 
 	void UpdateTemperature();
-	void UnpackSensorData(struct FIFO::bmi08x_sensor_data *sens_data, uint8_t *buffer);
+	//void UnpackSensorData(struct FIFO::bmi08x_sensor_data *sens_data, uint8_t *buffer);
 	bool SelfTest();
-	float *ReadAccelData();
-	float *ReadAccelDataFIFO();
-	float *SensorDataTomg(float *data);
+	//float *ReadAccelData();
+	//float *ReadAccelDataFIFO();
+	//float *SensorDataTomg(float *data);
 	uint8_t CheckSensorErrReg();
-	bool SimpleFIFORead(const hrt_abstime &timestamp_sample);
+	//bool SimpleFIFORead(const hrt_abstime &timestamp_sample);
 	bool NormalRead(const hrt_abstime &timestamp_sample);
 
 	PX4Accelerometer _px4_accel;
@@ -123,7 +129,7 @@ private:
 	perf_counter_t _fifo_reset_perf{perf_alloc(PC_COUNT, MODULE_NAME"_accel: FIFO reset")};
 	perf_counter_t _drdy_missed_perf{nullptr};
 
-	uint8_t _fifo_samples{static_cast<uint8_t>(_fifo_empty_interval_us / (1000000 / RATE))};
+	//uint8_t _fifo_samples{static_cast<uint8_t>(_fifo_empty_interval_us / (1000000 / RATE))};
 
 	uint8_t _checked_register{0};
 	static constexpr uint8_t size_register_cfg{10};
