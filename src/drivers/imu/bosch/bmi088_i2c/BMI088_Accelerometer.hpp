@@ -35,6 +35,8 @@
 
 #include "BMI088.hpp"
 
+#include "Ema3.hpp"
+
 #include <lib/drivers/accelerometer/PX4Accelerometer.hpp>
 
 #include "Bosch_BMI088_Accelerometer_Registers.hpp"
@@ -76,6 +78,8 @@ private:
 	bool NormalRead(const hrt_abstime &timestamp_sample);
 
 	PX4Accelerometer _px4_accel;
+
+	Ema3f _ema;
 
 	perf_counter_t _bad_register_perf{perf_alloc(PC_COUNT, MODULE_NAME"_accel: bad register")};
 	perf_counter_t _bad_transfer_perf{perf_alloc(PC_COUNT, MODULE_NAME"_accel: bad transfer")};

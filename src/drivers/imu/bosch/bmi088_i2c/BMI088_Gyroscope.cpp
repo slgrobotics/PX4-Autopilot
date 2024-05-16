@@ -55,6 +55,8 @@ BMI088_Gyroscope::BMI088_Gyroscope(const I2CSPIDriverConfig &config) :
 	ConfigureSampleRate(2000); // works at 400
 	//ConfigureSampleRate(RATE); - this doesn't work at 400, works at 2000 and FIFO samples 1
 	//ConfigureSampleRate(_px4_gyro.get_max_rate_hz()); - this doesn't work - shows 800 and FIFO samples 3
+
+	_ema.init(20);
 }
 
 BMI088_Gyroscope::~BMI088_Gyroscope()
@@ -535,12 +537,21 @@ bool BMI088_Gyroscope::NormalRead(const hrt_abstime &timestamp_sample)
 		return false;
 	}
 
+	matrix::Vector3f val {(float)gyro_x, (float)gyro_y, (float)gyro_z};
+
+	matrix::Vector3f res = _ema.Compute(val);
+
 	// sensor's frame is +x forward, +y left, +z up
 	//  flip y & z to publish right handed with z down (x forward, y right, z down)
-	x = gyro_x;
-	y = -gyro_y;
-	z = -gyro_z;
+	//x = gyro_x;
+	//y = -gyro_y;
+	//z = -gyro_z;
 
+	x = res(0);
+	y = -res(1);
+	z = -res(2);
+
+	//PX4_WARN("x: %f | y: %f | z: %f", (double)x, (double)y ,(double)z);
 	_px4_gyro.update(timestamp_sample, x, y, z);
 
 	return true;

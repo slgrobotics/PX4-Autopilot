@@ -48,6 +48,9 @@ BMI088_Accelerometer::BMI088_Accelerometer(const I2CSPIDriverConfig &config) :
 	}
 
 	//ConfigureSampleRate(1600);
+
+	_ema.init(20);
+
 }
 
 BMI088_Accelerometer::~BMI088_Accelerometer()
@@ -165,7 +168,9 @@ void BMI088_Accelerometer::RunImpl()
 			// if configure succeeded then start reading data
 			_state = STATE::DATA_READ;
 
-			ScheduleOnInterval(_fifo_empty_interval_us, _fifo_empty_interval_us);
+			//ScheduleOnInterval(_fifo_empty_interval_us, _fifo_empty_interval_us);
+			ScheduleDelayed(10_ms);
+
 
 		} else {
 			// CONFIGURE not complete
@@ -184,6 +189,8 @@ void BMI088_Accelerometer::RunImpl()
 
 	case STATE::DATA_READ: {
 			NormalRead(now);
+			//ScheduleDelayed(1_ms);
+			ScheduleNow();	// 250 Hz
 		}
 		break;
 	}
@@ -320,6 +327,7 @@ bool BMI088_Accelerometer::SelfTest()
 	usleep(100000);
 	PX4_WARN("Sensor ErrReg: 0x%02x", CheckSensorErrReg());
 
+	/*
 	// Positive sel-test polarity
 	if (RegisterWrite(Register::ACC_SELF_TEST, 0x0D) == PX4_OK) {
 		PX4_WARN("Self-test positive mode set success");
@@ -329,7 +337,6 @@ bool BMI088_Accelerometer::SelfTest()
 	usleep(100000);
 	PX4_WARN("Sensor ErrReg: 0x%02x", CheckSensorErrReg());
 
-	/*
 	float *accel_mss = ReadAccelDataFIFO();
 	PX4_WARN("Positive value");
 	PX4_WARN("X %f", (double)accel_mss[0]);
@@ -436,11 +443,19 @@ bool BMI088_Accelerometer::NormalRead(const hrt_abstime &timestamp_sample)
 		return false;
 	}
 
+	matrix::Vector3f val {(float)accel_x, (float)accel_y, (float)accel_z};
+
+	matrix::Vector3f res = _ema.Compute(val);
+
 	// sensor's frame is +x forward, +y left, +z up
 	//  flip y & z to publish right handed with z down (x forward, y right, z down)
-	x = accel_x;
-	y = -accel_y;
-	z = -accel_z;
+	//x = accel_x;
+	//y = -accel_y;
+	//z = -accel_z;
+
+	x = res(0);
+	y = -res(1);
+	z = -res(2);
 
 	//PX4_WARN("x: %f | y: %f | z: %f", (double)x, (double)y ,(double)z);
 	_px4_accel.update(timestamp_sample, x, y, z);

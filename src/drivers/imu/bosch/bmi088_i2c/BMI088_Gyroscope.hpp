@@ -35,6 +35,8 @@
 
 #include "BMI088.hpp"
 
+#include "Ema3.hpp"
+
 #include <lib/drivers/gyroscope/PX4Gyroscope.hpp>
 
 #include "Bosch_BMI088_Gyroscope_Registers.hpp"
@@ -98,7 +100,10 @@ private:
 	bool SelfTest();
 	bool NormalRead(const hrt_abstime &timestamp_sample);
 	bool SimpleFIFORead(const hrt_abstime &timestamp_sample);
+
 	PX4Gyroscope _px4_gyro;
+
+	Ema3f _ema;
 
 	perf_counter_t _bad_register_perf{perf_alloc(PC_COUNT, MODULE_NAME"_gyro: bad register")};
 	perf_counter_t _bad_transfer_perf{perf_alloc(PC_COUNT, MODULE_NAME"_gyro: bad transfer")};
