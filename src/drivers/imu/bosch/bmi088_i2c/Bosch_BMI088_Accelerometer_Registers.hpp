@@ -54,7 +54,8 @@ static constexpr uint32_t I2C_100_SPEED = 100 * 1000; // 100kHz I2C interface
 
 static constexpr uint8_t DIR_READ = 0x80;
 
-static constexpr uint8_t ID = 0x1E;
+static constexpr uint8_t ID_088 = 0x1E;
+static constexpr uint8_t ID_090L = 0x1A;
 
 static constexpr uint8_t ACC_I2C_ADDR_PRIMARY = 0x18;
 static constexpr uint8_t ACC_I2C_ADDR_SECONDARY = 0x19;

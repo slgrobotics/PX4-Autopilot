@@ -162,7 +162,7 @@ void BMI088_Gyroscope::RunImpl()
 
 		if (Configure()) {
 			// if configure succeeded then start reading from FIFO
-			_state = STATE::FIFO_READ;
+			_state = STATE::DATA_READ;
 
 			if (DataReadyInterruptConfigure()) {
 				_data_ready_interrupt_enabled = true;
@@ -192,7 +192,7 @@ void BMI088_Gyroscope::RunImpl()
 
 		break;
 
-	case STATE::FIFO_READ: {
+	case STATE::DATA_READ: {
 			//SimpleFIFORead(now);
 			NormalRead(now);
 			//FIFORead(now, 1);
