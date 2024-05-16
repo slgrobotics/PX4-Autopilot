@@ -191,7 +191,8 @@ void BMI088_Accelerometer::RunImpl()
 		break;
 
 	case STATE::FIFO_READ: {
-			SimpleFIFORead(now);
+			//SimpleFIFORead(now);
+			NormalRead(now);
 		}
 		break;
 	}
@@ -368,6 +369,8 @@ bool BMI088_Accelerometer::FIFORead(const hrt_abstime &timestamp_sample, uint8_t
 	FIFOTransferBuffer buffer{};
 	const size_t transfer_size = math::min(samples * sizeof(FIFO::DATA) + 4, FIFO::SIZE);
 
+	PX4_INFO_RAW("BMI088_Accelerometer::FIFORead()\n");
+
 	if (transfer((uint8_t *)&buffer, 1, (uint8_t *)&buffer, transfer_size) != PX4_OK) {
 		perf_count(_bad_transfer_perf);
 		return false;
@@ -406,6 +409,11 @@ bool BMI088_Accelerometer::FIFORead(const hrt_abstime &timestamp_sample, uint8_t
 				const int16_t accel_x = combine(fifo_sample->ACC_X_MSB, fifo_sample->ACC_X_LSB);
 				const int16_t accel_y = combine(fifo_sample->ACC_Y_MSB, fifo_sample->ACC_Y_LSB);
 				const int16_t accel_z = combine(fifo_sample->ACC_Z_MSB, fifo_sample->ACC_Z_LSB);
+
+				if (accel_x == INT16_MIN || accel_y == INT16_MIN || accel_z == INT16_MIN) {
+					PX4_WARN("Accel: INT16_MIN");
+					break;
+				}
 
 				// sensor's frame is +x forward, +y left, +z up
 				//  flip y & z to publish right handed with z down (x forward, y right, z down)
@@ -465,6 +473,8 @@ bool BMI088_Accelerometer::FIFORead(const hrt_abstime &timestamp_sample, uint8_t
 
 bool BMI088_Accelerometer::SimpleFIFORead(const hrt_abstime &timestamp_sample)
 {
+	//PX4_INFO_RAW("BMI088_Accelerometer::SimpleFIFORead()\n");
+
 	sensor_accel_fifo_s accel{};
 	accel.timestamp_sample = timestamp_sample;
 	accel.samples = 0;
@@ -499,6 +509,7 @@ bool BMI088_Accelerometer::SimpleFIFORead(const hrt_abstime &timestamp_sample)
 	data[0] = static_cast<uint8_t>(Register::FIFO_DATA);
 
 	if (transfer(&data[0], 1, &data[0], fifo_fill_level) != PX4_OK) {
+		perf_count(_bad_transfer_perf);
 		return false;
 	}
 
@@ -518,7 +529,25 @@ bool BMI088_Accelerometer::SimpleFIFORead(const hrt_abstime &timestamp_sample)
 					int16_t(uint16_t(d[4] | (d[5] << 8)))
 				};
 
+				if (xyz[0] == INT16_MIN) {
+					PX4_WARN("accel.x == INT16_MIN");
+				}
 
+				if (xyz[1] == INT16_MIN) {
+					PX4_WARN("accel.y == INT16_MIN");
+				}
+
+				if (xyz[2] == INT16_MIN) {
+					PX4_WARN("accel.z == INT16_MIN");
+				}
+
+				if (xyz[0] == INT16_MIN || xyz[1] == INT16_MIN || xyz[2] == INT16_MIN) {
+					PX4_WARN("Accel: INT16_MIN frame rejected");
+					perf_count(_bad_transfer_perf);
+					continue;
+				}
+
+				/*
 				const int16_t tX[3] = {1, 0, 0};
 				const int16_t tY[3] = {0, -1, 0};
 				const int16_t tZ[3] = {0, 0, -1};
@@ -534,6 +563,12 @@ bool BMI088_Accelerometer::SimpleFIFORead(const hrt_abstime &timestamp_sample)
 				accel.x[accel.samples] = x;
 				accel.y[accel.samples] = y;
 				accel.z[accel.samples] = z;
+				accel.samples++;
+				*/
+
+				accel.x[accel.samples] = xyz[0];
+				accel.y[accel.samples] = -xyz[1];
+				accel.z[accel.samples] = -xyz[2];
 				accel.samples++;
 
 				break;
@@ -741,6 +776,8 @@ bool BMI088_Accelerometer::SelfTest()
 
 float *BMI088_Accelerometer::ReadAccelData()
 {
+	PX4_INFO_RAW("BMI088_Accelerometer::ReadAccelData()\n");
+
 	uint8_t cmd[1] = {0x12};
 
 	uint8_t buf[6] = {0, 0, 0, 0, 0, 0};
@@ -771,6 +808,8 @@ float *BMI088_Accelerometer::ReadAccelData()
 
 float *BMI088_Accelerometer::ReadAccelDataFIFO()
 {
+	PX4_INFO_RAW("BMI088_Accelerometer::ReadAccelDataFIFO()\n");
+
 	float *accel_mg = new float[3];
 	struct FIFO::bmi08x_sensor_data bmi08x_accel;
 	uint8_t buffer[50] = {0};
@@ -883,9 +922,7 @@ float *BMI088_Accelerometer::SensorDataTomg(float *data)
 
 bool BMI088_Accelerometer::NormalRead(const hrt_abstime &timestamp_sample)
 {
-	const int16_t tX[3] = {1, 0, 0};
-	const int16_t tY[3] = {0, -1, 0};
-	const int16_t tZ[3] = {0, 0, -1};
+	//PX4_INFO_RAW("BMI088_Accelerometer::NormalRead()\n");
 
 	float x = 0;
 	float y = 0;
@@ -893,7 +930,10 @@ bool BMI088_Accelerometer::NormalRead(const hrt_abstime &timestamp_sample)
 	uint8_t buffer[6] = {0};
 	uint8_t cmd[1] = {static_cast<uint8_t>(Register::ACC_READ)};
 
-	transfer(&cmd[0], 1, &buffer[0], 6);
+	if (transfer(&cmd[0], 1, &buffer[0], 6) != PX4_OK) {
+		perf_count(_bad_transfer_perf);
+		return false;
+	}
 
 	uint8_t RATE_X_LSB = buffer[0];
 	uint8_t RATE_X_MSB = buffer[1];
@@ -908,11 +948,29 @@ bool BMI088_Accelerometer::NormalRead(const hrt_abstime &timestamp_sample)
 	const int16_t accel_y = combine(RATE_Y_MSB, RATE_Y_LSB);
 	const int16_t accel_z = combine(RATE_Z_MSB, RATE_Z_LSB);
 
+	if (accel_x == INT16_MIN) {
+		PX4_WARN("accel_x == INT16_MIN");
+	}
+
+	if (accel_y == INT16_MIN) {
+		PX4_WARN("accel_y == INT16_MIN");
+	}
+
+	if (accel_z == INT16_MIN) {
+		PX4_WARN("accel_z == INT16_MIN");
+	}
+
+	if (accel_x == INT16_MIN || accel_y == INT16_MIN || accel_z == INT16_MIN) {
+		PX4_WARN("Accel: INT16_MIN frame rejected");
+		perf_count(_bad_transfer_perf);
+		return false;
+	}
+
 	// sensor's frame is +x forward, +y left, +z up
 	//  flip y & z to publish right handed with z down (x forward, y right, z down)
-	x = accel_x * tX[0] + accel_y * tX[1] + accel_z * tX[2];
-	y = accel_x * tY[0] + accel_y * tY[1] + accel_z * tY[2];
-	z = accel_x * tZ[0] + accel_y * tZ[1] + accel_z * tZ[2];
+	x = accel_x;
+	y = -accel_y;
+	z = -accel_z;
 
 	//PX4_WARN("x: %f | y: %f | z: %f", (double)x, (double)y ,(double)z);
 	_px4_accel.update(timestamp_sample, x, y, z);

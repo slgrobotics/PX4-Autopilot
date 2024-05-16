@@ -460,7 +460,8 @@ void RoverPositionControl::debugPublishAll()
 
 		_dbg_array.data[0] = i;	// must be less than 58, per size of the data[]
 
-		_dbg_array.timestamp = hrt_elapsed_time(&_app_started_time);
+		_dbg_array.timestamp = hrt_absolute_time(); // hrt_elapsed_time(&_app_started_time);
+
 		orb_publish(ORB_ID(debug_array), _pub_dbg_array, &_dbg_array);
 
 		//warnx("...sending debug data...");
