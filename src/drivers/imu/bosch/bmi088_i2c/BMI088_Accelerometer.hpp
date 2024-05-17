@@ -80,6 +80,8 @@ private:
 	PX4Accelerometer _px4_accel;
 
 	Ema3f _ema;
+	const int ACCEL_EMA_PERIOD = 20;
+
 
 	perf_counter_t _bad_register_perf{perf_alloc(PC_COUNT, MODULE_NAME"_accel: bad register")};
 	perf_counter_t _bad_transfer_perf{perf_alloc(PC_COUNT, MODULE_NAME"_accel: bad transfer")};

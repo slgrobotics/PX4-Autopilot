@@ -47,7 +47,7 @@ BMI088_Accelerometer::BMI088_Accelerometer(const I2CSPIDriverConfig &config) :
 		_drdy_missed_perf = perf_alloc(PC_COUNT, MODULE_NAME"_accel: DRDY missed");
 	}
 
-	_ema.init(20);
+	_ema.init(ACCEL_EMA_PERIOD);
 }
 
 BMI088_Accelerometer::~BMI088_Accelerometer()
@@ -387,10 +387,6 @@ bool BMI088_Accelerometer::NormalRead(const hrt_abstime &timestamp_sample)
 
 	// sensor's frame is +x forward, +y left, +z up
 	//  flip y & z to publish right handed with z down (x forward, y right, z down)
-	//x = accel_x;
-	//y = -accel_y;
-	//z = -accel_z;
-
 	x = res(0);
 	y = -res(1);
 	z = -res(2);

@@ -44,19 +44,15 @@ BMI088_Gyroscope::BMI088_Gyroscope(const I2CSPIDriverConfig &config) :
 	BMI088(config),
 	_px4_gyro(get_device_id(), config.rotation)
 {
-	PX4_INFO_RAW("BMI088_Gyroscope::BMI088_Gyroscope()\n");
-
 	if (config.drdy_gpio != 0) {
 		_drdy_missed_perf = perf_alloc(PC_COUNT, MODULE_NAME"_gyro: DRDY missed");
 	}
 
-	_ema.init(20);
+	_ema.init(GYRO_EMA_PERIOD);
 }
 
 BMI088_Gyroscope::~BMI088_Gyroscope()
 {
-	PX4_INFO_RAW("BMI088_Gyroscope::~BMI088_Gyroscope()\n");
-
 	perf_free(_bad_register_perf);
 	perf_free(_bad_transfer_perf);
 	perf_free(_drdy_missed_perf);
@@ -64,8 +60,6 @@ BMI088_Gyroscope::~BMI088_Gyroscope()
 
 void BMI088_Gyroscope::exit_and_cleanup()
 {
-	PX4_INFO_RAW("BMI088_Gyroscope::exit_and_cleanup()\n");
-
 	I2CSPIDriverBase::exit_and_cleanup();
 }
 
@@ -82,7 +76,7 @@ void BMI088_Gyroscope::print_status()
 
 int BMI088_Gyroscope::probe()
 {
-	PX4_INFO_RAW("BMI088_Gyroscope::probe()\n");
+	//PX4_INFO_RAW("BMI088_Gyroscope::probe()\n");
 
 	const uint8_t chipid = RegisterRead(Register::GYRO_CHIP_ID);
 
@@ -187,7 +181,7 @@ void BMI088_Gyroscope::ConfigureGyro()
 {
 	const uint8_t GYRO_RANGE = RegisterRead(Register::GYRO_RANGE) & (Bit3 | Bit2 | Bit1 | Bit0);
 
-	PX4_INFO_RAW("BMI088_Gyroscope::ConfigureGyro()  GYRO_RANGE: %d\n", (int)GYRO_RANGE);
+	//PX4_INFO_RAW("BMI088_Gyroscope::ConfigureGyro()  GYRO_RANGE: %d\n", (int)GYRO_RANGE);
 
 	switch (GYRO_RANGE) {
 	case gyro_range_2000_dps:
@@ -219,7 +213,7 @@ void BMI088_Gyroscope::ConfigureGyro()
 
 bool BMI088_Gyroscope::Configure()
 {
-	PX4_INFO_RAW("BMI088_Gyroscope::Configure()\n");
+	//PX4_INFO_RAW("BMI088_Gyroscope::Configure()\n");
 
 	// first set and clear all configured register bits
 	for (const auto &reg_cfg : _register_cfg) {
@@ -242,8 +236,6 @@ bool BMI088_Gyroscope::Configure()
 
 bool BMI088_Gyroscope::RegisterCheck(const register_config_t &reg_cfg)
 {
-	PX4_INFO_RAW("BMI088_Gyroscope::RegisterCheck()\n");
-
 	bool success = true;
 
 	const uint8_t reg_value = RegisterRead(reg_cfg.reg);
@@ -263,8 +255,6 @@ bool BMI088_Gyroscope::RegisterCheck(const register_config_t &reg_cfg)
 
 uint8_t BMI088_Gyroscope::RegisterRead(Register reg)
 {
-	//PX4_INFO_RAW("Gyro: RegisterRead()\n");
-
 	uint8_t add = static_cast<uint8_t>(reg);
 	uint8_t cmd[2] = {add, 0};
 	transfer(&cmd[0], 1, &cmd[1], 1);
@@ -273,8 +263,6 @@ uint8_t BMI088_Gyroscope::RegisterRead(Register reg)
 
 void BMI088_Gyroscope::RegisterWrite(Register reg, uint8_t value)
 {
-	//PX4_INFO_RAW("Gyro: RegisterWrite()\n");
-
 	uint8_t add = static_cast<uint8_t>(reg);
 	uint8_t cmd[2] = {add, value};
 	transfer(cmd, sizeof(cmd), nullptr, 0);
@@ -282,8 +270,6 @@ void BMI088_Gyroscope::RegisterWrite(Register reg, uint8_t value)
 
 void BMI088_Gyroscope::RegisterSetAndClearBits(Register reg, uint8_t setbits, uint8_t clearbits)
 {
-	PX4_INFO_RAW("BMI088_Gyroscope::RegisterSetAndClearBits()\n");
-
 	const uint8_t orig_val = RegisterRead(reg);
 
 	uint8_t val = (orig_val & ~clearbits) | setbits;
@@ -295,8 +281,6 @@ void BMI088_Gyroscope::RegisterSetAndClearBits(Register reg, uint8_t setbits, ui
 
 bool BMI088_Gyroscope::SelfTest()
 {
-	PX4_INFO_RAW("BMI088_Gyroscope::SelfTest()\n");
-
 	//Datasheet page 17 self test
 
 	//Set bit0 to enable built in self test
@@ -334,8 +318,6 @@ bool BMI088_Gyroscope::NormalRead(const hrt_abstime &timestamp_sample)
 	float z = 0;
 	uint8_t buffer[6] = {0};
 	uint8_t cmd[1] = {static_cast<uint8_t>(Register::READ_GYRO)};
-
-	//transfer(&cmd[0], 1, &buffer[0], 6);
 
 	if (transfer(&cmd[0], 1, &buffer[0], 6) != PX4_OK) {
 		PX4_WARN("transfer(&data[0], 1, &data[0], n_frames) != PX4_OK");
@@ -379,10 +361,6 @@ bool BMI088_Gyroscope::NormalRead(const hrt_abstime &timestamp_sample)
 
 	// sensor's frame is +x forward, +y left, +z up
 	//  flip y & z to publish right handed with z down (x forward, y right, z down)
-	//x = gyro_x;
-	//y = -gyro_y;
-	//z = -gyro_z;
-
 	x = res(0);
 	y = -res(1);
 	z = -res(2);

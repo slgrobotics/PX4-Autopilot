@@ -4,10 +4,18 @@ echo "IP: starting " $MYSCRIPTNAME
 
 # Devices are considered "Calibrated" in preflight check if CAL_*_ID is set.
 
-param set CAL_ACC0_ID 2359554
+# BMI088
+param set CAL_ACC0_ID 6953225
 param set CAL_ACC0_PRIO 50
+param set CAL_GYRO0_ID 6711561
+param set CAL_GYRO0_PRIO 50
+
+# MPU9250
+param set CAL_ACC1_ID 2359554
+param set CAL_GYRO1_ID 2359554
+
 # Accelerometer caliration "*SCALE" values 1.0000 - default, work just fine
-# Calibration - previously saved 5/03/2022 after proper calibration - old good sensor on plastic:
+# Calibration - previously saved 5/03/2022 after proper MPU9250 calibration - old good sensor on plastic:
 #param set CAL_ACC0_XSCALE 1.0137
 #param set CAL_ACC0_YSCALE 1.0198
 #param set CAL_ACC0_ZSCALE 1.0035
@@ -15,9 +23,6 @@ param set CAL_ACC0_PRIO 50
 #param set CAL_ACC0_XSCALE 1.0232
 #param set CAL_ACC0_YSCALE 1.0253
 #param set CAL_ACC0_ZSCALE 1.0123
-
-param set CAL_GYRO0_ID 2359554
-param set CAL_GYRO0_PRIO 50
 
 if [ $PX4_ROBOT_NAME = DRAGGER ]
 then
