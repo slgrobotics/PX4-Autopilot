@@ -91,8 +91,8 @@ private:
 		// Register                        | Set bits, Clear bits
 		{ Register::ACC_PWR_CONF,          0, ACC_PWR_CONF_BIT::acc_pwr_save }, //
 		{ Register::ACC_PWR_CTRL,          ACC_PWR_CTRL_BIT::acc_enable, 0 },
-		{ Register::ACC_CONF,              ACC_CONF_BIT::acc_bwp_Normal | ACC_CONF_BIT::acc_odr_1600, Bit1 | Bit0 },
-		{ Register::ACC_RANGE,             ACC_RANGE_BIT::acc_range_24g, 0 },
+		{ Register::ACC_CONF,              Bit7 | ACC_CONF_BIT::acc_bwp_osr_4 | ACC_CONF_BIT::acc_odr_200, Bit7 }, // Bit7 must be always set. LPF cutoff 20Hz. Pages 16,23.
+		{ Register::ACC_RANGE,             ACC_RANGE_BIT::acc_range_6g, 0 },
 		{ Register::FIFO_WTM_0,            0, 0 },
 		{ Register::FIFO_WTM_1,            0, 0 },
 		{ Register::FIFO_CONFIG_0,         FIFO_CONFIG_0_BIT::BIT1_ALWAYS | FIFO_CONFIG_0_BIT::FIFO_mode, 0 },
