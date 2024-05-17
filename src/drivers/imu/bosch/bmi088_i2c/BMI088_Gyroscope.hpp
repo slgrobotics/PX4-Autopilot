@@ -90,12 +90,12 @@ private:
 		// Register                         | Set bits, Clear bits
 		{ Register::GYRO_RANGE,             GYRO_RANGE_BIT::gyro_range_250_dps, 0 },
 		{ Register::GYRO_BANDWIDTH,         0, GYRO_BANDWIDTH_BIT::gyro_bw_400_Hz_47_Hz},
-		{ Register::GYRO_INT_CTRL,          GYRO_INT_CTRL_BIT::fifo_en, 0 },
-		{ Register::INT3_INT4_IO_CONF,      0, INT3_INT4_IO_CONF_BIT::Int3_od | INT3_INT4_IO_CONF_BIT::Int3_lvl },
-		{ Register::INT3_INT4_IO_MAP,       INT3_INT4_IO_MAP_BIT::Int3_fifo, 0 },
-		{ Register::FIFO_WM_ENABLE,         FIFO_WM_ENABLE_BIT::fifo_wm_enable, 0 },
+		{ Register::GYRO_INT_CTRL,          0, 0 },
+		{ Register::INT3_INT4_IO_CONF,      0, 0 },
+		{ Register::INT3_INT4_IO_MAP,       0, 0 },
+		{ Register::FIFO_WM_ENABLE,         0, 0 },
 		{ Register::FIFO_CONFIG_0,          0, 0 }, // fifo_water_mark_level_trigger_retain<6:0>
-		{ Register::FIFO_CONFIG_1,          FIFO_CONFIG_1_BIT::FIFO_MODE_STREAM, 0 },
+		{ Register::FIFO_CONFIG_1,          0, 0 },
 	};
 };
 

@@ -89,16 +89,16 @@ private:
 	static constexpr uint8_t size_register_cfg{10};
 	register_config_t _register_cfg[size_register_cfg] {
 		// Register                        | Set bits, Clear bits
-		{ Register::ACC_PWR_CONF,          0, ACC_PWR_CONF_BIT::acc_pwr_save }, //
+		{ Register::ACC_PWR_CONF,          0, ACC_PWR_CONF_BIT::acc_pwr_save },
 		{ Register::ACC_PWR_CTRL,          ACC_PWR_CTRL_BIT::acc_enable, 0 },
-		{ Register::ACC_CONF,              Bit7 | ACC_CONF_BIT::acc_bwp_osr_4 | ACC_CONF_BIT::acc_odr_200, Bit7 }, // Bit7 must be always set. LPF cutoff 20Hz. Pages 16,23.
-		{ Register::ACC_RANGE,             ACC_RANGE_BIT::acc_range_6g, 0 },
+		{ Register::ACC_CONF,              ACC_CONF_BIT::acc_bwp_osr_4 | ACC_CONF_BIT::acc_odr_200, 0 }, // LPF cutoff 20Hz. Pages 16,23.
+		{ Register::ACC_RANGE,             ACC_RANGE_BIT::acc_range_24g, 0 },
 		{ Register::FIFO_WTM_0,            0, 0 },
 		{ Register::FIFO_WTM_1,            0, 0 },
-		{ Register::FIFO_CONFIG_0,         FIFO_CONFIG_0_BIT::BIT1_ALWAYS | FIFO_CONFIG_0_BIT::FIFO_mode, 0 },
-		{ Register::FIFO_CONFIG_1,         FIFO_CONFIG_1_BIT::BIT4_ALWAYS | FIFO_CONFIG_1_BIT::Acc_en, 0 },
-		{ Register::INT1_IO_CONF,          INT1_IO_CONF_BIT::int1_out, 0 },
-		{ Register::INT1_INT2_MAP_DATA,    INT1_INT2_MAP_DATA_BIT::int1_fwm, 0},
+		{ Register::FIFO_CONFIG_0,         0, 0 },
+		{ Register::FIFO_CONFIG_1,         0, 0 },
+		{ Register::INT1_IO_CONF,          0, 0 },
+		{ Register::INT1_INT2_MAP_DATA,    0, 0},
 	};
 };
 

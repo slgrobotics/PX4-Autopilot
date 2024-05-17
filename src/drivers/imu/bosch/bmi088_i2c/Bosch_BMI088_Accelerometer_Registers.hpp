@@ -96,10 +96,10 @@ enum class Register : uint8_t {
 
 // ACC_CONF
 enum ACC_CONF_BIT : uint8_t {
-	// bits [7:4] acc_bwp
-	acc_bwp_Normal = (0x02 << 4),   // Filter setting normal
-	acc_bwp_osr_2  = (0x01 << 4),   // OSR4, 4-fold oversampling
-	acc_bwp_osr_4  = 0x00,          // OSR4, 4-fold oversampling
+	// bits [7:4] acc_bwp - Bit 7 must be set, except for conf reset.
+	acc_bwp_Normal = Bit7 | (0x02 << 4),   // Filter setting normal
+	acc_bwp_osr_2  = Bit7 | (0x01 << 4),   // OSR4, 2-fold oversampling
+	acc_bwp_osr_4  = Bit7,                 // OSR4, 4-fold oversampling
 	// bits [3:0] acc_odr
 	acc_odr_1600   = 0x0C,          // ODR 1600 Hz output data rate
 	acc_odr_800    = 0x0B,          // ODR 800 Hz
