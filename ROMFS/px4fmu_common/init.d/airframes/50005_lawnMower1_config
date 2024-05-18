@@ -357,7 +357,6 @@ param set CBRK_SUPPLY_CHK 894281
 if [ $PX4_ROBOT_NAME = DRAGGER ]
 then
 	# start BN-880 (UBLOX M8N) GPS. It was configured for 5Hz using u-center on Windows:
-	#gps start -d /dev/ttyS0 -b 115200 -p ubx -s
 	gps start -d /dev/ttyUSB0 -b 115200 -p ubx
 
 	# start BN-880 GPS compass on I2C bus, address 0x1e:
@@ -382,7 +381,7 @@ mpu9250 -s -R 0 -M -f 20000 start
 # start barometer emulation (AHRS must have baro input):
 ms5611 -X start
 
-# start MCP3008 based ADC on SPI:
+# start MCP3008 based ADC on SPI (/dev/spidev0.0):
 board_adc start
 
 # start standard RGB LED on "external" I2C bus, default address 85:
