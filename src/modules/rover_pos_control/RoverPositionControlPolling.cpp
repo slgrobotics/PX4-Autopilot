@@ -444,7 +444,7 @@ RoverPositionControl::gps_poll()
 				vel_n_m_s: 0.0200			# GPS North velocity, (metres/sec)
 				vel_e_m_s: 0.0020			# GPS East velocity, (metres/sec)
 				vel_d_m_s: 0.0130			# GPS Down velocity, (metres/sec)
-				cog_rad: 3.8606				# Course over ground (NOT heading, but direction of movement), -PI..PI, (radians)
+				cog_rad: 3.8606				# Course over ground (NOT heading, but direction of movement), -PI..PI, (radians) - !!! ACTUALLY, 0...2PI is delivered here !!!
 				timestamp_time_relative: 0	# timestamp + timestamp_time_relative = Time of the UTC timestamp since system start, (microseconds)
 				heading: nan				# heading angle of XYZ body frame rel to NED. Set to NaN if not available and updated (used for dual antenna GPS), (rad, [-PI, PI])
 				heading_offset: 0.0000		# heading offset of dual antenna array in body frame. Set to NaN if not applicable. (rad, [-PI, PI])

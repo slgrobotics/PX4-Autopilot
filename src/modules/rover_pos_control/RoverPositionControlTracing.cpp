@@ -378,16 +378,16 @@ void RoverPositionControl::debugPublishAll()
 		int i = 1;	// data[0] is reserved for total number of parameters, max 58
 
 		// calculated by L1 controller, and are present as members of _gnd_control:
-		_dbg_array.data[i++] = _target_bearing;
-		_dbg_array.data[i++] = _nav_bearing;
-		_dbg_array.data[i++] = _current_heading;
+		_dbg_array.data[i++] = math::degrees(_target_bearing);
+		_dbg_array.data[i++] = math::degrees(_nav_bearing);
+		_dbg_array.data[i++] = math::degrees(_current_heading);
 		_dbg_array.data[i++] = _crosstrack_error;	// meters
 		_dbg_array.data[i++] = _mission_torque_effort;
 		_dbg_array.data[i++] = _abbe_error; 		// meters
 
 		// calculated values that become published actuator inputs:
-		_dbg_array.data[i++] = _current_heading;
-		_dbg_array.data[i++] = _heading_error;
+		_dbg_array.data[i++] = math::degrees(_current_heading);
+		_dbg_array.data[i++] = math::degrees(_heading_error);
 		_dbg_array.data[i++] = _mission_torque_effort;	// result of RateControl
 		_dbg_array.data[i++] = _torque_control;		// what is sent to actuators, smoothed and trimmed
 		_dbg_array.data[i++] = (float)_pos_ctrl_state;
@@ -431,7 +431,7 @@ void RoverPositionControl::debugPublishAll()
 		_dbg_array.data[i++] = math::degrees(_ekf_current_heading);
 		_dbg_array.data[i++] = math::degrees(_mag_current_heading);
 		_dbg_array.data[i++] = math::degrees(_gps_current_heading);
-		_dbg_array.data[i++] = math::degrees(_sensor_gps_data.cog_rad);
+		_dbg_array.data[i++] = math::degrees(wrap_pi(_sensor_gps_data.cog_rad));
 		//_dbg_array.data[i++] = _sensor_gps_data.heading;			// only works with dual RTK GPS setup
 		//_dbg_array.data[i++] = _sensor_gps_data.heading_offset;
 		//_dbg_array.data[i++] = _sensor_gps_data.heading_accuracy;

@@ -75,20 +75,22 @@ param set EKF2_DECL_TYPE 0
 param set EKF2_MAG_DECL 4
 
 # Option 0: No IMU or Magnetometer
-param set SENS_IMU_MODE 0
-param set EKF2_MULTI_IMU 0
-param set SENS_MAG_MODE 0
-param set EKF2_MULTI_MAG 0
+#param set EKF2_MULTI_IMU 0
+#param set EKF2_MULTI_MAG 0
 
 # Option 1: we have one IMU without mag on mpu9250, and separate mag on RM3100 (best used):
 # Option 2: we have one IMU with mag on mpu9250 with -M:
 #param set EKF2_MULTI_IMU 1
 #param set EKF2_MULTI_MAG 1
 
-# Option 3: we have one IMU with mag (mpu9250 -M) and second mag (RM3100):
+# Option 3: we have one IMU with mag (mpu9250 -M) and second mag (RM3100) and 6-axis BMI088 IMU:
 #           this configuration quickly loses orientation, do not use without testing.
-#param set EKF2_MULTI_IMU 1
-#param set EKF2_MULTI_MAG 2
+#           *_MODE=0 allows publishing all Mag and IMU data, not only Primary's
+#           We will have 4 instances of EKF2 here ("ekf2 status")
+param set SENS_IMU_MODE 0
+param set SENS_MAG_MODE 0
+param set EKF2_MULTI_IMU 2
+param set EKF2_MULTI_MAG 2
 
 # wait for 5 seconds to declare GPS healthy:
 param set EKF2_REQ_GPS_H 5.0
@@ -439,5 +441,3 @@ pca9685_pwm_out start -a 0x40 -b 1
 
 echo "OK: finished " $MYSCRIPTNAME
 echo "====================================="
-
-
