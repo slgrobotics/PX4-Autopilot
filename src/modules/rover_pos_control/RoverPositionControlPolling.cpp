@@ -145,9 +145,49 @@ void RoverPositionControl::poll_everything()
 		}
 	}
 
-	/* store position change */
-	_local_pos_sub.update(&_local_pos);
-	_global_pos_sub.update(&_global_pos);
+	// store position change:
+	if (_local_pos_sub.update(&_local_pos)) {
+
+		_ekf_data_good = _local_pos.xy_valid && _local_pos.v_xy_valid && _local_pos.heading_good_for_control;
+		_ekf_flags = {_local_pos.xy_valid, _local_pos.v_xy_valid, _local_pos.heading_good_for_control};
+	}
+
+	if (_global_pos_sub.update(&_global_pos)) {
+		// see how far EKF-calculated position is from RTK GPS position:
+		updateEkfGpsDeviation();
+	}
+
+	if (_sensor_gps_data.fix_type == 6) {
+
+		// do some brute force substitutions of EKF estimates with precise RTK GPS data:
+
+		if (_position_prefer_gps) {
+			// replace EKF data with precise RTK GPS position:
+			_global_pos.lat = _sensor_gps_data.latitude_deg;
+			_global_pos.lon = _sensor_gps_data.longitude_deg;
+			_global_pos.alt = _sensor_gps_data.altitude_msl_m;
+
+			float gps_local_x = get_distance_to_next_waypoint(
+						    _global_pos.lat, _global_pos.lon,
+						    _local_pos.ref_lat, _global_pos.lon);
+
+			float gps_local_y = get_distance_to_next_waypoint(
+						    _global_pos.lat, _local_pos.ref_lon,
+						    _global_pos.lat, _global_pos.lon);
+
+			//PX4_WARN("Local Pos: x: %.3f / %.3f   y: %.3f / %.3f",
+			//	 (double)gps_local_x, (double)_local_pos.x, (double)gps_local_y, (double)_local_pos.y);
+
+			_local_pos.x = gps_local_x;
+			_local_pos.y = gps_local_y;
+			_local_pos.xy_valid = true;
+		}
+
+		if (_heading_prefer_gps && PX4_ISFINITE(_sensor_gps_data.heading)) {
+			_local_pos.heading = _sensor_gps_data.heading;
+			_local_pos.heading_good_for_control = true;
+		}
+	}
 
 	position_setpoint_triplet_poll();	// autonomous inputs - goal waypoint
 

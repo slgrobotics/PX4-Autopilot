@@ -127,6 +127,15 @@ void RoverPositionControl::debugPrint()
 {
 
 	if (hrt_elapsed_time(&_debug_print_last_called) > 500_ms) {
+
+		if (!_ekf_data_good) {
+			PX4_WARN("Bad EKF: xy_valid: %s  v_xy_valid: %s  hdg_good_for_control: %s",
+				 _ekf_flags(0) ? "true" : "false",
+				 _ekf_flags(1) ? "true" : "false",
+				 _ekf_flags(2) ? "true" : "false"
+				);
+		}
+
 		if (_control_mode.flag_control_manual_enabled) {
 			if (_control_mode.flag_armed) {
 				debugPrintManual();
@@ -184,8 +193,8 @@ void RoverPositionControl::debugPrintArriveDepart()
 void RoverPositionControl::debugPrintAll()
 {
 	if (_tracing_lev > 0) {
-		PX4_INFO_RAW("=== %s ===================    dt: %.3f ms\n", control_state_name(_pos_ctrl_state),
-			     (double)(_dt * 1000.0f));
+		PX4_INFO_RAW("=== %s ===================    dt: %.3f ms EKF off: %.1f cm\n", control_state_name(_pos_ctrl_state),
+			     (double)(_dt * 1000.0f), (double)(_ekfGpsDeviation * 100.0f));
 		//print_run_status();   // scheduler calling rate
 
 		if (_tracing_lev < 4) {
@@ -251,8 +260,9 @@ void RoverPositionControl::debugPrintAll()
 void RoverPositionControl::debugPrintManual()
 {
 	if (_tracing_lev > 0) {
-		PX4_INFO_RAW("=== MANUAL CONTROL %s ===== %s =====    dt: %.3f ms\n", _manual_using_pids ? "using PIDs" : "direct",
-			     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f));
+		PX4_INFO_RAW("=== MANUAL CONTROL %s ===== %s =====    dt: %.3f ms EKF off: %.1f cm\n",
+			     _manual_using_pids ? "using PIDs" : "direct",
+			     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f), (double)(_ekfGpsDeviation * 100.0f));
 
 		PX4_INFO_RAW("---Heading:  current: %.2f  gps: %.2f  ekf: %.2f  by vel: %.2f  mag: %.2f\n",
 			     (double)math::degrees(_current_heading), (double)math::degrees(_gps_current_heading),
@@ -412,7 +422,7 @@ void RoverPositionControl::debugPublishAll()
 		_dbg_array.data[i++] = _mission_velocity_setpoint;
 		_dbg_array.data[i++] = _x_vel;
 		_dbg_array.data[i++] = _x_vel_ema;
-		_dbg_array.data[i++] = NAN;	// TBD
+		_dbg_array.data[i++] = _ekfGpsDeviation;	// meters
 		_dbg_array.data[i++] = _thrust_control;
 
 		// distances:

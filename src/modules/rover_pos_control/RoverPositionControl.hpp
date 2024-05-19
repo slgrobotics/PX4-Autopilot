@@ -328,6 +328,7 @@ private:
 	void publishControllerStatus();
 
 	bool updateBearings();
+	void updateEkfGpsDeviation();
 	bool checkNewWaypointArrival();
 	float computeVelocitySetpoint();
 	float computeTurningSetpoint();
@@ -361,6 +362,9 @@ private:
 	float _target_bearing{0.0f};		// the direction between the rover position and next (current) waypoint
 	float _nav_bearing{0.0f};		// bearing from current position to L1 point
 	float _crosstrack_error{0.0f};		// meters, how far we are from the A-B line (A = previous, visited waypoint, B = current waypoint, target)
+	float _ekfGpsDeviation{0.0f};		// meters, how far is EKF2 calculated position from GPS reading
+	bool _ekf_data_good{false};		// combination of: _local_pos.xy_valid && v_xy_valid && heading_good_for_control
+	Vector3<bool> _ekf_flags;
 
 	// calculated values that become published actuator inputs:
 	float _mission_torque_effort{0.0f};	// Rate control output (yaw a.k.a. heading)
@@ -402,8 +406,9 @@ private:
 	float _ekf_ground_speed_abs{0.0f};	// meters per second
 
 	// EKF2 or RTK GPS measurement priority:
-	bool _speed_prefer_gps = false;
-	bool _heading_prefer_gps = false;
+	bool _speed_prefer_gps{false};
+	bool _heading_prefer_gps{false};
+	bool _position_prefer_gps{true};
 
 	// some values that we calculate locally to decide on throttling thrust near waypoints:
 	float _current_heading{0.0f};		// radians to absolute North, selected between EKF and GPS values above
