@@ -251,7 +251,7 @@ PARAM_DEFINE_FLOAT(GND_THR_MIN, -1.0f);
  *
  * @min -1
  * @max 1
- * @value 0 use ekf2 speed measurement
+ * @value 0 use ekf2 speed estimate
  * @value 1 use RTK gps speed, if available
  * @group Rover Position Control
  */
@@ -264,11 +264,24 @@ PARAM_DEFINE_INT32(GND_SP_MEAS_MODE, 0);
  *
  * @min -1
  * @max 1
- * @value 0 use ekf2 heading measurement
+ * @value 0 use ekf2 heading estimate
  * @value 1 use RTK gps heading, if available
  * @group Rover Position Control
  */
 PARAM_DEFINE_INT32(GND_HD_MEAS_MODE, 1);
+
+/**
+ * Control mode for coordinates and heading being substituded in EKF2 data by GPS Lat/Lon/Heading values
+ *
+ * This allows the user to choose between ekf2 or gps when calculating position and orientation
+ *
+ * @min -1
+ * @max 1
+ * @value 0 use ekf2 lat/lon/heading estimates
+ * @value 1 substitute RTK gps lat/lon/heading in EKF2 data, if available
+ * @group Rover Position Control
+ */
+PARAM_DEFINE_INT32(GND_EKF_OVERRIDE, 1);
 
 /**
  * Speed proportional gain

@@ -155,6 +155,10 @@ else
 
 	# Decrease right stick horizontal (yaw) response when in Manual mode:
 	param set GND_MAN_YAW_SC 0.25
+
+	# For RTK GPS set position and velocity noise low:
+	param set EKF2_GPS_P_NOISE 0.05
+	param set EKF2_GPS_V_NOISE 0.1
 fi
 
 # For dual RTK GPS heading:

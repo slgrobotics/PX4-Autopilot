@@ -29,11 +29,11 @@ param set-default SENS_IMU_MODE 0	# temporary till rcS issue 22767
 # -------------------
 
 # Enable debug data logging:
-# Data logging to "SD card" (~/px4wrk/log):
+# Data logging to "SD card" (~/px4wrk/log or build/px4_sitl_default/rootfs/log):
 # "0" = armed to disarmed
 param set SDLOG_MODE 0
 # Bit 5 - Debug. 123 = 0b01111011  163 = 0b10100011
-param set SDLOG_PROFILE 32
+param set SDLOG_PROFILE 123
 
 param set-default MIS_TAKEOFF_ALT 0.01
 #param set-default NAV_ACC_RAD 0.5

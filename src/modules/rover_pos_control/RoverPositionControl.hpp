@@ -408,7 +408,7 @@ private:
 	// EKF2 or RTK GPS measurement priority:
 	bool _speed_prefer_gps{false};
 	bool _heading_prefer_gps{false};
-	bool _position_prefer_gps{true};
+	bool _ekf_override_by_gps{true};
 
 	// some values that we calculate locally to decide on throttling thrust near waypoints:
 	float _current_heading{0.0f};		// radians to absolute North, selected between EKF and GPS values above
@@ -536,6 +536,7 @@ private:
 
 		(ParamInt<px4::params::GND_SP_MEAS_MODE>) _param_speed_measurement_mode,
 		(ParamInt<px4::params::GND_HD_MEAS_MODE>) _param_heading_measurement_mode,
+		(ParamInt<px4::params::GND_EKF_OVERRIDE>) _param_ekf_override_by_gps,
 
 		(ParamFloat<px4::params::GND_SPEED_P>) _param_speed_p,
 		(ParamFloat<px4::params::GND_SPEED_I>) _param_speed_i,

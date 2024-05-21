@@ -115,7 +115,7 @@ void RoverPositionControl::poll_everything()
 
 #endif // DEBUG_MY_PRINT
 
-	// See GND_HD_MEAS_MODE, GND_SP_MEAS_MODE
+	// See GND_HD_MEAS_MODE, GND_SP_MEAS_MODE and GND_EKF_OVERRIDE:
 
 	_gps_current_heading = _sensor_gps_data.heading;	// only valid for dual antenna RTK, otherwise NAN
 
@@ -157,35 +157,39 @@ void RoverPositionControl::poll_everything()
 		updateEkfGpsDeviation();
 	}
 
-	if (_sensor_gps_data.fix_type == 6) {
+	if (_ekf_override_by_gps && _sensor_gps_data.fix_type == 6) {	// GND_EKF_OVERRIDE
 
-		// do some brute force substitutions of EKF estimates with precise RTK GPS data:
+		// do some brute force substitutions of EKF estimates with precise RTK GPS data.
 
-		if (_position_prefer_gps) {
-			// replace EKF data with precise RTK GPS position:
-			_global_pos.lat = _sensor_gps_data.latitude_deg;
-			_global_pos.lon = _sensor_gps_data.longitude_deg;
-			_global_pos.alt = _sensor_gps_data.altitude_msl_m;
+		_global_pos.lat = _sensor_gps_data.latitude_deg;
+		_global_pos.lon = _sensor_gps_data.longitude_deg;
+		_global_pos.alt = _sensor_gps_data.altitude_msl_m;
 
-			float gps_local_x = get_distance_to_next_waypoint(
-						    _global_pos.lat, _global_pos.lon,
-						    _local_pos.ref_lat, _global_pos.lon);
+		float gps_local_x = get_distance_to_next_waypoint(
+					    _global_pos.lat, _global_pos.lon,
+					    _local_pos.ref_lat, _global_pos.lon);
 
-			float gps_local_y = get_distance_to_next_waypoint(
-						    _global_pos.lat, _local_pos.ref_lon,
-						    _global_pos.lat, _global_pos.lon);
+		float gps_local_y = get_distance_to_next_waypoint(
+					    _global_pos.lat, _local_pos.ref_lon,
+					    _global_pos.lat, _global_pos.lon);
 
-			//PX4_WARN("Local Pos: x: %.3f / %.3f   y: %.3f / %.3f",
-			//	 (double)gps_local_x, (double)_local_pos.x, (double)gps_local_y, (double)_local_pos.y);
+		//PX4_WARN("Local Pos: x: %.3f / %.3f   y: %.3f / %.3f",
+		//	 (double)gps_local_x, (double)_local_pos.x, (double)gps_local_y, (double)_local_pos.y);
 
-			_local_pos.x = gps_local_x;
-			_local_pos.y = gps_local_y;
-			_local_pos.xy_valid = true;
-		}
+		_local_pos.x = gps_local_x;
+		_local_pos.y = gps_local_y;
+		_local_pos.xy_valid = true;
 
-		if (_heading_prefer_gps && PX4_ISFINITE(_sensor_gps_data.heading)) {
+		if (PX4_ISFINITE(_gps_current_heading)) {
 			_local_pos.heading = _sensor_gps_data.heading;
 			_local_pos.heading_good_for_control = true;
+		}
+
+		if (_sensor_gps_data.vel_ned_valid) {
+			PX4_INFO_RAW("V subst:   X: %.3f -> %.3f   Y: %.3f -> %.3f\n", (double)_local_pos.vx,
+				     (double)_sensor_gps_data.vel_e_m_s, (double)_local_pos.vy, (double)_sensor_gps_data.vel_n_m_s);
+			_local_pos.vx = _sensor_gps_data.vel_e_m_s;
+			_local_pos.vy = _sensor_gps_data.vel_n_m_s;
 		}
 	}
 
@@ -226,8 +230,9 @@ void RoverPositionControl::updateParams()
 	_tracing_lev = _param_tracing_lev.get();	// GND_TRACING_LEV
 	_gps_minfix = _param_gps_minfix.get();		// GND_GPS_MINFIX - Minimal acceptable GPS fix for heading calculations
 
-	_speed_prefer_gps = _param_speed_measurement_mode.get() == 1;			// GND_SP_MEAS_MODE
-	_heading_prefer_gps = _param_heading_measurement_mode.get() == 1;		// GND_HD_MEAS_MODE
+	_speed_prefer_gps = _param_speed_measurement_mode.get() == 1;		// GND_SP_MEAS_MODE
+	_heading_prefer_gps = _param_heading_measurement_mode.get() == 1;	// GND_HD_MEAS_MODE
+	_ekf_override_by_gps = _param_ekf_override_by_gps.get() == 1;		// GND_EKF_OVERRIDE
 
 	_ekf_heading_correction = math::radians(_param_heading_err_decl.get());	// GND_HEADING_DECL
 
