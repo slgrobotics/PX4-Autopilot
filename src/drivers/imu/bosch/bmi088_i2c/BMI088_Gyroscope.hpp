@@ -89,9 +89,10 @@ private:
 	static constexpr uint8_t size_register_cfg{8};
 	register_config_t _register_cfg[size_register_cfg] {
 		// Register                         | Set bits, Clear bits
-		{ Register::GYRO_RANGE,             GYRO_RANGE_BIT::gyro_range_250_dps, 0 },
-		//{ Register::GYRO_RANGE,             GYRO_RANGE_BIT::gyro_range_2000_dps, 0 },
-		{ Register::GYRO_BANDWIDTH,         0, GYRO_BANDWIDTH_BIT::gyro_bw_1000_Hz_116_Hz},	// page 28
+		//{ Register::GYRO_RANGE,             GYRO_RANGE_BIT::gyro_range_250_dps, 0 },
+		{ Register::GYRO_RANGE,             GYRO_RANGE_BIT::gyro_range_2000_dps, 0 },
+		{ Register::GYRO_BANDWIDTH,         GYRO_BANDWIDTH_BIT::gyro_bw_2000_Hz_532_hz, 0}, // page 28
+		//{ Register::GYRO_BANDWIDTH,         GYRO_BANDWIDTH_BIT::gyro_bw_1000_Hz_116_Hz, 0},
 		{ Register::GYRO_INT_CTRL,          0, 0 },
 		{ Register::INT3_INT4_IO_CONF,      0, 0 },
 		{ Register::INT3_INT4_IO_MAP,       0, 0 },

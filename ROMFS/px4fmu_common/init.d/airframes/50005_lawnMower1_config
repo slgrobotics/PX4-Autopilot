@@ -161,8 +161,13 @@ else
 	param set EKF2_GPS_V_NOISE 0.1
 fi
 
+# Disable all but GPS constellations (Glonass, Galileo...) fo faster rate:
+param set GPS_1_GNSS 1
+param set GPS_2_GNSS 1
+
 # For dual RTK GPS heading:
 param set GPS_YAW_OFFSET 180
+param set GPS_PITCH_OFFSET -45
 # Secondary GPS (Moving Base) is connected to telemetry radio for RTCM feed, the radio baud rate is 57600.
 # This also affects UART2 on the Rover GPS, but this is OK.
 param set GPS_UBX_MODE 1
@@ -171,6 +176,7 @@ param set GPS_UBX_BAUD2 57600
 param set SENS_GPS_MASK 0
 param set SENS_GPS_PRIME 0
 
+# Automotive model:
 param set GPS_UBX_DYNMODEL 4
 # We can drive in manual mode when GPS check fails:
 param set COM_ARM_WO_GPS 1

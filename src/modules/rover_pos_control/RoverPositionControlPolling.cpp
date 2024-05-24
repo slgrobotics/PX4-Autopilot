@@ -185,12 +185,17 @@ void RoverPositionControl::poll_everything()
 			_local_pos.heading_good_for_control = true;
 		}
 
+		/* this doesn't seem to work with real RTK GPS. Velocities seem to match in SITL:
 		if (_sensor_gps_data.vel_ned_valid) {
-			PX4_INFO_RAW("V subst:   X: %.3f -> %.3f   Y: %.3f -> %.3f\n", (double)_local_pos.vx,
-				     (double)_sensor_gps_data.vel_e_m_s, (double)_local_pos.vy, (double)_sensor_gps_data.vel_n_m_s);
-			_local_pos.vx = _sensor_gps_data.vel_e_m_s;
-			_local_pos.vy = _sensor_gps_data.vel_n_m_s;
-		}
+			if(_control_mode.flag_armed) {
+				PX4_INFO_RAW("V subst:   X: %.3f -> %.3f   Y: %.3f -> %.3f\n",
+					(double)_local_pos.vx, (double)_sensor_gps_data.vel_n_m_s,
+					(double)_local_pos.vy, (double)_sensor_gps_data.vel_e_m_s);
+			}
+			_local_pos.vx = _sensor_gps_data.vel_n_m_s;
+			_local_pos.vy = _sensor_gps_data.vel_e_m_s;
+			_local_pos.vz = 0.0f;
+		}*/
 	}
 
 	position_setpoint_triplet_poll();	// autonomous inputs - goal waypoint
