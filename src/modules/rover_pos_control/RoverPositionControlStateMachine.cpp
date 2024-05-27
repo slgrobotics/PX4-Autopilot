@@ -319,6 +319,8 @@ void RoverPositionControl::workStateMachine()
 
 	case WP_DEPARTING:		// we turned to first/next waypoint and must start accelerating
 
+		cte_begin(); // just invalidate _crosstrack_error_metrics to avoid confusion
+
 		if (updateBearings()) {
 
 			if (_wp_previous_dist < _accel_dist) {
@@ -336,6 +338,7 @@ void RoverPositionControl::workStateMachine()
 			} else {
 				// we are far enough from departure waypoint and not heading to the first waypoint, switch to L1:
 				setStateMachineState(L1_GOTO_WAYPOINT);
+				cte_begin();
 			}
 
 		} else {
@@ -353,6 +356,7 @@ void RoverPositionControl::workStateMachine()
 			if (is_arriving) {
 				// Close enough to destination waypoint, switch from L1 to direct heading:
 				setStateMachineState(WP_ARRIVING);
+				cte_end();
 
 			} else {
 
@@ -367,6 +371,7 @@ void RoverPositionControl::workStateMachine()
 #endif // DEBUG_MY_PRINT
 						// we are so much off course, or overshot the waypoint, that we need to switch to non-L1 algorithm:
 						setStateMachineState(WP_ARRIVING);
+						cte_end();
 						_mission_turning_setpoint = 0.0f;
 						setDefaultMissionSpeed();	// will be adusted later by adjustThrustAndYaw()
 
@@ -376,6 +381,8 @@ void RoverPositionControl::workStateMachine()
 
 						navigate_L1();	// compute all L1 variables
 
+						cte_compute();
+
 						_mission_turning_setpoint = computeTurningSetpoint();
 
 						setDefaultMissionSpeed();	// will be adusted later by adjustThrustAndYaw()
@@ -384,6 +391,7 @@ void RoverPositionControl::workStateMachine()
 				} else {
 					PX4_WARN("Lost _heading_error while in L1_GOTO_WAYPOINT");
 					setStateMachineState(POS_STATE_IDLE);	// somehow we lost heading error
+					cte_end();
 				}
 			}
 

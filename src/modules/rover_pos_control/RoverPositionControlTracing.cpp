@@ -171,7 +171,7 @@ void RoverPositionControl::debugPrintArriveDepart()
 					 (double)(_dt * 1000.0f));
 			*/
 
-			PX4_INFO_RAW("---- %s hdg_err: %.2f / %.2f abbe: %.2f m  turn_sp: %.4f  miss_torq_efrt: %.4f\n",
+			PX4_INFO_RAW("--- %s hdg_err: %.2f / %.2f abbe: %.2f m  turn_sp: %.4f  miss_torq_efrt: %.4f\n",
 				     control_state_name(_pos_ctrl_state),
 				     (double)math::degrees(_heading_error), (double)math::degrees(_heading_error_vel),
 				     (double)_abbe_error, (double)_mission_turning_setpoint,
@@ -198,6 +198,10 @@ void RoverPositionControl::debugPrintAll()
 		PX4_INFO_RAW("=== %s ===================    dt: %.3f ms EKF off: %.1f cm\n", control_state_name(_pos_ctrl_state),
 			     (double)(_dt * 1000.0f), (double)(_ekfGpsDeviation * 100.0f));
 		//print_run_status();   // scheduler calling rate
+
+		if (PX4_ISFINITE(_crosstrack_error_metrics)) {
+			PX4_INFO_RAW("---    last leg crosstrack error metrics: %.2f cm\n", (double)(_crosstrack_error_metrics * 100.0f));
+		}
 
 		if (_tracing_lev < 4) {
 			PX4_INFO_RAW("---    trgt_berng: %.2f  curr_hdg: %.2f  hdg_error: %.2f / %.2f\n",
@@ -469,6 +473,8 @@ void RoverPositionControl::debugPublishAll()
 		_dbg_array.data[i++] = 	_alarm_servo_position;
 		_dbg_array.data[i++] = 	_wheel_left_servo_position;
 		_dbg_array.data[i++] = 	_wheel_right_servo_position;
+
+		_dbg_array.data[i++] = 	_crosstrack_error_metrics;
 
 		_dbg_array.data[0] = i;	// must be less than 58, per size of the data[]
 

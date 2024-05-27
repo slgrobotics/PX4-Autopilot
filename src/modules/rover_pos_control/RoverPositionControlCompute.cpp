@@ -171,12 +171,14 @@ float RoverPositionControl::computeTorqueEffort()
 				torque_effort = setpoint_yaw * 0.2f;
 			}
 
+			/*
 			PX4_INFO_RAW("%.4f/%.4f/%.4f  xtrk: %.1f cm   msn_trng_sp: %.3f   sp_yaw: %.3f  torque_effort: %.3f\n",
 				     (double)turning_setpoint_hdg, (double)turning_setpoint_l1, (double)turning_setpoint_lf,
 				     (double)(_crosstrack_error * 100.0f),
 				     (double)_mission_turning_setpoint,
 				     (double)_rates_setpoint_yaw,
 				     (double)torque_effort);
+			*/
 
 			/*
 			// Far from the line use traditional L1 Controller, _nav_lateral_acceleration_demand as it was intended:

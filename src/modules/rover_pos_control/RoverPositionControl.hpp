@@ -281,21 +281,21 @@ private:
 	enum UGV_POSCTRL_MODE : int {
 		UGV_POSCTRL_MODE_AUTO,		// executing mission
 		UGV_POSCTRL_MODE_OTHER		// under manual control
-	} _control_mode_current{UGV_POSCTRL_MODE_OTHER};			///< used to check the mode in the last control loop iteration. Use to check if the last iteration was in the same mode.
+	} _control_mode_current{UGV_POSCTRL_MODE_OTHER}; // used to check the mode in the last control loop iteration. Use to check if the last iteration was in the same mode.
 
 
 	enum POS_CTRLSTATES : int {
-		POS_STATE_NONE,				// undefined/invalid state, no need controlling anything
-		POS_STATE_IDLE,				// idle state, no need controlling anything
-		L1_GOTO_WAYPOINT,			// target waypoint is far away, we can use L1 and cruise speed
-		WP_ARRIVING,				// target waypoint is close, we need to slow down and head straight to it till stop
-		WP_ARRIVED,					// reached waypoint, completely stopped. Make sure mission knows about it
-		WP_TURNING,					// we need to turn in place to the next waypoint
-		WP_DEPARTING,				// we turned to next waypoint and must start accelerating
-		POS_STATE_STOPPING,			// we hit a waypoint and need to stop
+		POS_STATE_NONE,			// undefined/invalid state, no need controlling anything
+		POS_STATE_IDLE,			// idle state, no need controlling anything
+		L1_GOTO_WAYPOINT,		// target waypoint is far away, we can use L1 and cruise speed
+		WP_ARRIVING,			// target waypoint is close, we need to slow down and head straight to it till stop
+		WP_ARRIVED,			// reached waypoint, completely stopped. Make sure mission knows about it
+		WP_TURNING,			// we need to turn in place to the next waypoint
+		WP_DEPARTING,			// we turned to next waypoint and must start accelerating
+		POS_STATE_STOPPING,		// we hit a waypoint and need to stop
 		POS_STATE_MISSION_START,	// turn on what we need for the mission (lights, gas engine throttle, blades)
 		POS_STATE_MISSION_END		// turn off what we needed for the mission at the end or error
-	} _pos_ctrl_state {POS_STATE_NONE};			/// Position control state machine
+	} _pos_ctrl_state {POS_STATE_NONE};	// Position control state machine
 
 	const char *control_state_name(const POS_CTRLSTATES state);
 
@@ -362,9 +362,32 @@ private:
 	float _target_bearing{0.0f};		// the direction between the rover position and next (current) waypoint
 	float _nav_bearing{0.0f};		// bearing from current position to L1 point
 	float _crosstrack_error{0.0f};		// meters, how far we are from the A-B line (A = previous, visited waypoint, B = current waypoint, target)
+	float _crosstrack_error_metrics{NAN};	// average (compound) absolute crosstrack error diring the line following leg
 	float _ekfGpsDeviation{0.0f};		// meters, how far is EKF2 calculated position from GPS reading
 	bool _ekf_data_good{false};		// combination of: _local_pos.xy_valid && v_xy_valid && heading_good_for_control
 	Vector3<bool> _ekf_flags;
+
+	// to compute _crosstrack_error_metrics:
+	float _cte_accum{NAN};
+	int _cte_count{0};
+	hrt_abstime _cte_lf_started{0};
+
+	inline void cte_begin()
+	{
+		_cte_accum = 0.0f; _cte_count = 0; _cte_lf_started = _now; _crosstrack_error_metrics = NAN;
+	};
+
+	inline void cte_compute()
+	{
+		if (PX4_ISFINITE(_crosstrack_error) && hrt_elapsed_time(&_cte_lf_started) > 5 * 1_s) {
+			_cte_accum += abs(_crosstrack_error); ++_cte_count;
+		}
+	};
+
+	inline void cte_end()
+	{
+		_crosstrack_error_metrics = _cte_accum / _cte_count;
+	};
 
 	// calculated values that become published actuator inputs:
 	float _mission_torque_effort{0.0f};	// Rate control output (yaw a.k.a. heading)
