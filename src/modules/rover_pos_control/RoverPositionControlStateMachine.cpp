@@ -500,7 +500,7 @@ void RoverPositionControl::adjustAcuatorSetpoints()
 	case POS_STATE_NONE:	// undefined/invalid state, no need to control anything
 	case POS_STATE_IDLE:	// idle state, just make sure we stay put.
 
-		_gas_engine_throttle = _param_gas_throttle_idle.get();
+		_gas_engine_throttle = _param_gas_throttle_idle.get();	// GND_GTL_IDLE *0.0
 		_cutter_setpoint = ACTUATOR_OFF;
 		_alarm_dev_level = ACTUATOR_OFF;
 
@@ -508,44 +508,44 @@ void RoverPositionControl::adjustAcuatorSetpoints()
 
 	case WP_ARRIVING:		// target waypoint is close, we need to slow down and head straight to it till stop
 
-		_gas_engine_throttle = _param_gas_throttle_arriving.get();
+		_gas_engine_throttle = _param_gas_throttle_arriving.get();	// GND_GTL_ARRIVE *0.8
 
 		break;
 
 	case WP_ARRIVED:		// reached waypoint. Make sure mission knows about it
 
-		_gas_engine_throttle = _param_gas_throttle_arriving.get();
+		_gas_engine_throttle = _param_gas_throttle_arriving.get();	// GND_GTL_ARRIVE *0.8
 
 		break;
 
 	case WP_TURNING:		// we need to turn in place towards the next waypoint
 
-		_gas_engine_throttle = _param_gas_throttle_turning.get();
+		_gas_engine_throttle = _param_gas_throttle_turning.get();	// GND_GTL_TURN *0.2
 
 		break;
 
 	case WP_DEPARTING:		// we turned to next waypoint and must start accelerating
 
-		_gas_engine_throttle = _param_gas_throttle_departing.get();
+		_gas_engine_throttle = _param_gas_throttle_departing.get();	// GND_GTL_DEPART *0.8
 		//_cutter_setpoint = ACTUATOR_ON;
 
 		break;
 
 	case L1_GOTO_WAYPOINT: 	// target waypoint is far away, we can use L1 and cruise speed
 
-		_gas_engine_throttle = _param_gas_throttle_straight.get();
+		_gas_engine_throttle = _param_gas_throttle_straight.get();	// GND_GTL_STRAIGHT *1.0
 
 		break;
 
 	case POS_STATE_STOPPING: 		// we hit a waypoint and need to stop before we declare "we arrived"
 
-		_gas_engine_throttle = _param_gas_throttle_idle.get();
+		_gas_engine_throttle = _param_gas_throttle_idle.get();	// GND_GTL_IDLE *0.0
 
 		break;
 
 	case POS_STATE_MISSION_START:	// turn on what we need for the mission (lights, gas engine throttle, blades)
 
-		_gas_engine_throttle = _param_gas_throttle_idle.get();
+		_gas_engine_throttle = _param_gas_throttle_idle.get();	// GND_GTL_IDLE *0.0
 		_cutter_setpoint = ACTUATOR_OFF;			// keep the tools off until we start departing from the first waypoint of the mission
 		_alarm_dev_level = ACTUATOR_OFF;
 
@@ -553,7 +553,7 @@ void RoverPositionControl::adjustAcuatorSetpoints()
 
 	case POS_STATE_MISSION_END:		// turn off what we needed for the mission at the end or error
 
-		_gas_engine_throttle = _param_gas_throttle_idle.get();
+		_gas_engine_throttle = _param_gas_throttle_idle.get();	// GND_GTL_IDLE *0.0
 		_cutter_setpoint = ACTUATOR_OFF;
 		_alarm_dev_level = ACTUATOR_OFF;
 

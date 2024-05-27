@@ -572,7 +572,7 @@ private:
 		(ParamFloat<px4::params::GND_RATE_IMAX>) _param_rate_imax,
 		(ParamFloat<px4::params::GND_RATE_IMINSPD>) _param_rate_i_minspeed,
 		(ParamFloat<px4::params::GND_RATE_AD_TRIM>) _param_rate_depart_arrive_trim,
-		(ParamFloat<px4::params::GND_RATE_SC>) _param_heading_rate_scaler,
+		(ParamFloat<px4::params::GND_RATE_AD_SC>) _param_heading_ad_rate_scaler,
 
 		// R/C yaw scaler to control right stick horizontal movement effect, avoiding too sensitive feel:
 		(ParamFloat<px4::params::GND_MAN_YAW_SC>) _param_manual_yaw_scaler,

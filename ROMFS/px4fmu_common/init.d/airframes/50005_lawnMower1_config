@@ -61,14 +61,6 @@ param set COM_POS_FS_DELAY 5
 param set COM_POS_FS_EPH 20
 param set COM_POS_LOW_EPH -1.0
 
-# EKF2 estimator:
-# only consider heading from magnetometer (1) or use all three axisi (2):
-#	0: Automatic (heading on ground, 3D in-flight)
-#	1: Magnetic heading (2D)
-#	2: 3-axis (3D)
-#   5: none (i.e. use GPS instead, disable/ignore magnetometer)
-param set EKF2_MAG_TYPE 5
-
 # Default 7, i.e. use geo lookup and save on disarm
 # Option: preset mag declination, no geo lookup, do not use declination in 3D mode (see .post file at the end):
 param set EKF2_DECL_TYPE 0
@@ -112,9 +104,9 @@ then
 	param set RDD_WHEEL_RADIUS 0.18
 	param set RDD_WHEEL_SPEED 6.0	# Maximum wheel speed rad/s
 
-	# Dragger, having non-RTK GPS, needs vertical reference - Baro sim.
+	# Dragger, having non-RTK GPS, needs Mag and vertical reference - Baro sim.
 	param set SYS_HAS_BARO 1
-	param set SENS_MAG_MODE 1
+	# Magnetic heading (2D):
 	param set EKF2_MAG_TYPE 1
 
 	param set EKF2_BARO_CTRL 1
@@ -145,6 +137,9 @@ else
 	param set RDD_WHEEL_RADIUS 0.22
 	param set RDD_WHEEL_SPEED 10.0	# Maximum wheel speed rad/s
 
+	# Decrease right stick horizontal (yaw) response when in Manual mode:
+	param set GND_MAN_YAW_SC 0.25
+
 	param set SYS_HAS_BARO 0
 	param set EKF2_BARO_CTRL 0
 	# have EKF2 estimator use BARO (0) or GPS (1) for altitude.
@@ -153,19 +148,39 @@ else
 	#param set EKF2_GPS_CTRL 7
 	param set EKF2_GPS_CTRL 15
 
-	# Decrease right stick horizontal (yaw) response when in Manual mode:
-	param set GND_MAN_YAW_SC 0.25
+	# only consider heading from magnetometer (1) or use all three axisi (2):
+	#	0: Automatic (heading on ground, 3D in-flight)
+	#	1: Magnetic heading (2D)
+	#	2: 3-axis (3D)
+	#   5: none (i.e. use GPS instead, disable/ignore magnetometer)
+	param set EKF2_MAG_TYPE 5
 
 	# For RTK GPS set position and velocity noise low:
 	param set EKF2_GPS_P_NOISE 0.05
 	param set EKF2_GPS_V_NOISE 0.1
+
+	# Adjust other GPS related parameters for better EKF2 operation:
+	#param set EKF2_GPS_DELAY 110
+	#param set EKF2_GPS_POS_X 0
+	#param set EKF2_GPS_POS_Y 0
+	param set EKF2_GPS_POS_Z 0.5
+	#param set EKF2_TAU_POS 0.25
 fi
 
-# Disable all but GPS constellations (Glonass, Galileo...) fo faster rate:
-param set GPS_1_GNSS 1
-param set GPS_2_GNSS 1
+# Disable all but GPS constellations (Glonass, Galileo...) for faster rate (not very stable RTK fix):
+#param set GPS_1_GNSS 1
+#param set GPS_2_GNSS 1
+# Use GPS, SBAS and Glonass (good 9Hz):
+param set GPS_1_GNSS 19
+param set GPS_2_GNSS 19
+# Use GPS, SBAS, BeiDou and Glonass (slow):
+#param set GPS_1_GNSS 27
+#param set GPS_2_GNSS 27
+# Use all:
+#param set GPS_1_GNSS 0
+#param set GPS_2_GNSS 0
 
-# For dual RTK GPS heading:
+# For dual RTK GPS heading - 180 when Moving Base antenna is in front of the Rover GPS antenna:
 param set GPS_YAW_OFFSET 180
 param set GPS_PITCH_OFFSET -45
 # Secondary GPS (Moving Base) is connected to telemetry radio for RTCM feed, the radio baud rate is 57600.

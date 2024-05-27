@@ -174,7 +174,7 @@ PARAM_DEFINE_FLOAT(GND_LF_MAX, 0.8f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_LF_PID_SC, 0.1);
+PARAM_DEFINE_FLOAT(GND_LF_PID_SC, 1.0f);
 
 /**
  * Line Following path width
@@ -534,7 +534,7 @@ PARAM_DEFINE_FLOAT(GND_RATE_AD_TRIM, 0.8f);
  * @increment 0.1
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_RATE_SC, 2.0f);
+PARAM_DEFINE_FLOAT(GND_RATE_AD_SC, 2.0f);
 
 /**
  * When turning at waypoint, set yaw rate setpoint for Rate Control

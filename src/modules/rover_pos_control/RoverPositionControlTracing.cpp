@@ -128,6 +128,7 @@ void RoverPositionControl::debugPrint()
 
 	if (hrt_elapsed_time(&_debug_print_last_called) > 500_ms) {
 
+		/*
 		if (!_ekf_data_good) {
 			PX4_WARN("Bad EKF: xy_valid: %s  v_xy_valid: %s  hdg_good_for_control: %s",
 				 _ekf_flags(0) ? "true" : "false",
@@ -135,6 +136,7 @@ void RoverPositionControl::debugPrint()
 				 _ekf_flags(2) ? "true" : "false"
 				);
 		}
+		*/
 
 		if (_control_mode.flag_control_manual_enabled) {
 			if (_control_mode.flag_armed) {
