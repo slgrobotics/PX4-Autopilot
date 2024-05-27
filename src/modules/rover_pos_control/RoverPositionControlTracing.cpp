@@ -199,8 +199,10 @@ void RoverPositionControl::debugPrintAll()
 			     (double)(_dt * 1000.0f), (double)(_ekfGpsDeviation * 100.0f));
 		//print_run_status();   // scheduler calling rate
 
-		if (PX4_ISFINITE(_crosstrack_error_metrics)) {
-			PX4_INFO_RAW("---    last leg crosstrack error metrics: %.2f cm\n", (double)(_crosstrack_error_metrics * 100.0f));
+		if (PX4_ISFINITE(_crosstrack_error_avg)) {
+			PX4_INFO_RAW("---    last leg crosstrack error:  avg: %.1f cm  max: %.1f cm\n",
+				     (double)(_crosstrack_error_avg * 100.0f),
+				     (double)(_crosstrack_error_max * 100.0f));
 		}
 
 		if (_tracing_lev < 4) {
@@ -474,7 +476,7 @@ void RoverPositionControl::debugPublishAll()
 		_dbg_array.data[i++] = 	_wheel_left_servo_position;
 		_dbg_array.data[i++] = 	_wheel_right_servo_position;
 
-		_dbg_array.data[i++] = 	_crosstrack_error_metrics;
+		_dbg_array.data[i++] = 	_crosstrack_error_avg;
 
 		_dbg_array.data[0] = i;	// must be less than 58, per size of the data[]
 

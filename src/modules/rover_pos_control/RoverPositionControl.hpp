@@ -362,31 +362,35 @@ private:
 	float _target_bearing{0.0f};		// the direction between the rover position and next (current) waypoint
 	float _nav_bearing{0.0f};		// bearing from current position to L1 point
 	float _crosstrack_error{0.0f};		// meters, how far we are from the A-B line (A = previous, visited waypoint, B = current waypoint, target)
-	float _crosstrack_error_metrics{NAN};	// average (compound) absolute crosstrack error diring the line following leg
+	float _crosstrack_error_avg{NAN};	// average (compound) absolute crosstrack error diring the line following leg
+	float _crosstrack_error_max{NAN};	// max absolute crosstrack error diring the line following leg
 	float _ekfGpsDeviation{0.0f};		// meters, how far is EKF2 calculated position from GPS reading
 	bool _ekf_data_good{false};		// combination of: _local_pos.xy_valid && v_xy_valid && heading_good_for_control
 	Vector3<bool> _ekf_flags;
 
-	// to compute _crosstrack_error_metrics:
+	// to compute _crosstrack_error_avg / _max:
 	float _cte_accum{NAN};
 	int _cte_count{0};
 	hrt_abstime _cte_lf_started{0};
 
 	inline void cte_begin()
 	{
-		_cte_accum = 0.0f; _cte_count = 0; _cte_lf_started = _now; _crosstrack_error_metrics = NAN;
+		_cte_accum = 0.0f; _cte_count = 0; _cte_lf_started = _now; _crosstrack_error_avg = NAN; _crosstrack_error_max = 0.0f;
 	};
 
 	inline void cte_compute()
 	{
 		if (PX4_ISFINITE(_crosstrack_error) && hrt_elapsed_time(&_cte_lf_started) > 5 * 1_s) {
-			_cte_accum += abs(_crosstrack_error); ++_cte_count;
+			float cte_abs = abs(_crosstrack_error);
+			_crosstrack_error_max = math::max(_crosstrack_error_max, cte_abs);
+			_cte_accum += cte_abs;
+			++_cte_count;
 		}
 	};
 
 	inline void cte_end()
 	{
-		_crosstrack_error_metrics = _cte_accum / _cte_count;
+		_crosstrack_error_avg = _cte_accum / _cte_count;
 	};
 
 	// calculated values that become published actuator inputs:

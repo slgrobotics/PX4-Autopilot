@@ -319,7 +319,7 @@ void RoverPositionControl::workStateMachine()
 
 	case WP_DEPARTING:		// we turned to first/next waypoint and must start accelerating
 
-		cte_begin(); // just invalidate _crosstrack_error_metrics to avoid confusion
+		cte_begin(); // just invalidate _crosstrack_error_avg to avoid confusion
 
 		if (updateBearings()) {
 
