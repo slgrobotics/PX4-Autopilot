@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2015-2021 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2024 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,71 +31,30 @@
  *
  ****************************************************************************/
 
-/**
- * @file camera_interface.h
- */
+#include "loggerCheck.hpp"
 
-#pragma once
+using namespace time_literals;
 
-#include <parameters/param.h>
-#include <px4_platform_common/log.h>
-#include <systemlib/px4_macros.h>
-
-class CameraInterface
+LoggerChecks::LoggerChecks()
+	: _param_sdlog_mode_handle(param_find("SDLOG_MODE"))
 {
-public:
-	CameraInterface() = default;
-	virtual ~CameraInterface() = default;
+	param_get(_param_sdlog_mode_handle, &_sdlog_mode);
+}
 
-	/**
-	 * trigger the camera
-	 * @param enable
-	 */
-	virtual void trigger(bool trigger_on_true) {}
+void LoggerChecks::checkAndReport(const Context &context, Report &reporter)
+{
+	bool active = false;
 
-	/**
-	 * send command to turn the camera on/off
-	 * @param enable
-	 */
-	virtual void send_toggle_power(bool enable) {}
+	if (_sdlog_mode >= 0) {
+		if (_logger_status_sub.advertised()) {
+			logger_status_s status;
+			_logger_status_sub.copy(&status);
 
-	/**
-	 * send command to prevent the camera from sleeping
-	 * @param enable
-	 */
-	virtual void send_keep_alive(bool enable) {}
+			if (hrt_elapsed_time(&status.timestamp) < 3_s && status.is_logging) {
+				active = true;
+			}
+		}
+	}
 
-	/**
-	 * Display info.
-	 */
-	virtual void info() {}
-
-	/**
-	 * Checks if the interface has support for
-	 * camera power control
-	 * @return true if power control is supported
-	 */
-	virtual bool has_power_control() { return false; }
-
-	/**
-	 * Checks if the camera connected to the interface
-	 * is turned on.
-	 * @return true if camera is on
-	 */
-	virtual bool is_powered_on() { return true; }
-
-protected:
-
-	/**
-	 * setup the interface
-	 */
-	virtual void setup() {}
-
-	/**
-	 * get the hardware configuration
-	 */
-	void get_pins();
-
-	int _pins[32] {};
-
-};
+	reporter.setHealth(health_component_t::logging, active, false, false);
+}

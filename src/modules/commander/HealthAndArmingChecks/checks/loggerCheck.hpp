@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2015-2021 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2024 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,71 +31,24 @@
  *
  ****************************************************************************/
 
-/**
- * @file camera_interface.h
- */
-
 #pragma once
 
-#include <parameters/param.h>
-#include <px4_platform_common/log.h>
-#include <systemlib/px4_macros.h>
+#include "../Common.hpp"
 
-class CameraInterface
+#include <uORB/Subscription.hpp>
+#include <uORB/SubscriptionMultiArray.hpp>
+#include <uORB/topics/logger_status.h>
+
+class LoggerChecks : public HealthAndArmingCheckBase
 {
 public:
-	CameraInterface() = default;
-	virtual ~CameraInterface() = default;
+	LoggerChecks();
+	~LoggerChecks() = default;
 
-	/**
-	 * trigger the camera
-	 * @param enable
-	 */
-	virtual void trigger(bool trigger_on_true) {}
+	void checkAndReport(const Context &context, Report &reporter) override;
 
-	/**
-	 * send command to turn the camera on/off
-	 * @param enable
-	 */
-	virtual void send_toggle_power(bool enable) {}
-
-	/**
-	 * send command to prevent the camera from sleeping
-	 * @param enable
-	 */
-	virtual void send_keep_alive(bool enable) {}
-
-	/**
-	 * Display info.
-	 */
-	virtual void info() {}
-
-	/**
-	 * Checks if the interface has support for
-	 * camera power control
-	 * @return true if power control is supported
-	 */
-	virtual bool has_power_control() { return false; }
-
-	/**
-	 * Checks if the camera connected to the interface
-	 * is turned on.
-	 * @return true if camera is on
-	 */
-	virtual bool is_powered_on() { return true; }
-
-protected:
-
-	/**
-	 * setup the interface
-	 */
-	virtual void setup() {}
-
-	/**
-	 * get the hardware configuration
-	 */
-	void get_pins();
-
-	int _pins[32] {};
-
+private:
+	uORB::Subscription _logger_status_sub{ORB_ID::logger_status};
+	const param_t _param_sdlog_mode_handle;
+	int32_t _sdlog_mode = -1;
 };
