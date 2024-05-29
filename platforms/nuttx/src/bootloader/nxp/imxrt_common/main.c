@@ -16,6 +16,7 @@
 #include "imxrt_clockconfig.h"
 
 #include <nvic.h>
+#include <mpu.h>
 #include <lib/systick.h>
 #include <lib/flash_cache.h>
 
@@ -396,7 +397,7 @@ flash_func_sector_size(unsigned sector)
 }
 
 /* imxRT uses Flash lib, not up_progmem so let's stub it here */
-up_progmem_ispageerased(unsigned sector)
+ssize_t up_progmem_ispageerased(unsigned sector)
 {
 	const uint32_t bytes_per_sector =  flash_func_sector_size(sector);
 	uint32_t *address = (uint32_t *)(IMXRT_FLEXSPI1_CIPHER_BASE + (sector * bytes_per_sector));
@@ -431,8 +432,12 @@ flash_func_erase_sector(unsigned sector, bool force)
 		return;
 	}
 
-	if (force || flash_func_is_sector_blank(sector) != 0) {
+	if (force || up_progmem_ispageerased(sector) != 0) {
+
 		struct flexspi_nor_config_s *pConfig = &g_bootConfig;
+
+		const uint32_t bytes_per_sector =  flash_func_sector_size(sector);
+		uint32_t *address = (uint32_t *)(IMXRT_FLEXSPI1_CIPHER_BASE + (sector * bytes_per_sector));
 
 		uintptr_t offset = ((uintptr_t) address) - IMXRT_FLEXSPI1_CIPHER_BASE;
 		irqstate_t flags;
@@ -577,6 +582,21 @@ led_toggle(unsigned led)
 void
 arch_do_jump(const uint32_t *app_base)
 {
+	/* The MPU configuration after booting has ITCM set to MPU_RASR_AP_RORO
+	 * We add this overlaping region to allow the Application to copy code into
+	 * the ITCM when it is booted. With CONFIG_ARM_MPU_RESET defined. The mpu
+	 * init will clear any added regions (after the copy)
+	 */
+
+	mpu_configure_region(IMXRT_ITCM_BASE, 256 * 1024,
+			     /* Instruction access Enabled */
+			     MPU_RASR_AP_RWRW  | /* P:RW   U:RW                */
+			     MPU_RASR_TEX_NOR    /* Normal                     */
+			     /* Not Cacheable              */
+			     /* Not Bufferable             */
+			     /* Not Shareable              */
+			     /* No Subregion disable       */
+			    );
 
 	/* extract the stack and entrypoint from the app vector table and go */
 	uint32_t stacktop = app_base[APP_VECTOR_OFFSET_WORDS];
