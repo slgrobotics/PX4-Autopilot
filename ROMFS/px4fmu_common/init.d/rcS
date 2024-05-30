@@ -144,6 +144,13 @@ else
 		echo "FYI: PARAM_FILE on MTD device: $PARAM_FILE"
 	fi
 
+	# Check if /fs/mtd_params is a valid BSON file
+	if ! bsondump docsize /fs/mtd_caldata
+	then
+		echo "New /fs/mtd_caldata size is:"
+		bsondump docsize /fs/mtd_caldata
+	fi
+
 	#
 	# Load parameters.
 	#
