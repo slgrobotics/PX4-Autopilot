@@ -362,35 +362,76 @@ private:
 	float _target_bearing{0.0f};		// the direction between the rover position and next (current) waypoint
 	float _nav_bearing{0.0f};		// bearing from current position to L1 point
 	float _crosstrack_error{0.0f};		// meters, how far we are from the A-B line (A = previous, visited waypoint, B = current waypoint, target)
-	float _crosstrack_error_avg{NAN};	// average (compound) absolute crosstrack error diring the line following leg
-	float _crosstrack_error_max{NAN};	// max absolute crosstrack error diring the line following leg
 	float _ekfGpsDeviation{0.0f};		// meters, how far is EKF2 calculated position from GPS reading
 	bool _ekf_data_good{false};		// combination of: _local_pos.xy_valid && v_xy_valid && heading_good_for_control
 	Vector3<bool> _ekf_flags;
+
+	// Mission metrics:
+	float _crosstrack_error_avg{NAN};	// average (compound) absolute crosstrack error diring the line following leg
+	float _crosstrack_error_max{NAN};	// max absolute crosstrack error diring the line following leg
+
+	float _crosstrack_error_mission_avg{NAN};	// average (compound) absolute crosstrack error for the mission
+	float _crosstrack_error_mission_max{NAN};	// max absolute crosstrack error for the mission
 
 	// to compute _crosstrack_error_avg / _max:
 	float _cte_accum{NAN};
 	int _cte_count{0};
 	hrt_abstime _cte_lf_started{0};
+	hrt_abstime _cte_lf_tick{0};
+
+	float _cte_accum_mission{NAN};
+	int _cte_count_mission{0};
+	int _cte_count_outside{0};
+
+	inline void cte_begin_mission()
+	{
+		_cte_accum_mission = 0.0f; _cte_count_mission = 0; _cte_count_outside = 0;
+		_crosstrack_error_mission_avg = NAN; _crosstrack_error_mission_max = 0.0f;
+	}
+
+	inline void cte_end_mission()
+	{
+		_crosstrack_error_mission_avg = _cte_accum_mission / _cte_count_mission;
+	};
 
 	inline void cte_begin()
 	{
-		_cte_accum = 0.0f; _cte_count = 0; _cte_lf_started = _now; _crosstrack_error_avg = NAN; _crosstrack_error_max = 0.0f;
+		_cte_accum = 0.0f; _cte_count = 0;
+		_cte_lf_started = _cte_lf_tick = _now;
+		_crosstrack_error_avg = NAN; _crosstrack_error_max = 0.0f;
 	};
 
 	inline void cte_compute()
 	{
 		if (PX4_ISFINITE(_crosstrack_error) && hrt_elapsed_time(&_cte_lf_started) > 5 * 1_s) {
 			float cte_abs = abs(_crosstrack_error);
+
 			_crosstrack_error_max = math::max(_crosstrack_error_max, cte_abs);
 			_cte_accum += cte_abs;
 			++_cte_count;
+
+			_crosstrack_error_mission_max = math::max(_crosstrack_error_mission_max, cte_abs);
+			_cte_accum_mission += cte_abs;
+			++_cte_count_mission;
+
+			if (hrt_elapsed_time(&_cte_lf_tick) > 1_s) {
+
+				// every second we see if we are outside +-20 cm corridor, and count those seconds:
+
+				_cte_lf_tick = _now;
+
+				if (cte_abs > 0.2f) {
+					++_cte_count_outside;
+					PX4_WARN("+++++++++++++  outside: %i +++++++++++++", _cte_count_outside);
+				}
+			}
 		}
 	};
 
 	inline void cte_end()
 	{
 		_crosstrack_error_avg = _cte_accum / _cte_count;
+		_crosstrack_error_mission_avg = _cte_accum_mission / _cte_count_mission; // keep it current for tracing
 	};
 
 	// calculated values that become published actuator inputs:

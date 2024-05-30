@@ -126,7 +126,7 @@ const char *RoverPositionControl::waypoint_type_name(const uint8_t wptype)
 void RoverPositionControl::debugPrint()
 {
 
-	if (hrt_elapsed_time(&_debug_print_last_called) > 500_ms) {
+	if (hrt_elapsed_time(&_debug_print_last_called) > 1_s) {
 
 		/*
 		if (!_ekf_data_good) {
@@ -158,7 +158,7 @@ void RoverPositionControl::debugPrint()
 
 void RoverPositionControl::debugPrintArriveDepart()
 {
-	if (hrt_elapsed_time(&_debug_print1_last_called) > 100_ms) {
+	if (hrt_elapsed_time(&_debug_print1_last_called) > 1_s) {
 		if (_tracing_lev > 4) {
 			/*
 			PX4_INFO_RAW("------- %s  wp_current_dist: %.2f   wp_previous_dist: %.2f   mission_velocity_setpoint: %.2f   mission_thrust: %.2f\n",
@@ -203,6 +203,10 @@ void RoverPositionControl::debugPrintAll()
 			PX4_INFO_RAW("---    last leg crosstrack error:  avg: %.1f cm  max: %.1f cm\n",
 				     (double)(_crosstrack_error_avg * 100.0f),
 				     (double)(_crosstrack_error_max * 100.0f));
+			PX4_INFO_RAW("---    mission crosstrack error:   avg: %.1f cm  max: %.1f cm  outside: %i\n",
+				     (double)(_crosstrack_error_mission_avg * 100.0f),
+				     (double)(_crosstrack_error_mission_max * 100.0f),
+				     _cte_count_outside);
 		}
 
 		if (_tracing_lev < 4) {
@@ -477,6 +481,8 @@ void RoverPositionControl::debugPublishAll()
 		_dbg_array.data[i++] = 	_wheel_right_servo_position;
 
 		_dbg_array.data[i++] = 	_crosstrack_error_avg;
+		_dbg_array.data[i++] = 	_crosstrack_error_max;
+		_dbg_array.data[i++] = 	_cte_count_outside;
 
 		_dbg_array.data[0] = i;	// must be less than 58, per size of the data[]
 

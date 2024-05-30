@@ -442,6 +442,8 @@ void RoverPositionControl::workStateMachine()
 
 		// First waypoint of the mission has arrived, go to it. First we need to turn towards it:
 		setStateMachineState(WP_TURNING);
+
+		cte_begin_mission();
 		break;
 
 	case POS_STATE_MISSION_END:		// turn off what we needed for the mission at the end or error
@@ -451,6 +453,13 @@ void RoverPositionControl::workStateMachine()
 #endif // DEBUG_MY_PRINT
 
 		setStateMachineState(POS_STATE_IDLE); // just rest at the end of the mission
+
+		cte_end_mission();
+
+		PX4_WARN("Mission end: mission crosstrack error:  avg: %.1f cm  max: %.1f cm  outside: %i",
+			 (double)(_crosstrack_error_mission_avg * 100.0f),
+			 (double)(_crosstrack_error_mission_max * 100.0f),
+			 _cte_count_outside);
 
 		break;
 
