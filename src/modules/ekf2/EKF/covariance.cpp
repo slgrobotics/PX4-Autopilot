@@ -163,22 +163,26 @@ void Ekf::predictCovariance(const imuSample &imu_delayed)
 
 
 #if defined(CONFIG_EKF2_MAGNETOMETER)
-	if (_control_status.flags.mag) {
-		// mag_I: add process noise
-		float mag_I_sig = dt * math::constrain(_params.mage_p_noise, 0.f, 1.f);
-		float mag_I_process_noise = sq(mag_I_sig);
+	// mag_I: add process noise
+	float mag_I_sig = dt * math::constrain(_params.mage_p_noise, 0.f, 1.f);
+	float mag_I_process_noise = sq(mag_I_sig);
 
-		for (unsigned index = 0; index < State::mag_I.dof; index++) {
-			const unsigned i = State::mag_I.idx + index;
+	for (unsigned index = 0; index < State::mag_I.dof; index++) {
+		const unsigned i = State::mag_I.idx + index;
+
+		if (P(i, i) < sq(_params.mag_noise)) {
 			P(i, i) += mag_I_process_noise;
 		}
+	}
 
-		// mag_B: add process noise
-		float mag_B_sig = dt * math::constrain(_params.magb_p_noise, 0.f, 1.f);
-		float mag_B_process_noise = sq(mag_B_sig);
+	// mag_B: add process noise
+	float mag_B_sig = dt * math::constrain(_params.magb_p_noise, 0.f, 1.f);
+	float mag_B_process_noise = sq(mag_B_sig);
 
-		for (unsigned index = 0; index < State::mag_B.dof; index++) {
-			const unsigned i = State::mag_B.idx + index;
+	for (unsigned index = 0; index < State::mag_B.dof; index++) {
+		const unsigned i = State::mag_B.idx + index;
+
+		if (P(i, i) < sq(_params.mag_noise)) {
 			P(i, i) += mag_B_process_noise;
 		}
 	}
@@ -304,10 +308,7 @@ void Ekf::resetAccelBiasCov()
 #if defined(CONFIG_EKF2_MAGNETOMETER)
 void Ekf::resetMagCov()
 {
-	if (_mag_decl_cov_reset) {
-		ECL_INFO("reset mag covariance");
-		_mag_decl_cov_reset = false;
-	}
+	ECL_INFO("reset mag covariance");
 
 	P.uncorrelateCovarianceSetVariance<State::mag_I.dof>(State::mag_I.idx, sq(_params.mag_noise));
 	P.uncorrelateCovarianceSetVariance<State::mag_B.dof>(State::mag_B.idx, sq(_params.mag_noise));
