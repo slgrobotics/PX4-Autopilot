@@ -88,7 +88,7 @@ PARAM_DEFINE_FLOAT(GND_L1_DAMPING, 0.8f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_L1_SCALER, 1.0f);
+PARAM_DEFINE_FLOAT(GND_L1_SCALER, 2.0f);
 
 //========================= PID controller for Line Following ===================================================
 
