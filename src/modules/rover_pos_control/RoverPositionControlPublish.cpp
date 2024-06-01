@@ -130,7 +130,8 @@ void RoverPositionControl::publishAuxActuators(const hrt_abstime &timestamp_samp
 	bool strobe_on = _vehicle_status.nav_state == vehicle_status_s::NAVIGATION_STATE_AUTO_MISSION;
 
 	//bool horn_on = _alarm_dev_level > SIGMA;
-	bool horn_on = !_control_mode.flag_control_manual_enabled && _sensor_gps_data.fix_type < _gps_minfix;
+	bool horn_on = !_control_mode.flag_control_manual_enabled &&
+		       (_sensor_gps_data.fix_type < _gps_minfix || !PX4_ISFINITE(_sensor_gps_data.heading));
 
 #ifndef PUBLISH_THRUST_TORQUE
 	_wheel_speeds.copyTo(actuator_servos.control);

@@ -144,6 +144,15 @@ void RoverPositionControl::debugPrint()
 			}
 
 		} else if (_pos_ctrl_state != POS_STATE_IDLE || !_printed_idle_trace) {
+
+			if (PX4_ISFINITE(_ekfGpsDeviation) && _ekfGpsDeviation > 0.2f) {
+				PX4_WARN("EKF2 deviation: %.1f cm", (double)(_ekfGpsDeviation * 100.0f));
+			}
+
+			if (PX4_ISFINITE(_crosstrack_error) && _crosstrack_error > 0.2f) {
+				PX4_WARN("crosstrack error: %.1f cm", (double)(_crosstrack_error * 100.0f));
+			}
+
 			debugPrintAll();
 		}
 

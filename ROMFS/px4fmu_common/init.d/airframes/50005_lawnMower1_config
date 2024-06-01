@@ -397,13 +397,13 @@ else
 fi
 
 # start SeedStudio/Bosch BMI088 6-Axis IMU on external I2C bus:
-bmi088_i2c -A -R 0 -X -a 0x19 start
-bmi088_i2c -G -R 0 -X -a 0x69 start
+#bmi088_i2c -A -R 0 -X -a 0x19 start
+#bmi088_i2c -G -R 0 -X -a 0x69 start
 
 # start IMU on SPI (/dev/spidev0.1):
-mpu9250 -s -R 0 -M -f 20000 start
+#mpu9250 -s -R 0 -M -f 20000 start
 # same without magnitometer:
-#mpu9250 -s -R 0 -f 20000 start
+mpu9250 -s -R 0 -f 20000 start
 
 # start barometer emulation (AHRS must have baro input):
 ms5611 -X start
