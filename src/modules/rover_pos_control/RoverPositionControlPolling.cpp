@@ -101,11 +101,11 @@ void RoverPositionControl::poll_everything()
 
 #ifdef DEBUG_MY_PRINT
 
-	float gps_fix_warn_period = _control_mode.flag_armed ? 2.0f : 20.0f; // seconds
+	unsigned long long gps_fix_warn_period = _control_mode.flag_armed ? 2_s : 20_s; // seconds
 
 	// See GND_GPS_MINFIX
 	if (_sensor_gps_data.fix_type < _gps_minfix
-	    && hrt_elapsed_time(&_debug_gps_warn_last_called) > gps_fix_warn_period * 1000_ms) {
+	    && hrt_elapsed_time(&_debug_gps_warn_last_called) > gps_fix_warn_period) {
 		PX4_WARN("Bad GPS fix: %d (must be %d)  jamming: state: %d indicator: %d   noise_per_ms: %d",
 			 _sensor_gps_data.fix_type, _gps_minfix, _sensor_gps_data.jamming_state, _sensor_gps_data.jamming_indicator,
 			 _sensor_gps_data.noise_per_ms);

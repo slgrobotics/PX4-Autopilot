@@ -98,7 +98,7 @@ void RoverPositionControl::publishWheelMotors(const hrt_abstime &timestamp_sampl
 void RoverPositionControl::publishAuxActuators(const hrt_abstime &timestamp_sample)
 {
 	/*
-	bool test_switch = _now - _debug_print_last_called > 0.25f*1000_ms;
+	bool test_switch = _now - _debug_print_last_called > 250_ms;
 
 	//if(test_switch)	{ PX4_INFO("+"); } else { PX4_INFO("-"); }
 

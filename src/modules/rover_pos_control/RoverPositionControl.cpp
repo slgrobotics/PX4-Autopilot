@@ -124,7 +124,7 @@ RoverPositionControl::init()
 
 #ifdef PRINT_GPS_WALK
 static hrt_abstime _gps_print_last_called;
-static float _gps_print_interval_sec = 5.0f;
+static unsigned long long _gps_print_interval_sec = 5L;
 static double _last_lat {0};
 static double _last_lon {0};
 static double _last_alt {0};
@@ -166,7 +166,7 @@ RoverPositionControl::update_orientation()
 
 #ifdef PRINT_GPS_WALK
 
-		if (hrt_elapsed_time(&_gps_print_last_called) > _gps_print_interval_sec * 1000_ms) {
+		if (hrt_elapsed_time(&_gps_print_last_called) > _gps_print_interval_sec * 1_s) {
 			PX4_INFO_RAW("GPS6: Lat: %.10f Lon: %.10f Alt: %.6f : %.6f H: %.2f deg\n", f_lat, f_lon, f_alt, f_alte,
 				     (double)math::degrees(_sensor_gps_data.heading));
 			printed = true;
@@ -183,7 +183,7 @@ RoverPositionControl::update_orientation()
 
 #ifdef PRINT_GPS_WALK
 
-		if (hrt_elapsed_time(&_gps_print_last_called) > _gps_print_interval_sec * 1000_ms) {
+		if (hrt_elapsed_time(&_gps_print_last_called) > _gps_print_interval_sec * 1_s) {
 			PX4_INFO_RAW("GPS%d: Lat: %.10f Lon: %.10f Alt: %.6f : %.6f\n", _sensor_gps_data.fix_type, f_lat, f_lon, f_alt, f_alte);
 			printed = true;
 		}
@@ -442,6 +442,13 @@ void
 RoverPositionControl::Run()
 {
 	// we run at kINTERVAL (100 Hz on RPi, 250 Hz in SITL), as scheduled
+
+	if (should_exit()) {
+		//_..._sub.unregisterCallback(); - only for uORB::SubscriptionCallbackWorkItem types
+		ScheduleClear();
+		exit_and_cleanup();
+		return;
+	}
 
 #ifdef DEBUG_MY_PRINT
 	_cnt_run++;

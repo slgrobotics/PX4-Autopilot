@@ -241,9 +241,9 @@ void RoverPositionControl::workStateMachine()
 				}
 
 				// GND_TURN_WAIT
-				float turn_wait_sec = _param_turn_wait.get();
+				unsigned long long turn_wait_sec = (unsigned long long)_param_turn_wait.get();
 
-				if (turn_wait_sec < FLT_EPSILON || hrt_elapsed_time(&_turn_goal_last_reached) > turn_wait_sec * 1000_ms) {
+				if (turn_wait_sec < FLT_EPSILON || hrt_elapsed_time(&_turn_goal_last_reached) > turn_wait_sec * 1_s) {
 					_turn_goal_last_reached = 0;
 
 					bool is_first_leg = !PX4_ISFINITE(_wp_previous_dist) && PX4_ISFINITE(_wp_current_dist);

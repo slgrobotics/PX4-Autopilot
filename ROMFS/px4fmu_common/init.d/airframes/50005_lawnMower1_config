@@ -152,12 +152,14 @@ else
 	#	0: Automatic (heading on ground, 3D in-flight)
 	#	1: Magnetic heading (2D)
 	#	2: 3-axis (3D)
-	#   5: none (i.e. use GPS instead, disable/ignore magnetometer)
+	#	5: none (i.e. use GPS instead, disable/ignore magnetometer)
+	#	6: use mag for initialization only
 	param set EKF2_MAG_TYPE 5
 
-	# For RTK GPS set position and velocity noise low:
+	# For dual RTK GPS set position, heading and velocity noise low:
 	param set EKF2_GPS_P_NOISE 0.05
 	param set EKF2_GPS_V_NOISE 0.1
+	#param set EKF2_HEAD_NOISE 0.01 - this goes to mag fusing, not GPS
 
 	# Adjust other GPS related parameters for better EKF2 operation:
 	#param set EKF2_GPS_DELAY 110
