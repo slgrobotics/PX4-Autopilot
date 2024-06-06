@@ -52,8 +52,6 @@ void Ekf::controlMagFusion()
 		_control_status.flags.mag_aligned_in_flight = false;
 	}
 
-	checkYawAngleObservability();
-
 	if (_params.mag_fusion_type == MagFuseType::NONE) {
 		stopMagFusion();
 		return;
@@ -277,6 +275,15 @@ void Ekf::stopMagFusion()
 	if (_control_status.flags.mag) {
 		ECL_INFO("stopping mag fusion");
 
+		if (_control_status.flags.yaw_align && (_control_status.flags.mag_3D || _control_status.flags.mag_hdg)) {
+			// reset yaw alignment from mag unless using GNSS aiding
+			const bool using_ne_aiding = _control_status.flags.gps || _control_status.flags.aux_gpos;
+
+			if (!using_ne_aiding) {
+				_control_status.flags.yaw_align = false;
+			}
+		}
+
 		_control_status.flags.mag = false;
 		_control_status.flags.mag_dec = false;
 
@@ -290,6 +297,8 @@ void Ekf::stopMagFusion()
 			_control_status.flags.mag_hdg = false;
 			_fault_status.flags.bad_hdg = false;
 		}
+
+		_control_status.flags.mag_aligned_in_flight = false;
 
 		_fault_status.flags.bad_mag_x = false;
 		_fault_status.flags.bad_mag_y = false;
@@ -391,23 +400,6 @@ void Ekf::resetMagStates(const Vector3f &mag, bool reset_heading)
 	}
 }
 
-void Ekf::checkYawAngleObservability()
-{
-	if (_control_status.flags.gps) {
-		// Check if there has been enough change in horizontal velocity to make yaw observable
-		// Apply hysteresis to check to avoid rapid toggling
-		if (_yaw_angle_observable) {
-			_yaw_angle_observable = _accel_lpf_NE.norm() > _params.mag_acc_gate;
-
-		} else {
-			_yaw_angle_observable = _accel_lpf_NE.norm() > _params.mag_acc_gate * 2.f;
-		}
-
-	} else {
-		_yaw_angle_observable = false;
-	}
-}
-
 void Ekf::checkMagHeadingConsistency(const magSample &mag_sample)
 {
 	// use mag bias if variance good
@@ -437,7 +429,10 @@ void Ekf::checkMagHeadingConsistency(const magSample &mag_sample)
 	}
 
 	if (fabsf(_mag_heading_innov_lpf.getState()) < _params.mag_heading_noise) {
-		if (_yaw_angle_observable) {
+		// Check if there has been enough change in horizontal velocity to make yaw observable
+		const bool using_ne_aiding = _control_status.flags.gps || _control_status.flags.aux_gpos;
+
+		if (using_ne_aiding && (_accel_lpf_NE.norm() > _params.mag_acc_gate)) {
 			// yaw angle must be observable to consider consistency
 			_control_status.flags.mag_heading_consistent = true;
 		}
