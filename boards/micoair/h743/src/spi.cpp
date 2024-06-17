@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (C) 2023 PX4 Development Team. All rights reserved.
+ *   Copyright (C) 2021 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,99 +31,20 @@
  *
  ****************************************************************************/
 
-/**
- * @file Vector4.hpp
- *
- * 4D vector class.
- *
- * @author Matthias Grob <maetugr@gmail.com>
- */
+#include <px4_arch/spi_hw_description.h>
+#include <drivers/drv_sensor.h>
+#include <nuttx/spi/spi.h>
 
-#pragma once
 
-#include "Vector.hpp"
-
-namespace matrix
-{
-
-template<typename Type>
-class Vector4 : public Vector<Type, 4>
-{
-public:
-	using Matrix41 = Matrix<Type, 4, 1>;
-
-	Vector4() = default;
-
-	Vector4(const Matrix41 &other) :
-		Vector<Type, 4>(other)
-	{
-	}
-
-	explicit Vector4(const Type data_[3]) :
-		Vector<Type, 4>(data_)
-	{
-	}
-
-	Vector4(Type x1, Type x2, Type x3, Type x4)
-	{
-		Vector4 &v(*this);
-		v(0) = x1;
-		v(1) = x2;
-		v(2) = x3;
-		v(3) = x4;
-	}
-
-	template<size_t P, size_t Q>
-	Vector4(const Slice<Type, 4, 1, P, Q> &slice_in) : Vector<Type, 4>(slice_in)
-	{
-	}
-
-	template<size_t P, size_t Q>
-	Vector4(const Slice<Type, 1, 4, P, Q> &slice_in) : Vector<Type, 4>(slice_in)
-	{
-	}
-
-	/**
-	 * Override matrix ops so Vector4 type is returned
-	 */
-
-	Vector4 operator+(Vector4 other) const
-	{
-		return Matrix41::operator+(other);
-	}
-
-	Vector4 operator+(Type scalar) const
-	{
-		return Matrix41::operator+(scalar);
-	}
-
-	Vector4 operator-(Vector4 other) const
-	{
-		return Matrix41::operator-(other);
-	}
-
-	Vector4 operator-(Type scalar) const
-	{
-		return Matrix41::operator-(scalar);
-	}
-
-	Vector4 operator-() const
-	{
-		return Matrix41::operator-();
-	}
-
-	Vector4 operator*(Type scalar) const
-	{
-		return Matrix41::operator*(scalar);
-	}
-
-	Type operator*(Vector4 b) const
-	{
-		return Vector<Type, 4>::operator*(b);
-	}
-
+constexpr px4_spi_bus_t px4_spi_buses[SPI_BUS_MAX_BUS_ITEMS] = {
+	initSPIBus(SPI::Bus::SPI1, {
+		initSPIDevice(DRV_OSD_DEVTYPE_ATXXXX, SPI::CS{GPIO::PortB, GPIO::Pin12}),
+	}),
+	initSPIBus(SPI::Bus::SPI2, {
+		initSPIDevice(DRV_GYR_DEVTYPE_BMI088, SPI::CS{GPIO::PortD, GPIO::Pin5}),
+		initSPIDevice(DRV_ACC_DEVTYPE_BMI088, SPI::CS{GPIO::PortD, GPIO::Pin4}),
+		initSPIDevice(DRV_IMU_DEVTYPE_BMI270, SPI::CS{GPIO::PortA, GPIO::Pin15}),
+	}),
 };
 
-using Vector4f = Vector4<float>;
-
-} // namespace matrix
+static constexpr bool unused = validateSPIConfig(px4_spi_buses);

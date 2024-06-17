@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (C) 2023 PX4 Development Team. All rights reserved.
+ *   Copyright (C) 2021 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,98 +32,47 @@
  ****************************************************************************/
 
 /**
- * @file Vector4.hpp
+ * @file usb.c
  *
- * 4D vector class.
- *
- * @author Matthias Grob <maetugr@gmail.com>
+ * Board-specific USB functions.
  */
 
-#pragma once
+#include "board_config.h"
+#include <nuttx/usb/usbdev.h>
+#include <nuttx/usb/usbdev_trace.h>
+#include <stm32_otg.h>
+#include <debug.h>
 
-#include "Vector.hpp"
+/************************************************************************************
+ * Name: stm32_usbinitialize
+ *
+ * Description:
+ *   Called to setup USB-related GPIO pins for the board.
+ *
+ ************************************************************************************/
 
-namespace matrix
+__EXPORT void stm32_usbinitialize(void)
 {
+	/* The OTG FS has an internal soft pull-up */
 
-template<typename Type>
-class Vector4 : public Vector<Type, 4>
+	/* Configure the OTG FS VBUS sensing GPIO, Power On, and Overcurrent GPIOs */
+
+#ifdef CONFIG_STM32H7_OTGFS
+	stm32_configgpio(GPIO_OTGFS_VBUS);
+#endif
+}
+
+/************************************************************************************
+ * Name:  stm32_usbsuspend
+ *
+ * Description:
+ *   Board logic must provide the stm32_usbsuspend logic if the USBDEV driver is
+ *   used.  This function is called whenever the USB enters or leaves suspend mode.
+ *   This is an opportunity for the board logic to shutdown clocks, power, etc.
+ *   while the USB is suspended.
+ *
+ ************************************************************************************/
+__EXPORT void stm32_usbsuspend(FAR struct usbdev_s *dev, bool resume)
 {
-public:
-	using Matrix41 = Matrix<Type, 4, 1>;
-
-	Vector4() = default;
-
-	Vector4(const Matrix41 &other) :
-		Vector<Type, 4>(other)
-	{
-	}
-
-	explicit Vector4(const Type data_[3]) :
-		Vector<Type, 4>(data_)
-	{
-	}
-
-	Vector4(Type x1, Type x2, Type x3, Type x4)
-	{
-		Vector4 &v(*this);
-		v(0) = x1;
-		v(1) = x2;
-		v(2) = x3;
-		v(3) = x4;
-	}
-
-	template<size_t P, size_t Q>
-	Vector4(const Slice<Type, 4, 1, P, Q> &slice_in) : Vector<Type, 4>(slice_in)
-	{
-	}
-
-	template<size_t P, size_t Q>
-	Vector4(const Slice<Type, 1, 4, P, Q> &slice_in) : Vector<Type, 4>(slice_in)
-	{
-	}
-
-	/**
-	 * Override matrix ops so Vector4 type is returned
-	 */
-
-	Vector4 operator+(Vector4 other) const
-	{
-		return Matrix41::operator+(other);
-	}
-
-	Vector4 operator+(Type scalar) const
-	{
-		return Matrix41::operator+(scalar);
-	}
-
-	Vector4 operator-(Vector4 other) const
-	{
-		return Matrix41::operator-(other);
-	}
-
-	Vector4 operator-(Type scalar) const
-	{
-		return Matrix41::operator-(scalar);
-	}
-
-	Vector4 operator-() const
-	{
-		return Matrix41::operator-();
-	}
-
-	Vector4 operator*(Type scalar) const
-	{
-		return Matrix41::operator*(scalar);
-	}
-
-	Type operator*(Vector4 b) const
-	{
-		return Vector<Type, 4>::operator*(b);
-	}
-
-};
-
-using Vector4f = Vector4<float>;
-
-} // namespace matrix
+	uinfo("resume: %d\n", resume);
+}

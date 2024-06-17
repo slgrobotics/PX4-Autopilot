@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (C) 2023 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2021 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,98 +32,83 @@
  ****************************************************************************/
 
 /**
- * @file Vector4.hpp
+ * @file led.c
  *
- * 4D vector class.
- *
- * @author Matthias Grob <maetugr@gmail.com>
+ * LED backend.
  */
 
-#pragma once
+#include <px4_platform_common/px4_config.h>
 
-#include "Vector.hpp"
+#include <stdbool.h>
 
-namespace matrix
-{
+#include "chip.h"
+#include "stm32_gpio.h"
+#include "board_config.h"
 
-template<typename Type>
-class Vector4 : public Vector<Type, 4>
-{
-public:
-	using Matrix41 = Matrix<Type, 4, 1>;
+#include <nuttx/board.h>
+#include <arch/board/board.h>
 
-	Vector4() = default;
+/*
+ * Ideally we'd be able to get these from arm_internal.h,
+ * but since we want to be able to disable the NuttX use
+ * of leds for system indication at will and there is no
+ * separate switch, we need to build independent of the
+ * CONFIG_ARCH_LEDS configuration switch.
+ */
+__BEGIN_DECLS
+extern void led_init(void);
+extern void led_on(int led);
+extern void led_off(int led);
+extern void led_toggle(int led);
+__END_DECLS
 
-	Vector4(const Matrix41 &other) :
-		Vector<Type, 4>(other)
-	{
-	}
-
-	explicit Vector4(const Type data_[3]) :
-		Vector<Type, 4>(data_)
-	{
-	}
-
-	Vector4(Type x1, Type x2, Type x3, Type x4)
-	{
-		Vector4 &v(*this);
-		v(0) = x1;
-		v(1) = x2;
-		v(2) = x3;
-		v(3) = x4;
-	}
-
-	template<size_t P, size_t Q>
-	Vector4(const Slice<Type, 4, 1, P, Q> &slice_in) : Vector<Type, 4>(slice_in)
-	{
-	}
-
-	template<size_t P, size_t Q>
-	Vector4(const Slice<Type, 1, 4, P, Q> &slice_in) : Vector<Type, 4>(slice_in)
-	{
-	}
-
-	/**
-	 * Override matrix ops so Vector4 type is returned
-	 */
-
-	Vector4 operator+(Vector4 other) const
-	{
-		return Matrix41::operator+(other);
-	}
-
-	Vector4 operator+(Type scalar) const
-	{
-		return Matrix41::operator+(scalar);
-	}
-
-	Vector4 operator-(Vector4 other) const
-	{
-		return Matrix41::operator-(other);
-	}
-
-	Vector4 operator-(Type scalar) const
-	{
-		return Matrix41::operator-(scalar);
-	}
-
-	Vector4 operator-() const
-	{
-		return Matrix41::operator-();
-	}
-
-	Vector4 operator*(Type scalar) const
-	{
-		return Matrix41::operator*(scalar);
-	}
-
-	Type operator*(Vector4 b) const
-	{
-		return Vector<Type, 4>::operator*(b);
-	}
-
+#  define xlat(p) (p)
+static uint32_t g_ledmap[] = {
+	GPIO_nLED_GREEN,   // Indexed by BOARD_LED_GREEN
+	GPIO_nLED_BLUE,    // Indexed by BOARD_LED_BLUE
+	GPIO_nLED_RED,     // Indexed by BOARD_LED_RED
 };
 
-using Vector4f = Vector4<float>;
+__EXPORT void led_init(void)
+{
+	/* Configure LED GPIOs for output */
+	for (size_t l = 0; l < (sizeof(g_ledmap) / sizeof(g_ledmap[0])); l++) {
+		if (g_ledmap[l] != 0) {
+			stm32_configgpio(g_ledmap[l]);
+		}
+	}
+}
 
-} // namespace matrix
+static void phy_set_led(int led, bool state)
+{
+	/* Drive Low to switch on */
+	if (g_ledmap[led] != 0) {
+		stm32_gpiowrite(g_ledmap[led], !state);
+	}
+}
+
+static bool phy_get_led(int led)
+{
+	/* If Low it is on */
+	if (g_ledmap[led] != 0) {
+		return !stm32_gpioread(g_ledmap[led]);
+	}
+
+	return false;
+}
+
+
+__EXPORT void led_on(int led)
+{
+	phy_set_led(xlat(led), true);
+}
+
+__EXPORT void led_off(int led)
+{
+	phy_set_led(xlat(led), false);
+}
+
+__EXPORT void led_toggle(int led)
+{
+	phy_set_led(xlat(led), !phy_get_led(xlat(led)));
+}

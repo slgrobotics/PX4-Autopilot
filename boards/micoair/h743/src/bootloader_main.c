@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (C) 2023 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2021 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,98 +32,44 @@
  ****************************************************************************/
 
 /**
- * @file Vector4.hpp
+ * @file bootloader_main.c
  *
- * 4D vector class.
- *
- * @author Matthias Grob <maetugr@gmail.com>
- */
+ * FMU-specific early startup code for bootloader
+*/
 
-#pragma once
+#include "board_config.h"
+#include "bl.h"
 
-#include "Vector.hpp"
+#include <nuttx/config.h>
+#include <nuttx/board.h>
+#include <chip.h>
+#include <stm32_uart.h>
+#include <arch/board/board.h>
+#include "arm_internal.h"
+#include <px4_platform_common/init.h>
 
-namespace matrix
+extern int sercon_main(int c, char **argv);
+
+__EXPORT void board_on_reset(int status) {}
+
+__EXPORT void stm32_boardinitialize(void)
 {
+	/* configure USB interfaces */
+	stm32_usbinitialize();
+}
 
-template<typename Type>
-class Vector4 : public Vector<Type, 4>
+__EXPORT int board_app_initialize(uintptr_t arg)
 {
-public:
-	using Matrix41 = Matrix<Type, 4, 1>;
+	return 0;
+}
 
-	Vector4() = default;
+void board_late_initialize(void)
+{
+	sercon_main(0, NULL);
+}
 
-	Vector4(const Matrix41 &other) :
-		Vector<Type, 4>(other)
-	{
-	}
-
-	explicit Vector4(const Type data_[3]) :
-		Vector<Type, 4>(data_)
-	{
-	}
-
-	Vector4(Type x1, Type x2, Type x3, Type x4)
-	{
-		Vector4 &v(*this);
-		v(0) = x1;
-		v(1) = x2;
-		v(2) = x3;
-		v(3) = x4;
-	}
-
-	template<size_t P, size_t Q>
-	Vector4(const Slice<Type, 4, 1, P, Q> &slice_in) : Vector<Type, 4>(slice_in)
-	{
-	}
-
-	template<size_t P, size_t Q>
-	Vector4(const Slice<Type, 1, 4, P, Q> &slice_in) : Vector<Type, 4>(slice_in)
-	{
-	}
-
-	/**
-	 * Override matrix ops so Vector4 type is returned
-	 */
-
-	Vector4 operator+(Vector4 other) const
-	{
-		return Matrix41::operator+(other);
-	}
-
-	Vector4 operator+(Type scalar) const
-	{
-		return Matrix41::operator+(scalar);
-	}
-
-	Vector4 operator-(Vector4 other) const
-	{
-		return Matrix41::operator-(other);
-	}
-
-	Vector4 operator-(Type scalar) const
-	{
-		return Matrix41::operator-(scalar);
-	}
-
-	Vector4 operator-() const
-	{
-		return Matrix41::operator-();
-	}
-
-	Vector4 operator*(Type scalar) const
-	{
-		return Matrix41::operator*(scalar);
-	}
-
-	Type operator*(Vector4 b) const
-	{
-		return Vector<Type, 4>::operator*(b);
-	}
-
-};
-
-using Vector4f = Vector4<float>;
-
-} // namespace matrix
+extern void sys_tick_handler(void);
+void board_timerhook(void)
+{
+	sys_tick_handler();
+}
