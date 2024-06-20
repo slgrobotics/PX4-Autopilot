@@ -17,3 +17,13 @@ done
 
 exit 0
 
+#
+# fixing git merge:
+#
+# git remote -v
+# git remote add upstream https://github.com/PX4/PX4-Autopilot.git
+# git remote -v
+# git fetch upstream    (maybe  --single-branch --recursive -b main )
+# git status
+# git merge upstream/main
+
