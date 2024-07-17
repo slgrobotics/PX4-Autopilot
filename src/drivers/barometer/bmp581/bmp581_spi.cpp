@@ -31,44 +31,72 @@
  *
  ****************************************************************************/
 
-#include "ekf.h"
-#include "ekf_derivation/generated/compute_hagl_h.h"
+/**
+ * @file bmp581_spi.cpp
+ *
+ * SPI interface for BMP 581 (NOTE: untested!)
+ */
 
-bool Ekf::fuseHaglRng(estimator_aid_source1d_s &aid_src, bool update_height, bool update_terrain)
+#include <drivers/device/spi.h>
+
+#include "bmp581.h"
+
+/* SPI protocol address bits */
+#define DIR_READ			(1<<7)  //for set
+#define DIR_WRITE			~(1<<7) //for clear
+
+class BMP581_SPI: public device::SPI, public IBMP581
 {
-	if (aid_src.innovation_rejected) {
-		_innov_check_fail_status.flags.reject_hagl = true;
-		return false;
-	}
+public:
+	BMP581_SPI(uint8_t bus, uint32_t device, int bus_frequency, spi_mode_e spi_mode);
+	virtual ~BMP581_SPI() = default;
 
-	VectorState H;
+	int init();
 
-	sym::ComputeHaglH(&H);
+	uint8_t get_reg(uint8_t addr);
+	int get_reg_buf(uint8_t addr, uint8_t *buf, uint8_t len);
+	int set_reg(uint8_t value, uint8_t addr);
 
-	// calculate the Kalman gain
-	VectorState K = P * H / aid_src.innovation_variance;
+	uint32_t get_device_id() const override { return device::SPI::get_device_id(); }
 
-	if (!update_terrain) {
-		K(State::terrain.idx) = 0.f;
-	}
+	uint8_t get_device_address() const override { return device::SPI::get_device_address(); }
+};
 
-	if (!update_height) {
-		const float k_terrain = K(State::terrain.idx);
-		K.zero();
-		K(State::terrain.idx) = k_terrain;
-	}
+IBMP581 *bmp581_spi_interface(uint8_t busnum, uint32_t device, int bus_frequency, spi_mode_e spi_mode)
+{
+	return new BMP581_SPI(busnum, device, bus_frequency, spi_mode);
+}
 
-	measurementUpdate(K, H, aid_src.observation_variance, aid_src.innovation);
+BMP581_SPI::BMP581_SPI(uint8_t bus, uint32_t device, int bus_frequency, spi_mode_e spi_mode) :
+	SPI(DRV_BARO_DEVTYPE_BMP581, MODULE_NAME, bus, device, spi_mode, bus_frequency)
+{
+}
 
-	// record last successful fusion event
-	_innov_check_fail_status.flags.reject_hagl = false;
+int BMP581_SPI::init()
+{
+	return SPI::init();
+}
 
-	aid_src.time_last_fuse = _time_delayed_us;
-	aid_src.fused = true;
+uint8_t BMP581_SPI::get_reg(uint8_t addr)
+{
+	uint8_t cmd[2] = { (uint8_t)(addr | DIR_READ), 0}; //set MSB bit
+	transfer(&cmd[0], &cmd[0], 2);
+	return cmd[1];
+}
 
-	if (update_terrain) {
-		_time_last_terrain_fuse = _time_delayed_us;
-	}
+int BMP581_SPI::get_reg_buf(uint8_t addr, uint8_t *buf, uint8_t len)
+{
+	uint8_t cmd[len + 1] = {(uint8_t)(addr | DIR_READ)};
+	int ret;
 
-	return true;
+	ret = transfer(&cmd[0], &cmd[0], (len + 1));
+	memcpy(buf, &cmd[1], len);
+
+	return ret;
+}
+
+int BMP581_SPI::set_reg(uint8_t value, uint8_t addr)
+{
+	uint8_t cmd[2] = { (uint8_t)(addr & DIR_WRITE), value}; //clear MSB bit
+	return transfer(&cmd[0], nullptr, 2);
 }

@@ -31,44 +31,65 @@
  *
  ****************************************************************************/
 
-#include "ekf.h"
-#include "ekf_derivation/generated/compute_hagl_h.h"
+/**
+ * @file bmp581_i2c.cpp
+ *
+ * I2C interface for BMP581
+ */
 
-bool Ekf::fuseHaglRng(estimator_aid_source1d_s &aid_src, bool update_height, bool update_terrain)
+#include <drivers/device/i2c.h>
+
+#include "bmp581.h"
+
+class BMP581_I2C: public device::I2C, public IBMP581
 {
-	if (aid_src.innovation_rejected) {
-		_innov_check_fail_status.flags.reject_hagl = true;
-		return false;
-	}
+public:
+	BMP581_I2C(uint8_t bus, uint32_t device, int bus_frequency);
+	virtual ~BMP581_I2C() = default;
 
-	VectorState H;
+	int init();
 
-	sym::ComputeHaglH(&H);
+	uint8_t get_reg(uint8_t addr);
+	int get_reg_buf(uint8_t addr, uint8_t *buf, uint8_t len);
+	int set_reg(uint8_t value, uint8_t addr);
 
-	// calculate the Kalman gain
-	VectorState K = P * H / aid_src.innovation_variance;
+	uint32_t get_device_id() const override { return device::I2C::get_device_id(); }
 
-	if (!update_terrain) {
-		K(State::terrain.idx) = 0.f;
-	}
+	uint8_t get_device_address() const override { return device::I2C::get_device_address(); }
+};
 
-	if (!update_height) {
-		const float k_terrain = K(State::terrain.idx);
-		K.zero();
-		K(State::terrain.idx) = k_terrain;
-	}
-
-	measurementUpdate(K, H, aid_src.observation_variance, aid_src.innovation);
-
-	// record last successful fusion event
-	_innov_check_fail_status.flags.reject_hagl = false;
-
-	aid_src.time_last_fuse = _time_delayed_us;
-	aid_src.fused = true;
-
-	if (update_terrain) {
-		_time_last_terrain_fuse = _time_delayed_us;
-	}
-
-	return true;
+IBMP581 *bmp581_i2c_interface(uint8_t busnum, uint32_t device, int bus_frequency)
+{
+	return new BMP581_I2C(busnum, device, bus_frequency);
 }
+
+BMP581_I2C::BMP581_I2C(uint8_t bus, uint32_t device, int bus_frequency) :
+	I2C(DRV_BARO_DEVTYPE_BMP581, MODULE_NAME, bus, device, bus_frequency)
+{
+}
+
+int BMP581_I2C::init()
+{
+	return I2C::init();
+}
+
+uint8_t BMP581_I2C::get_reg(uint8_t addr)
+{
+	uint8_t cmd[2] = { (uint8_t)(addr), 0};
+	transfer(&cmd[0], 1, &cmd[1], 1);
+
+	return cmd[1];
+}
+
+int BMP581_I2C::get_reg_buf(uint8_t addr, uint8_t *buf, uint8_t len)
+{
+	const uint8_t cmd = (uint8_t)(addr);
+	return transfer(&cmd, sizeof(cmd), buf, len);
+}
+
+int BMP581_I2C::set_reg(uint8_t value, uint8_t addr)
+{
+	uint8_t cmd[2] = { (uint8_t)(addr), value};
+	return transfer(cmd, sizeof(cmd), nullptr, 0);
+}
+

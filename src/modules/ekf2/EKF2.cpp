@@ -1191,6 +1191,9 @@ void EKF2::PublishGlobalPosition(const hrt_abstime &timestamp)
 			global_pos.terrain_alt_valid = true;
 		}
 
+		float delta_hagl = 0.f;
+		_ekf.get_hagl_reset(&delta_hagl, &global_pos.terrain_reset_counter);
+		global_pos.delta_terrain = -delta_z;
 #endif // CONFIG_EKF2_TERRAIN
 
 		global_pos.dead_reckoning = _ekf.control_status_flags().inertial_dead_reckoning
@@ -1619,9 +1622,10 @@ void EKF2::PublishLocalPosition(const hrt_abstime &timestamp)
 
 #if defined(CONFIG_EKF2_TERRAIN)
 	// Distance to bottom surface (ground) in meters, must be positive
+	lpos.dist_bottom_valid = _ekf.isTerrainEstimateValid();
 	lpos.dist_bottom = math::max(_ekf.getHagl(), 0.f);
 	lpos.dist_bottom_var = _ekf.getTerrainVariance();
-	lpos.dist_bottom_valid = _ekf.isTerrainEstimateValid();
+	_ekf.get_hagl_reset(&lpos.delta_dist_bottom, &lpos.dist_bottom_reset_counter);
 
 	lpos.dist_bottom_sensor_bitfield = vehicle_local_position_s::DIST_BOTTOM_SENSOR_NONE;
 
@@ -1821,7 +1825,7 @@ void EKF2::PublishStatus(const hrt_abstime &timestamp)
 	status.beta_test_ratio = _ekf.getSyntheticSideslipInnovationTestRatio();
 
 	_ekf.get_ekf_lpos_accuracy(&status.pos_horiz_accuracy, &status.pos_vert_accuracy);
-	_ekf.get_ekf_soln_status(&status.solution_status_flags);
+	status.solution_status_flags = _ekf.get_ekf_soln_status();
 
 	// reset counters
 	status.reset_count_vel_ne = _ekf.state_reset_status().reset_count.velNE;
@@ -1908,12 +1912,12 @@ void EKF2::PublishStatusFlags(const hrt_abstime &timestamp)
 		status_flags.cs_fuse_aspd             = _ekf.control_status_flags().fuse_aspd;
 		status_flags.cs_gnd_effect            = _ekf.control_status_flags().gnd_effect;
 		status_flags.cs_rng_stuck             = _ekf.control_status_flags().rng_stuck;
-		status_flags.cs_gps_yaw               = _ekf.control_status_flags().gps_yaw;
+		status_flags.cs_gnss_yaw               = _ekf.control_status_flags().gnss_yaw;
 		status_flags.cs_mag_aligned_in_flight = _ekf.control_status_flags().mag_aligned_in_flight;
 		status_flags.cs_ev_vel                = _ekf.control_status_flags().ev_vel;
 		status_flags.cs_synthetic_mag_z       = _ekf.control_status_flags().synthetic_mag_z;
 		status_flags.cs_vehicle_at_rest       = _ekf.control_status_flags().vehicle_at_rest;
-		status_flags.cs_gps_yaw_fault         = _ekf.control_status_flags().gps_yaw_fault;
+		status_flags.cs_gnss_yaw_fault         = _ekf.control_status_flags().gnss_yaw_fault;
 		status_flags.cs_rng_fault             = _ekf.control_status_flags().rng_fault;
 		status_flags.cs_inertial_dead_reckoning = _ekf.control_status_flags().inertial_dead_reckoning;
 		status_flags.cs_wind_dead_reckoning     = _ekf.control_status_flags().wind_dead_reckoning;
