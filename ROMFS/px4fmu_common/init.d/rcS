@@ -146,15 +146,8 @@ else
 
 	echo "IP: autostart"
 
-	#
-	# Set the parameter file the board supports params on
-	# MTD device.
-	#
-	if mft query -q -k MTD -s MTD_PARAMETERS -v /fs/mtd_params
-	then
-		set PARAM_FILE /fs/mtd_params
-		echo "FYI: PARAM_FILE on MTD device: $PARAM_FILE"
-	fi
+	# Load param file location from kconfig
+	. ${R}etc/init.d/rc.filepaths
 
 	# Check if /fs/mtd_params is a valid BSON file
 	if ! bsondump docsize /fs/mtd_caldata
