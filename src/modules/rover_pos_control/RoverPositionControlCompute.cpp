@@ -358,8 +358,8 @@ float RoverPositionControl::computeVelocitySetpoint()
 			// (time to reach the desired acceleration from opposite max acceleration)
 			// Equation to solve: vel_final^2 = vel_initial^2 - 2*accel*(x - vel_initial*2*accel/jerk)
 			float max_velocity = math::trajectory::computeMaxSpeedFromDistance(
-						     _param_rdd_max_jerk.get(),	 // RDD_MAX_JERK
-						     _param_rdd_max_accel.get(), // RDD_MAX_ACCEL
+						     _param_rd_max_jerk.get(),	 // RD_MAX_JERK
+						     _param_rd_max_accel.get(), // RD_MAX_ACCEL
 						     braking_distance, final_speed);
 
 			max_velocity = math::min(max_velocity, _mission_velocity_setpoint);

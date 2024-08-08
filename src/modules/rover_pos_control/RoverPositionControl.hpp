@@ -455,8 +455,8 @@ private:
 	bool _manual_drive_straight{false};
 
 	// To support Differential Drive module logic, whole body max speed and turn rate pre-calculated and stored here:
-	float _rdd_max_speed{0.f};		// = RDD_WHEEL_SPEED * RDD_WHEEL_RADIUS
-	float _rdd_max_angular_velocity{0.f};	// = _rdd_max_speed / (RDD_WHEEL_BASE / 2)
+	float _rd_max_speed{0.f};		// = RD_WHEEL_SPEED * RD_WHEEL_RADIUS
+	float _rd_max_angular_velocity{0.f};	// = _rd_max_speed / (RD_WHEEL_BASE / 2)
 
 	// Magnetometer sensor - variables and readings:
 	uint32_t _device_id_mag{0};
@@ -647,16 +647,16 @@ private:
 		(ParamFloat<px4::params::GND_MAN_YAW_SC>) _param_manual_yaw_scaler,
 
 		// Differential Drive module parameters used here:
-		(ParamFloat<px4::params::RDD_WHEEL_SPEED>) _param_rdd_max_wheel_speed,
-		(ParamFloat<px4::params::RDD_WHEEL_BASE>) _param_rdd_wheel_base,
-		(ParamFloat<px4::params::RDD_WHEEL_RADIUS>) _param_rdd_wheel_radius,
+		(ParamFloat<px4::params::RD_WHEEL_SPEED>) _param_rd_max_wheel_speed,
+		(ParamFloat<px4::params::RD_WHEEL_BASE>) _param_rd_wheel_base,
+		(ParamFloat<px4::params::RD_WHEEL_RADIUS>) _param_rd_wheel_radius,
 
-		(ParamFloat<px4::params::RDD_THRUST_SC>) _param_rdd_thrust_scaler,
-		(ParamFloat<px4::params::RDD_TORQUE_SC>) _param_rdd_torque_scaler,
+		(ParamFloat<px4::params::RD_THRUST_SC>) _param_rd_thrust_scaler,
+		(ParamFloat<px4::params::RD_TORQUE_SC>) _param_rd_torque_scaler,
 
 		// Velocity smoothing parameters for speed control:
-		(ParamFloat<px4::params::RDD_MAX_JERK>) _param_rdd_max_jerk,
-		(ParamFloat<px4::params::RDD_MAX_ACCEL>) _param_rdd_max_accel,
+		(ParamFloat<px4::params::RD_MAX_JERK>) _param_rd_max_jerk,
+		(ParamFloat<px4::params::RD_MAX_ACCEL>) _param_rd_max_accel,
 
 		(ParamInt<px4::params::GND_TRACING_LEV>) _param_tracing_lev,
 		(ParamInt<px4::params::GND_GPS_MINFIX>) _param_gps_minfix,

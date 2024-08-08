@@ -548,11 +548,11 @@ RoverPositionControl::Run()
 #else
 		// Directly publish to actuators, calling DifferentialDriveKinematics:
 
-		float ddk_linear_velocity_x = _thrust_control * _param_rdd_thrust_scaler.get();	// RDD_THRUST_SC
+		float ddk_linear_velocity_x = _thrust_control * _param_rd_thrust_scaler.get();	// RD_THRUST_SC
 
 		float ddk_yaw_rate = _torque_control
 				     * yaw_responsiveness_factor()	// 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas)
-				     * _param_rdd_torque_scaler.get();	// RDD_TORQUE_SC
+				     * _param_rd_torque_scaler.get();	// RD_TORQUE_SC
 
 		// get the wheel speeds from the inverse kinematics class (DifferentialDriveKinematics)
 		_wheel_speeds = _differential_drive_kinematics.computeInverseKinematics(ddk_linear_velocity_x, ddk_yaw_rate);
@@ -565,7 +565,7 @@ RoverPositionControl::Run()
 
 		// Check if max_angular_wheel_speed is zero
 		//const bool setpoint_timeout = (_differential_drive_setpoint.timestamp + 100_ms) < now;
-		//const bool valid_max_speed = _param_rdd_speed_scale.get() > FLT_EPSILON;
+		//const bool valid_max_speed = _param_rd_speed_scale.get() > FLT_EPSILON;
 
 		if (!_control_mode.flag_armed) { // || setpoint_timeout || !valid_max_speed) {
 			_wheel_speeds = {0.0f, 0.0f}; // stop

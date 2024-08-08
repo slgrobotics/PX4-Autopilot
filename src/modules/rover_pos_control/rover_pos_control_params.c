@@ -635,7 +635,7 @@ PARAM_DEFINE_FLOAT(GND_RATE_IMINSPD, 0.1f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(RDD_THRUST_SC, 1.0f);
+PARAM_DEFINE_FLOAT(RD_THRUST_SC, 1.0f);
 
 /**
  * Scaler to convert body torque to diff drive kinematics yaw rate
@@ -647,7 +647,7 @@ PARAM_DEFINE_FLOAT(RDD_THRUST_SC, 1.0f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(RDD_TORQUE_SC, 1.0f);
+PARAM_DEFINE_FLOAT(RD_TORQUE_SC, 1.0f);
 
 /**
  * Wheel base. Distance from the center of the right wheel to the center of the left wheel
@@ -659,7 +659,7 @@ PARAM_DEFINE_FLOAT(RDD_TORQUE_SC, 1.0f);
  * @increment 0.001
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(RDD_WHEEL_BASE, 0.5f);
+PARAM_DEFINE_FLOAT(RD_WHEEL_BASE, 0.5f);
 
 /**
  * Wheel radius
@@ -671,7 +671,7 @@ PARAM_DEFINE_FLOAT(RDD_WHEEL_BASE, 0.5f);
  * @increment 0.001
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(RDD_WHEEL_RADIUS, 0.2f);
+PARAM_DEFINE_FLOAT(RD_WHEEL_RADIUS, 0.2f);
 
 /**
  * Maximum wheel speed
@@ -683,31 +683,7 @@ PARAM_DEFINE_FLOAT(RDD_WHEEL_RADIUS, 0.2f);
  * @increment 0.001
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(RDD_WHEEL_SPEED, 0.3f);
-
-/**
- * Maximum jerk. Limit for forwards acc/deceleration change.
- *
- * @unit m/s^3
- * @min 0.0
- * @max 100.0
- * @decimal 2
- * @increment 0.001
- * @group Rover Position Control
- */
-PARAM_DEFINE_FLOAT(RDD_MAX_JERK, 0.5f);
-
-/**
- * Maximum jerk. Limit for forwards acc/deceleration change.
- *
- * @unit m/s^2
- * @min 0.0
- * @max 100.0
- * @decimal 2
- * @increment 0.001
- * @group Rover Position Control
- */
-PARAM_DEFINE_FLOAT(RDD_MAX_ACCEL, 0.5f);
+PARAM_DEFINE_FLOAT(RD_WHEEL_SPEED, 0.3f);
 
 // ================  Other parameters ===========================================================
 

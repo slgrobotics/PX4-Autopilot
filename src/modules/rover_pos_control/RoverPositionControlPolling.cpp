@@ -245,12 +245,12 @@ void RoverPositionControl::updateParams()
 	_gnd_control.set_l1_period(_param_l1_period.get());	// GND_L1_PERIOD
 
 	// To support Differential Drive module logic, whole body max speed and turn rate:
-	_rdd_max_speed = _param_rdd_max_wheel_speed.get() * _param_rdd_wheel_radius.get();	// RDD_WHEEL_SPEED, RDD_WHEEL_RADIUS
-	_rdd_max_angular_velocity = _rdd_max_speed / (_param_rdd_wheel_base.get() / 2.f);	// RDD_WHEEL_BASE
+	_rd_max_speed = _param_rd_max_wheel_speed.get() * _param_rd_wheel_radius.get();	// RD_WHEEL_SPEED, RD_WHEEL_RADIUS
+	_rd_max_angular_velocity = _rd_max_speed / (_param_rd_wheel_base.get() / 2.f);	// RD_WHEEL_BASE
 
-	_differential_drive_kinematics.setWheelBase(_param_rdd_wheel_base.get());	// RDD_WHEEL_BASE
-	_differential_drive_kinematics.setMaxSpeed(_rdd_max_speed);
-	_differential_drive_kinematics.setMaxAngularVelocity(_rdd_max_angular_velocity);
+	_differential_drive_kinematics.setWheelBase(_param_rd_wheel_base.get());	// RD_WHEEL_BASE
+	_differential_drive_kinematics.setMaxSpeed(_rd_max_speed);
+	_differential_drive_kinematics.setMaxAngularVelocity(_rd_max_angular_velocity);
 
 	// to provide for Line Following when in modified L1 mode:
 	pid_init(&_line_following_ctrl, PID_MODE_DERIVATIV_CALC, 0.01f);
@@ -277,9 +277,9 @@ void RoverPositionControl::updateParams()
 	pid_reset_integral(&_speed_ctrl);
 
 	// Velocity setpoint smoothing parameters:
-	_forwards_velocity_smoothing.setMaxJerk(_param_rdd_max_jerk.get());	// RDD_MAX_JERK
-	_forwards_velocity_smoothing.setMaxAccel(_param_rdd_max_accel.get());	// RDD_MAX_ACCEL
-	_forwards_velocity_smoothing.setMaxVel(_rdd_max_speed);
+	_forwards_velocity_smoothing.setMaxJerk(_param_rd_max_jerk.get());	// RD_MAX_JERK
+	_forwards_velocity_smoothing.setMaxAccel(_param_rd_max_accel.get());	// RD_MAX_ACCEL
+	_forwards_velocity_smoothing.setMaxVel(_rd_max_speed);
 
 	// Turn rate control parameters (z-axis only):
 	_rate_control.setPidGains(matrix::Vector3f(0.0f, 0.0f, _param_rate_p.get()),	// GND_RATE_P

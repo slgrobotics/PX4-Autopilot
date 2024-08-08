@@ -54,8 +54,8 @@ param set RD_WHEEL_RADIUS 0.22
 param set RD_WHEEL_SPEED 10.0	# Maximum wheel speed rad/s, approx 8 km/h
 
 # Lawnmower parameters to scale Differential Drive Kinematics output:
-param set-default RDD_THRUST_SC 1.0
-param set-default RDD_TORQUE_SC 3.0
+param set-default RD_THRUST_SC 1.0
+param set-default RD_TORQUE_SC 3.0
 
 # Parameters that "just work" in gz sim:
 #param set-default GND_LF_P 2
