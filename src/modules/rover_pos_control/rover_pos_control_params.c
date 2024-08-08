@@ -649,6 +649,66 @@ PARAM_DEFINE_FLOAT(RDD_THRUST_SC, 1.0f);
  */
 PARAM_DEFINE_FLOAT(RDD_TORQUE_SC, 1.0f);
 
+/**
+ * Wheel base. Distance from the center of the right wheel to the center of the left wheel
+ *
+ * @unit m
+ * @min 0.01
+ * @max 100.0
+ * @decimal 3
+ * @increment 0.001
+ * @group Rover Position Control
+ */
+PARAM_DEFINE_FLOAT(RDD_WHEEL_BASE, 0.5f);
+
+/**
+ * Wheel radius
+ *
+ * @unit m
+ * @min 0.01
+ * @max 100.0
+ * @decimal 3
+ * @increment 0.001
+ * @group Rover Position Control
+ */
+PARAM_DEFINE_FLOAT(RDD_WHEEL_RADIUS, 0.2f);
+
+/**
+ * Maximum wheel speed
+ *
+ * @unit rad/s
+ * @min 0.0
+ * @max 100.0
+ * @decimal 2
+ * @increment 0.001
+ * @group Rover Position Control
+ */
+PARAM_DEFINE_FLOAT(RDD_WHEEL_SPEED, 0.3f);
+
+/**
+ * Maximum jerk. Limit for forwards acc/deceleration change.
+ *
+ * @unit m/s^3
+ * @min 0.0
+ * @max 100.0
+ * @decimal 2
+ * @increment 0.001
+ * @group Rover Position Control
+ */
+PARAM_DEFINE_FLOAT(RDD_MAX_JERK, 0.5f);
+
+/**
+ * Maximum jerk. Limit for forwards acc/deceleration change.
+ *
+ * @unit m/s^2
+ * @min 0.0
+ * @max 100.0
+ * @decimal 2
+ * @increment 0.001
+ * @group Rover Position Control
+ */
+PARAM_DEFINE_FLOAT(RDD_MAX_ACCEL, 0.5f);
+
 // ================  Other parameters ===========================================================
 
 /**
