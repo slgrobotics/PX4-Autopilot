@@ -93,6 +93,84 @@ float RoverPositionControl::computeTurningSetpoint()
 	//return math::sq(math::constrain(turning_setpoint, -max_turning_sp, max_turning_sp)) * sign(turning_setpoint);
 }
 
+void RoverPositionControl::computeRdGuidance()
+{
+	// see src/modules/rover_differential/RoverDifferentialGuidance/RoverDifferentialGuidance.cpp
+
+	// Guidance logic - first yaw rate:
+	const float yaw = _current_heading;	// The yaw orientation of the vehicle in radians.
+	const float actual_speed = _x_vel_ema;	// The forward velocity of the vehicle in m/s.
+
+	const float pp_desired_heading = _pure_pursuit.calcDesiredHeading(_curr_wp_ned, _prev_wp_ned, _curr_pos_ned,
+					 math::max(actual_speed, 0.f));
+
+	const float pp_heading_error = matrix::wrap_pi(pp_desired_heading - yaw);
+
+	float desired_yaw_rate = pid_calculate(&_pid_heading, pp_heading_error, 0.f, 0.f, _dt);
+
+	desired_yaw_rate = math::constrain(desired_yaw_rate, -_max_yaw_rate, _max_yaw_rate);
+
+	_heading_error = pp_heading_error; // make Pure Pursuit heading error global
+
+	// now speed:
+	float desired_speed =
+		_mission_velocity_setpoint; // RD_MISS_SPD_DEF - default mission speed, superceeded by leg speed from triplet
+
+	float braking_distance = math::min(_wp_previous_dist, _wp_current_dist);
+	float final_speed = 0.0f; //_param_turn_speed.get();	// final_speed, GND_TURN_SPEED
+
+	// Compute the maximum possible speed on the track given the desired speed,
+	// remaining distance, the maximum acceleration and the maximum jerk.
+	// We assume a constant acceleration profile with a delay of 2*accel/jerk
+	// (time to reach the desired acceleration from opposite max acceleration)
+	// Equation to solve: vel_final^2 = vel_initial^2 - 2*accel*(x - vel_initial*2*accel/jerk)
+
+	if (_param_rd_max_jerk.get() > FLT_EPSILON && _param_rd_max_accel.get() > FLT_EPSILON) {
+		desired_speed = math::trajectory::computeMaxSpeedFromDistance(_param_rd_max_jerk.get(),
+				_param_rd_max_accel.get(), braking_distance, final_speed);
+
+		//const float max_speed = _param_rd_max_speed.get();	// RD_MAX_SPEED - not RD_MISS_SPD_DEF here
+		const float max_speed = _mission_velocity_setpoint;
+
+		desired_speed = math::constrain(desired_speed, -max_speed, max_speed);
+	}
+
+	/*
+	const float distance_to_next_wp = get_distance_to_next_waypoint(_global_pos.lat, _global_pos.lon, _curr_wp(0),
+					  _curr_wp(1));
+
+	if (_param_rd_max_jerk.get() > FLT_EPSILON && _param_rd_max_accel.get() > FLT_EPSILON) {
+		desired_speed = math::trajectory::computeMaxSpeedFromDistance(_param_rd_max_jerk.get(),
+				_param_rd_max_accel.get(), distance_to_next_wp, 0.0f);
+	}
+	*/
+
+	/*
+	// Closed loop speed control
+	float throttle{0.f};
+
+	if (fabsf(desired_speed) < FLT_EPSILON) {
+		pid_reset_integral(&_pid_throttle);
+
+	} else {
+		throttle = pid_calculate(&_pid_throttle, desired_speed, actual_speed, 0,
+					 dt);
+
+		if (_param_rd_max_speed.get() > FLT_EPSILON) { // Feed-forward term
+			throttle += math::interpolate<float>(desired_speed,
+							     0.f, _param_rd_max_speed.get(),
+							     0.f, 1.f);
+		}
+	}
+
+	throttle = math::constrain(throttle, 0.f, 1.f);
+	*/
+
+	// Return setpoints:
+	_rd_guidance.desired_speed = desired_speed;
+	_rd_guidance.desired_yaw_rate = desired_yaw_rate;
+}
+
 float RoverPositionControl::computeTorqueEffort()
 {
 	if (!PX4_ISFINITE(_mission_turning_setpoint)) {
@@ -114,6 +192,20 @@ float RoverPositionControl::computeTorqueEffort()
 
 	case L1_GOTO_WAYPOINT: {
 
+			_rates_setpoint.yaw = _yaw_rate_setpoint = _rd_guidance.desired_yaw_rate;
+
+			torque_effort = control_yaw_rate(_angular_velocity, _rates_setpoint);
+
+			/*
+			PX4_INFO_RAW("xtrk: %.1f cm  msn_trng: %.3f   yaw: %.4f  spd: %.3f  trq_eff: %.3f\n",
+					(double)(_crosstrack_error * 100.0f),
+					(double)_mission_turning_setpoint,
+					(double)_yaw_rate_setpoint,
+					(double)_rd_guidance.desired_speed,
+					(double)torque_effort);
+			*/
+
+#ifdef OLD_L1_LOGIC
 			// Start with Arrive-Depart calculations (heading error based):
 
 			float turning_setpoint_hdg = _mission_turning_setpoint *
@@ -299,13 +391,14 @@ float RoverPositionControl::computeTorqueEffort()
 						10.0f; // experimental factor to leave GND_LF_HDG_SC intact while switching GND_LF_USE_RATE
 			}
 			*/
+#endif // OLD_L1_LOGIC
 		}
 		break;
 
 	case WP_TURNING:
 
 		// Just use constant yaw rate - GND_TURN_RATE:
-		_rates_setpoint.yaw = _rates_setpoint_yaw =
+		_rates_setpoint.yaw = _yaw_rate_setpoint =
 					      sign(_mission_turning_setpoint) * _param_turn_rate_sp.get(); // GND_TURN_RATE
 
 		torque_effort = control_yaw_rate(_angular_velocity, _rates_setpoint);
@@ -321,7 +414,7 @@ float RoverPositionControl::computeTorqueEffort()
 
 			float max_yaw_rate_setpoint = _param_rate_depart_arrive_trim.get(); // GND_RATE_AD_TRIM
 
-			_rates_setpoint.yaw = _rates_setpoint_yaw = math::constrain(
+			_rates_setpoint.yaw = _yaw_rate_setpoint = math::constrain(
 						      _mission_turning_setpoint * _param_heading_ad_rate_scaler.get(), // GND_RATE_AD_SC
 						      -max_yaw_rate_setpoint, max_yaw_rate_setpoint); // constrained with GND_RATE_AD_TRIM
 
@@ -340,34 +433,21 @@ float RoverPositionControl::computeTorqueEffort()
 	return math::constrain(torque_effort, -1.0f, 1.0f);
 }
 
-float RoverPositionControl::computeVelocitySetpoint()
+float RoverPositionControl::adjustMissionVelocitySetpoint()
 {
-	float velocity_sp = _mission_velocity_setpoint;
+	float velocity_sp =
+		_mission_velocity_setpoint;	// start with default RD_MISS_SPD_DEF or the leg speed - see setDefaultMissionSpeed()
 
 	switch (_pos_ctrl_state) {
 	case WP_ARRIVING:		// target waypoint is close, we need to slow down and head straight to it till stop
 	case WP_DEPARTING:		// we turned to next waypoint and must accelerate
 	case L1_GOTO_WAYPOINT: {
 
-			float braking_distance = math::min(_wp_previous_dist, _wp_current_dist);
-			float final_speed = 0.0f; //_param_turn_speed.get();	// final_speed, GND_TURN_SPEED
-
-			// Compute the maximum possible speed on the track given the desired speed,
-			// remaining distance, the maximum acceleration and the maximum jerk.
-			// We assume a constant acceleration profile with a delay of 2*accel/jerk
-			// (time to reach the desired acceleration from opposite max acceleration)
-			// Equation to solve: vel_final^2 = vel_initial^2 - 2*accel*(x - vel_initial*2*accel/jerk)
-			float max_velocity = math::trajectory::computeMaxSpeedFromDistance(
-						     _param_rd_max_jerk.get(),	 // RD_MAX_JERK
-						     _param_rd_max_accel.get(), // RD_MAX_ACCEL
-						     braking_distance, final_speed);
-
-			max_velocity = math::min(max_velocity, _mission_velocity_setpoint);
+			float max_velocity = _rd_guidance.desired_speed; // already limited by _mission_velocity_setpoint
 
 			_forwards_velocity_smoothing.updateDurations(max_velocity);
 
-			const float dt = math::min(_dt, 5.0f);	// no more than 5 seconds
-			_forwards_velocity_smoothing.updateTraj(dt);
+			_forwards_velocity_smoothing.updateTraj(_dt);
 
 			float smooth_speed = _forwards_velocity_smoothing.getCurrentVelocity();
 
@@ -380,7 +460,7 @@ float RoverPositionControl::computeVelocitySetpoint()
 			//	     (double)_mission_velocity_setpoint, (double)max_velocity, (double)smooth_speed,
 			//	     (double)velocity_sp, (double)_heading_error);
 
-			velocity_sp = math::max(_param_turn_speed.get(), velocity_sp);	// GND_TURN_SPEED
+			velocity_sp = math::max(_param_turn_speed.get(), velocity_sp);	// GND_TURN_SPEED is a minimum
 		}
 		break;
 
@@ -390,7 +470,7 @@ float RoverPositionControl::computeVelocitySetpoint()
 
 	velocity_sp = _velocity_setpoint_ema.Compute(velocity_sp); // smooth the jitter for the speed PID's input
 
-	return velocity_sp;
+	return velocity_sp; // will become new _mission_velocity_setpoint value
 }
 
 float RoverPositionControl::computeThrustEffort()
@@ -418,9 +498,22 @@ void RoverPositionControl::adjustThrustAndTorque()
 	// computes _mission_thrust (by PID or for slowing down) and computes _mission_torque_effort from _mission_turning_setpoint (for more gentle turns).
 
 	if (!_control_mode.flag_armed) {
+
+		resetRdGuidance();
+
 		_mission_torque_effort = _mission_thrust_effort = NAN;
 
 	} else {
+
+		computeRdGuidance();	// computes desired speed and yaw rate in _rd_guidance
+
+		/*
+		PX4_INFO_RAW("des_yaw: %.4f  des_spd: %.4f  mis_vel_sp: %.3f\n",
+				(double)_rd_guidance.desired_yaw_rate,
+				(double)_rd_guidance.desired_speed,
+				(double)_mission_velocity_setpoint);
+		*/
+
 		_mission_torque_effort = computeTorqueEffort();	// can be a factor in speed calculation below. Can be NAN.
 
 		if (PX4_ISFINITE(_mission_velocity_setpoint)) {
@@ -428,7 +521,7 @@ void RoverPositionControl::adjustThrustAndTorque()
 			if (!_manual_using_pids) {
 				if (PX4_ISFINITE(_wp_current_dist)) {
 
-					_mission_velocity_setpoint = computeVelocitySetpoint();
+					_mission_velocity_setpoint = adjustMissionVelocitySetpoint();
 
 				} else {
 
@@ -466,6 +559,7 @@ void RoverPositionControl::resetTorqueControls()
 
 	_rate_control.resetIntegral();
 	pid_reset_integral(&_line_following_ctrl);
+	pid_reset_integral(&_pid_heading);
 
 	_mission_torque_ema.Reset();
 	//_mission_thrust_ema.Reset();
@@ -491,8 +585,8 @@ void RoverPositionControl::resetVelocitySmoothing()
 
 void RoverPositionControl::setDefaultMissionSpeed()
 {
-	// target speed is GND_SPEED_TRIM - later scaled for waypoint proximity and heading deviation, and smoothed:
-	_mission_velocity_setpoint = _param_gndspeed_trim.get();
+	// target speed is RD_MISS_SPD_DEF - later scaled for waypoint proximity and heading deviation, and smoothed:
+	_mission_velocity_setpoint = _param_rd_miss_spd_def.get();
 
 	if (PX4_ISFINITE(_pos_sp_triplet.current.cruising_speed) && _pos_sp_triplet.current.cruising_speed > 0.1f) {
 		_mission_velocity_setpoint = _pos_sp_triplet.current.cruising_speed;
@@ -504,4 +598,36 @@ void RoverPositionControl::updateEkfGpsDeviation()
 	// meters, how far is EKF2 calculated position from GPS reading:
 	_ekfGpsDeviation = get_distance_to_next_waypoint(_global_pos.lat, _global_pos.lon,
 			   _sensor_gps_data.latitude_deg, _sensor_gps_data.longitude_deg);
+}
+
+void RoverPositionControl::compute_crosstrack_error()
+{
+	// See src/lib/l1/ECL_L1_Pos_Controller.cpp
+
+	if (!PX4_ISFINITE(_wp_previous_dist)) {
+		_crosstrack_error = NAN;
+		return;
+	}
+
+	// vector operations change operands values, so get local copies:
+	Vector2f curr_pos_local = _curr_pos_ned;
+	Vector2f curr_wp_local = _curr_wp_ned;
+	Vector2f prev_wp_local = _prev_wp_ned;
+
+	// calculate vector from A to B
+	Vector2f vector_AB = curr_wp_local - prev_wp_local;
+
+	// check if waypoints are on top of each other
+	if (vector_AB.length() < 1.0e-6f) {
+		_crosstrack_error = NAN;
+		return;
+	}
+
+	vector_AB.normalize();
+
+	// calculate the vector from waypoint A to the aircraft
+	Vector2f vector_A_to_vehicle = curr_pos_local - prev_wp_local;
+
+	// calculate crosstrack error (output only)
+	_crosstrack_error = vector_AB % vector_A_to_vehicle;   // distance meters from AB line
 }

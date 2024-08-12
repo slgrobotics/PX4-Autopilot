@@ -110,7 +110,7 @@ void RoverPositionControl::poll_everything()
 			 _sensor_gps_data.fix_type, _gps_minfix, _sensor_gps_data.jamming_state, _sensor_gps_data.jamming_indicator,
 			 _sensor_gps_data.noise_per_ms);
 
-		_debug_gps_warn_last_called = _now;
+		_debug_gps_warn_last_called = _timestamp;
 	}
 
 #endif // DEBUG_MY_PRINT
@@ -145,14 +145,31 @@ void RoverPositionControl::poll_everything()
 		}
 	}
 
+	if (_home_position_sub.updated()) {
+		home_position_s home_position{};
+		_home_position_sub.copy(&home_position);
+		_home_position = Vector2d(home_position.lat, home_position.lon);
+
+		//PX4_WARN("Home Position: lat: %.3f  lon: %.3f", (double)_home_position(0), (double)_home_position(1));
+	}
+
 	// store position change:
-	if (_local_pos_sub.update(&_local_pos)) {
+	if (_local_position_sub.update(&_local_pos)) {
 
 		_ekf_data_good = _local_pos.xy_valid && _local_pos.v_xy_valid && _local_pos.heading_good_for_control;
 		_ekf_flags = {_local_pos.xy_valid, _local_pos.v_xy_valid, _local_pos.heading_good_for_control};
+
+		if (_ekf_data_good && (!_global_ned_proj_ref.isInitialized()
+				       || (_global_ned_proj_ref.getProjectionReferenceTimestamp() != _local_pos.ref_timestamp))) {
+
+			_global_ned_proj_ref.initReference(_local_pos.ref_lat, _local_pos.ref_lon,
+							   _local_pos.ref_timestamp);
+		}
+
+		_curr_pos_ned = Vector2f(_local_pos.x, _local_pos.y);
 	}
 
-	if (_global_pos_sub.update(&_global_pos)) {
+	if (_global_position_sub.update(&_global_pos)) {
 		// see how far EKF-calculated position is from RTK GPS position:
 		updateEkfGpsDeviation();
 	}
@@ -198,14 +215,8 @@ void RoverPositionControl::poll_everything()
 		}*/
 	}
 
+	// must be called after _global_pos updates:
 	position_setpoint_triplet_poll();	// autonomous inputs - goal waypoint
-
-	if (!_global_local_proj_ref.isInitialized()
-	    || (_global_local_proj_ref.getProjectionReferenceTimestamp() != _local_pos.ref_timestamp)) {
-
-		_global_local_proj_ref.initReference(_local_pos.ref_lat, _local_pos.ref_lon,
-						     _local_pos.ref_timestamp);
-	}
 
 	/*
 	 *  This is part of control_velocity() code, removed for now
@@ -244,14 +255,6 @@ void RoverPositionControl::updateParams()
 	_gnd_control.set_l1_damping(_param_l1_damping.get());	// GND_L1_DAMPING
 	_gnd_control.set_l1_period(_param_l1_period.get());	// GND_L1_PERIOD
 
-	// To support Differential Drive module logic, whole body max speed and turn rate:
-	_rd_max_speed = _param_rd_max_wheel_speed.get() * _param_rd_wheel_radius.get();	// RD_WHEEL_SPEED, RD_WHEEL_RADIUS
-	_rd_max_angular_velocity = _rd_max_speed / (_param_rd_wheel_base.get() / 2.f);	// RD_WHEEL_BASE
-
-	_differential_drive_kinematics.setWheelBase(_param_rd_wheel_base.get());	// RD_WHEEL_BASE
-	_differential_drive_kinematics.setMaxSpeed(_rd_max_speed);
-	_differential_drive_kinematics.setMaxAngularVelocity(_rd_max_angular_velocity);
-
 	// to provide for Line Following when in modified L1 mode:
 	pid_init(&_line_following_ctrl, PID_MODE_DERIVATIV_CALC, 0.01f);
 	pid_set_parameters(&_line_following_ctrl,
@@ -263,9 +266,30 @@ void RoverPositionControl::updateParams()
 
 	pid_reset_integral(&_line_following_ctrl);
 
+
+	pid_init(&_pid_heading, PID_MODE_DERIVATIV_NONE, 0.001f);
+
+	_max_yaw_rate = _param_rd_max_yaw_rate.get() * M_DEG_TO_RAD_F;
+	pid_set_parameters(&_pid_heading,
+			   _param_rd_p_gain_heading.get(),  // Proportional gain
+			   _param_rd_i_gain_heading.get(),  // Integral gain
+			   0.f,  // Derivative gain
+			   _max_yaw_rate,  // Integral limit
+			   _max_yaw_rate);  // Output limit
+
+	pid_init(&_pid_yaw_rate, PID_MODE_DERIVATIV_NONE, 0.001f);
+
+	pid_set_parameters(&_pid_yaw_rate,
+			   _param_rd_p_gain_yaw_rate.get(), // Proportional gain
+			   _param_rd_i_gain_yaw_rate.get(), // Integral gain
+			   0.f, // Derivative gain
+			   1.f, // Integral limit
+			   1.f); // Output limit
+
+
 	// PID_MODE_DERIVATIV_CALC calculates discrete derivative from previous error, val_dot in pid_calculate() will be ignored
 
-	// to stabilize speed at desired level, given by GND_SPEED_TRIM (m/s):
+	// to stabilize speed at desired level, given by RD_MISS_SPD_DEF (m/s):
 	pid_init(&_speed_ctrl, PID_MODE_DERIVATIV_CALC, 0.01f);
 	pid_set_parameters(&_speed_ctrl,
 			   _param_speed_p.get(),	// GND_SPEED_P
@@ -279,7 +303,7 @@ void RoverPositionControl::updateParams()
 	// Velocity setpoint smoothing parameters:
 	_forwards_velocity_smoothing.setMaxJerk(_param_rd_max_jerk.get());	// RD_MAX_JERK
 	_forwards_velocity_smoothing.setMaxAccel(_param_rd_max_accel.get());	// RD_MAX_ACCEL
-	_forwards_velocity_smoothing.setMaxVel(_rd_max_speed);
+	_forwards_velocity_smoothing.setMaxVel(_param_rd_miss_spd_def.get());	// RD_MISS_SPD_DEF - not RD_MAX_SPEED
 
 	// Turn rate control parameters (z-axis only):
 	_rate_control.setPidGains(matrix::Vector3f(0.0f, 0.0f, _param_rate_p.get()),	// GND_RATE_P
@@ -373,9 +397,9 @@ RoverPositionControl::manual_control_setpoint_poll()
 
 #endif // DEBUG_MY_PRINT
 
-		// Set heading torque from the manual roll input channel. See GND_MAN_YAW_SC - for smoother manual control.
+		// Set heading torque from the manual roll input channel. See RD_MAN_YAW_SCALE - for smoother manual control.
 		_torque_control_manual = _manual_control_setpoint.roll *
-					 _param_manual_yaw_scaler.get();		// Nominally yaw: _manual_control_setpoint.roll;  - this is right stick, horizontal movement, R/C CH1 "ailerons"
+					 _param_rd_man_yaw_scale.get();		// Nominally yaw: _manual_control_setpoint.roll;  - this is right stick, horizontal movement, R/C CH1 "ailerons"
 		// Set thrust from the manual throttle channel
 		_thrust_control_manual =
 			_manual_control_setpoint.throttle;	// this is right stick, vertical movement, R/C CH2 "elevator"
@@ -391,15 +415,15 @@ RoverPositionControl::manual_control_setpoint_poll()
 		_alarm_dev_level_manual =
 			_manual_control_setpoint.aux2;	// R/C CH6 "right round knob"    - param set RC_MAP_AUX2 6  - spare servo
 
-		_manual_setpoint_last_called = _now = hrt_absolute_time();
+		_manual_setpoint_last_called = _timestamp = hrt_absolute_time();
 	}
 }
 
 void
 RoverPositionControl::position_setpoint_triplet_poll()
 {
-	if (_pos_sp_triplet_sub.updated()) {
-		_pos_sp_triplet_sub.copy(&_pos_sp_triplet);
+	if (_position_setpoint_triplet_sub.updated()) {
+		_position_setpoint_triplet_sub.copy(&_pos_sp_triplet);
 
 		if (_pos_sp_triplet.current.valid || _pos_sp_triplet.previous.valid || _pos_sp_triplet.next.valid) {
 #ifdef DEBUG_MY_PRINT
@@ -455,8 +479,74 @@ RoverPositionControl::position_setpoint_triplet_poll()
 
 #endif // DEBUG_MY_PRINT
 
+			updateWaypoints();
+
+			updateWaypointDistances();
+
 			//setStateMachineState(POS_STATE_IDLE);
 		}
+	}
+}
+
+void RoverPositionControl::updateWaypoints()
+{
+	// Global waypoint coordinates
+	if (_pos_sp_triplet.current.valid && PX4_ISFINITE(_pos_sp_triplet.current.lat)
+	    && PX4_ISFINITE(_pos_sp_triplet.current.lon)) {
+		_curr_wp = Vector2d(_pos_sp_triplet.current.lat, _pos_sp_triplet.current.lon);
+
+	} else {
+		_curr_wp = Vector2d(0, 0);
+	}
+
+	if (_pos_sp_triplet.previous.valid && PX4_ISFINITE(_pos_sp_triplet.previous.lat)
+	    && PX4_ISFINITE(_pos_sp_triplet.previous.lon)) {
+		_prev_wp = Vector2d(_pos_sp_triplet.previous.lat, _pos_sp_triplet.previous.lon);
+
+	} else {
+		_prev_wp = _curr_pos; // this is first leg - towards the first waypoint
+	}
+
+	if (_pos_sp_triplet.next.valid && PX4_ISFINITE(_pos_sp_triplet.next.lat)
+	    && PX4_ISFINITE(_pos_sp_triplet.next.lon)) {
+		_next_wp = Vector2d(_pos_sp_triplet.next.lat, _pos_sp_triplet.next.lon);
+
+	} else {
+		_next_wp = _home_position;
+	}
+
+	// NED waypoint coordinates
+	_curr_wp_ned = _global_ned_proj_ref.project(_curr_wp(0), _curr_wp(1));
+	_prev_wp_ned = _global_ned_proj_ref.project(_prev_wp(0), _prev_wp(1));
+}
+
+void RoverPositionControl::updateWaypointDistances()
+{
+	if (_pos_sp_triplet.current.valid && PX4_ISFINITE(_pos_sp_triplet.current.lat)
+	    && PX4_ISFINITE(_pos_sp_triplet.current.lon)) {
+		_wp_current_dist = get_distance_to_next_waypoint(_global_pos.lat, _global_pos.lon,
+				   _pos_sp_triplet.current.lat, _pos_sp_triplet.current.lon);
+
+	} else {
+		_wp_current_dist = NAN;
+	}
+
+	// we use previously saved _prev_wp, it helps with the first leg, when _pos_sp_triplet.previous.valid is false:
+	if (PX4_ISFINITE(_prev_wp(0)) && PX4_ISFINITE(_prev_wp(1))) {
+		_wp_previous_dist = get_distance_to_next_waypoint(_global_pos.lat, _global_pos.lon,
+				    _prev_wp(0), _prev_wp(1));
+
+	} else {
+		_wp_previous_dist = NAN;
+	}
+
+	if (_pos_sp_triplet.next.valid && PX4_ISFINITE(_pos_sp_triplet.next.lat)
+	    && PX4_ISFINITE(_pos_sp_triplet.next.lon)) {
+		_wp_next_dist = get_distance_to_next_waypoint(_global_pos.lat, _global_pos.lon,
+				_pos_sp_triplet.next.lat, _pos_sp_triplet.next.lon);
+
+	} else {
+		_wp_next_dist = NAN;
 	}
 }
 

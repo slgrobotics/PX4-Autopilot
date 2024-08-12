@@ -86,7 +86,7 @@ RoverPositionControl::init()
 	//	return false;
 	//}
 
-	_app_started_time = _now = hrt_absolute_time();
+	_app_started_time = _timestamp = hrt_absolute_time();
 
 	_gas_engine_throttle = _param_gas_throttle_idle.get();
 	_cutter_setpoint = ACTUATOR_OFF;
@@ -136,20 +136,6 @@ static double _last_alt_e {0};
 void
 RoverPositionControl::update_orientation()
 {
-	//_dt = 0.004f; // Using non zero value to a avoid division by zero, assume 250 Hz cycle (4 ms)
-	_dt = 0.01f;
-
-	if (_update_orientation_last_called > 0) {
-		int64_t elapsed = hrt_elapsed_time(&_update_orientation_last_called);
-		_dt = (float)elapsed * 1e-6f;		// seconds, usually 0.004 in sitl
-
-		if (_dt > 0.9f) {
-			_dt = 0.01f;        // this was a first call after a state change
-		}
-	}
-
-	_update_orientation_last_called = _now = hrt_absolute_time();
-
 	matrix::Vector3f gs(_local_pos.vx, _local_pos.vy,  _local_pos.vz);
 	_ground_speed = gs;
 
@@ -174,7 +160,7 @@ RoverPositionControl::update_orientation()
 
 #endif // PRINT_GPS_WALK
 
-		_current_position = cp;
+		_curr_pos = cp;
 
 	} else {
 		// No RTK fix - we can only rely on EKF2 estimated position:
@@ -190,7 +176,7 @@ RoverPositionControl::update_orientation()
 
 #endif // PRINT_GPS_WALK
 
-		_current_position = cp;
+		_curr_pos = cp;
 	}
 
 #ifdef PRINT_GPS_WALK
@@ -207,7 +193,7 @@ RoverPositionControl::update_orientation()
 		_last_lat_e = _global_pos.lat;
 		_last_lon_e = _global_pos.lon;
 		_last_alt_e = _global_pos.alt;
-		_gps_print_last_called = _now;
+		_gps_print_last_called = _timestamp;
 	}
 
 #endif // PRINT_GPS_WALK
@@ -255,45 +241,16 @@ RoverPositionControl::control_position(const matrix::Vector2d &current_position)
 #endif // DEBUG_MY_PRINT
 
 	// _pos_sp_triplet.current is always valid here
-	_wp_current_dist = get_distance_to_next_waypoint(_global_pos.lat, _global_pos.lon,
-			   _pos_sp_triplet.current.lat, _pos_sp_triplet.current.lon);
-
-	_dist_target = _wp_current_dist;
 
 	// we can have a LOITER waypoint arriving (1) on mission end and (2) when "Go to this point" is clicked on the map at any time.
 	// _vehicle_status.nav_state will be MAIN_STATE_AUTO_MISSION = 3 at the mission, and MAIN_STATE_AUTO_LOITER = 4 at the go-to
 
 	if (_pos_sp_triplet.current.type != position_setpoint_s::SETPOINT_TYPE_LOITER
 	    || _vehicle_status.nav_state != vehicle_status_s::NAVIGATION_STATE_AUTO_MISSION) {
-		// ============= Prepare variables related to distances between waypoints and vehicle motion: ===================================
 
-		/* get circle mode */
-		//bool was_circle_mode = _gnd_control.circle_mode();
+		updateWaypointDistances();
 
-		/* current waypoint (the one we are currently heading for) */
-		const matrix::Vector2d t_wp(_pos_sp_triplet.current.lat, _pos_sp_triplet.current.lon);
-		_curr_wp = t_wp;
-
-		/* previous waypoint */
-		_prev_wp = _curr_wp;
-
-		if (_pos_sp_triplet.previous.valid) {
-			_prev_wp(0) = _pos_sp_triplet.previous.lat;
-			_prev_wp(1) = _pos_sp_triplet.previous.lon;
-			_wp_previous_dist = get_distance_to_next_waypoint(_global_pos.lat, _global_pos.lon,
-					    _pos_sp_triplet.previous.lat, _pos_sp_triplet.previous.lon);
-
-		} else {
-			_wp_previous_dist = NAN;
-		}
-
-		if (_pos_sp_triplet.next.valid) {
-			_wp_next_dist = get_distance_to_next_waypoint(_global_pos.lat, _global_pos.lon,
-					_pos_sp_triplet.next.lat, _pos_sp_triplet.next.lon);
-
-		} else {
-			_wp_next_dist = NAN;
-		}
+		_dist_target = _wp_current_dist;
 
 		//PX4_INFO("Setpoint type %s", waypoint_type_name(_pos_sp_triplet.current.type));
 		//PX4_INFO(" State machine state %d", (int) _pos_ctrl_state);
@@ -377,7 +334,7 @@ RoverPositionControl::control_yaw_rate(const vehicle_angular_velocity_s &rates,
 	//                              and src/modules/mc_rate_control/MulticopterRateControl.cpp:185+
 
 	float dt = (_control_yaw_rate_last_called > 0) ? hrt_elapsed_time(&_control_yaw_rate_last_called) * 1e-6f : 0.01f;
-	_control_yaw_rate_last_called = hrt_absolute_time();
+	_control_yaw_rate_last_called = _timestamp;
 
 	// reset integral if disarmed
 	if (!_control_mode.flag_armed) {
@@ -427,7 +384,7 @@ RoverPositionControl::control_yaw_rate(const vehicle_angular_velocity_s &rates,
 	// publish rate controller status
 	rate_ctrl_status_s rate_ctrl_status{};
 	_rate_control.getRateControlStatus(rate_ctrl_status);
-	rate_ctrl_status.timestamp = hrt_absolute_time();
+	rate_ctrl_status.timestamp = _timestamp;
 	_controller_status_pub.publish(rate_ctrl_status);
 
 	// only interested in yaw (z) axis:
@@ -454,10 +411,12 @@ RoverPositionControl::Run()
 	_cnt_run++;
 #endif // DEBUG_MY_PRINT
 
-	_now = hrt_absolute_time();
+	hrt_abstime timestamp_prev = _timestamp;
+	_timestamp = hrt_absolute_time();
+	_dt = math::constrain(_timestamp - timestamp_prev, 1_ms, 5000_ms) * 1e-6f;
 
-	_rates_setpoint_yaw = NAN;	// for logging, will be set in control_position()
-	_z_yaw_rate = NAN;			//              will be set in poll_everything()
+	_yaw_rate_setpoint = NAN;	// for logging, will be set in control_position()
+	_z_yaw_rate = NAN;		//              will be set in poll_everything()
 
 	poll_everything();
 
@@ -472,15 +431,11 @@ RoverPositionControl::Run()
 	_thrust_control = _torque_control = NAN;
 	_mission_thrust_effort = _mission_torque_effort = NAN;
 
-	_control_mode_current = UGV_POSCTRL_MODE_OTHER;		// assume Manual mode
-
 	if (!_control_mode.flag_control_manual_enabled && _control_mode.flag_control_position_enabled) {
 
 		if ((_control_mode.flag_control_auto_enabled ||
 		     _control_mode.flag_control_offboard_enabled) && _pos_sp_triplet.current.valid) {
 			/* AUTONOMOUS FLIGHT */
-
-			_control_mode_current = UGV_POSCTRL_MODE_AUTO;
 
 			// _acceptance_radius - if large enough, it will be used for mission advancement to next WP
 
@@ -513,7 +468,7 @@ RoverPositionControl::Run()
 #endif
 
 			// This is where all the magic happens:
-			control_position(_current_position);
+			control_position(_curr_pos);
 
 			// publish controller status, mostly for tracing and tuning:
 			publishControllerStatus();
@@ -546,19 +501,58 @@ RoverPositionControl::Run()
 		// "Servo" channels - Gas Engine Throttle, Cutter, Strobe, Horn, Alarm:
 		publishAuxActuators(timestamp_sample);
 #else
-		// Directly publish to actuators, calling DifferentialDriveKinematics:
 
-		float ddk_linear_velocity_x = _thrust_control * _param_rd_thrust_scaler.get();	// RD_THRUST_SC
+		// see src/modules/rover_differential/RoverDifferential.cpp
 
-		float ddk_yaw_rate = _torque_control
-				     * yaw_responsiveness_factor()	// 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas)
-				     * _param_rd_torque_scaler.get();	// RD_TORQUE_SC
-
-		// get the wheel speeds from the inverse kinematics class (DifferentialDriveKinematics)
-		_wheel_speeds = _differential_drive_kinematics.computeInverseKinematics(ddk_linear_velocity_x, ddk_yaw_rate);
+		float speed_diff_normalized = _torque_control
+					      * yaw_responsiveness_factor()	// 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas)
+					      * _param_gnd_torque_scaler.get();	// RD_TORQUE_SC
 
 		/*
-			PX4_INFO_RAW("THR %f ->  %f     TRQ %f -> %f  :   %f   %f\n",
+				float yaw_rate = 0.0f;
+
+				if (PX4_ISFINITE(_yaw_rate_setpoint)) {
+					_yaw_rate_setpoint = _yaw_rate_setpoint
+							     * yaw_responsiveness_factor()	// 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas)
+							     * _param_rd_torque_scaler.get();	// RD_TORQUE_SC
+
+					speed_diff_normalized = _yaw_rate_setpoint;
+					yaw_rate = _yaw_rate_setpoint;
+				}
+
+				static constexpr float YAW_RATE_ERROR_THRESHOLD = 0.1f; // [rad/s] Error threshold for the closed loop yaw rate control
+
+				// Closed loop yaw rate control
+				if (fabsf(yaw_rate - _z_yaw_rate) < YAW_RATE_ERROR_THRESHOLD) {
+					speed_diff_normalized = 0.f;
+					pid_reset_integral(&_pid_yaw_rate);
+
+				} else {
+					const float speed_diff = yaw_rate * _param_rd_wheel_track.get(); // Feedforward
+					speed_diff_normalized = math::interpolate<float>(speed_diff, -_param_rd_max_speed.get(),
+								_param_rd_max_speed.get(), -1.f, 1.f);
+					speed_diff_normalized = math::constrain(speed_diff_normalized +
+										pid_calculate(&_pid_yaw_rate, yaw_rate, _z_yaw_rate, 0, _dt),
+										-1.f, 1.f); // Feedback
+				}
+		*/
+
+		float forward_speed = _thrust_control * _param_gnd_thrust_scaler.get();	// RD_THRUST_SC
+		float speed_diff = speed_diff_normalized;
+
+		float combined_velocity = fabsf(forward_speed) + fabsf(speed_diff);
+
+		if (combined_velocity > 1.0f) { // Prioritize yaw rate
+			float excess_velocity = fabsf(combined_velocity - 1.0f);
+			forward_speed -= sign(forward_speed) * excess_velocity;
+		}
+
+		// Calculate the left and right wheel speeds
+		_wheel_speeds = Vector2f(forward_speed - speed_diff, forward_speed + speed_diff);
+
+		/*
+			PX4_INFO_RAW("Vsp: %.3f  THR %f ->  %f  TRQ %f -> %f  Whls: %f   %f\n",
+				(double)_mission_velocity_setpoint,
 				(double)_mission_thrust_effort, (double)_thrust_control, (double)_mission_torque_effort,
 				(double)_torque_control, (double)_wheel_speeds(0), (double)_wheel_speeds(1));
 		*/
@@ -618,10 +612,13 @@ void RoverPositionControl::control_position_manual()
 		//PX4_INFO("cutter: %f    yaw: %f    thrust: %f ", (double)_cutter_setpoint_manual, (double)_torque_control_manual, (double)_thrust_control_manual);
 
 		if (_manual_using_pids) {
+			// diviision below compensates for prior scaling, so stick inputs become +-1.0:
 			_mission_turning_setpoint = _torque_control_manual /
-						    _param_manual_yaw_scaler.get(); // GND_MAN_YAW_SC +- 1.0 controlled by right stick horizontal movement
+						    _param_rd_man_yaw_scale.get(); // RD_MAN_YAW_SCALE +- 1.0 controlled by right stick horizontal movement
+
+			// stick inputs become +-RD_MAX_SPEED:
 			_mission_velocity_setpoint = _thrust_control_manual *
-						     _param_gndspeed_trim.get(); // GND_SPEED_TRIM +- max (a.k.a. trim) speed controlled by right stick vertical movement
+						     _param_rd_max_speed.get(); // RD_MAX_SPEED +- max (a.k.a. trim) speed controlled by right stick vertical movement
 
 			adjustThrustAndTorque(); // will call PIDs via computeTorqueEffort() and computeThrust(), result in _mission_torque_effort, _mission_thrust_effort;
 			setActControls();

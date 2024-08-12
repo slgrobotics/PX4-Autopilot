@@ -54,7 +54,6 @@ param set CBRK_SUPPLY_CHK 894281
 
 # Commander parameters - defaults for safe operation:
 param set COM_CPU_MAX -1.0
-param set COM_ARM_EKF_POS 0.5
 param set COM_RC_IN_MODE 0
 param set COM_POSCTL_NAVL 1
 param set COM_POS_FS_DELAY 5
@@ -91,8 +90,25 @@ param set EKF2_REQ_GPS_H 5.0
 #param set SYS_HAS_NUM_ASPD 0
 
 # Lawnmower parameters to scale Differential Drive Kinematics output:
-param set-default RDD_THRUST_SC 2.5
-param set-default RDD_TORQUE_SC 10.0
+param set-default RD_THRUST_SC 1.0
+param set-default RD_TORQUE_SC 3.0
+
+# Rover parameters
+param set-default RD_MAN_YAW_SCALE 0.25
+param set-default RD_YAW_RATE_I 0.1
+param set-default RD_YAW_RATE_P 5
+param set-default RD_MAX_ACCEL 1.0
+param set-default RD_MAX_JERK 1.0
+param set-default RD_HEADING_P 5
+param set-default RD_HEADING_I 0.1
+param set-default RD_MAX_YAW_RATE 30
+param set-default RD_TRANS_DRV_TRN 0.349066
+param set-default RD_TRANS_TRN_DRV 0.174533
+
+# Pure pursuit parameters
+param set-default PP_LOOKAHD_MAX 30
+param set-default PP_LOOKAHD_MIN 2
+param set-default PP_LOOKAHD_GAIN 1
 
 echo "IP: configuring GND_* parameters for " $PX4_ROBOT_NAME
 
@@ -100,9 +116,11 @@ echo "IP: configuring GND_* parameters for " $PX4_ROBOT_NAME
 if [ $PX4_ROBOT_NAME = DRAGGER ]
 then
 	# Set Differential Drive Kinematics Library parameters:
-	param set RDD_WHEEL_BASE 0.58
-	param set RDD_WHEEL_RADIUS 0.18
-	param set RDD_WHEEL_SPEED 6.0	# Maximum wheel speed rad/s
+	param set RD_WHEEL_TRACK 0.58
+
+	// Dragger max speed is 0.5 m/s as measired on R/C
+	param set RD_MAX_SPEED 0.55
+	param set RD_MISS_SPD_DEF 0.45
 
 	# Dragger, having non-RTK GPS, needs Mag and vertical reference - Baro sim.
 	param set SYS_HAS_BARO 1
@@ -124,21 +142,19 @@ then
 	param set EKF2_MULTI_MAG 1
 	param set EKF2_MULTI_MAG 1
 
-	// Dragger max speed is 0.5 m/s as measired on R/C
-	param set GND_SPEED_TRIM 0.45
-
 	param set GND_RATE_P 0.2
 	param set GND_RATE_I 0.0
 	param set GND_RATE_D 0.0
 
 else
 	# Set Differential Drive Kinematics Library parameters:
-	param set RDD_WHEEL_BASE 0.9
-	param set RDD_WHEEL_RADIUS 0.22
-	param set RDD_WHEEL_SPEED 10.0	# Maximum wheel speed rad/s
+	param set RD_WHEEL_TRACK 0.9
+
+	param set RD_MAX_SPEED 2.0
+	param set RD_MISS_SPD_DEF 1.5
 
 	# Decrease right stick horizontal (yaw) response when in Manual mode:
-	param set GND_MAN_YAW_SC 0.25
+	param set RD_MAN_YAW_SCALE 0.25
 
 	param set SYS_HAS_BARO 0
 	param set EKF2_BARO_CTRL 0
@@ -184,7 +200,6 @@ param set GPS_2_GNSS 19
 
 # For dual RTK GPS heading - 180 when Moving Base antenna is in front of the Rover GPS antenna:
 param set GPS_YAW_OFFSET 180
-param set GPS_PITCH_OFFSET -45
 # Secondary GPS (Moving Base) is connected to telemetry radio for RTCM feed, the radio baud rate is 57600.
 # This also affects UART2 on the Rover GPS, but this is OK.
 param set GPS_UBX_MODE 1

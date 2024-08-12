@@ -158,7 +158,7 @@ void RoverPositionControl::debugPrint()
 
 		_printed_idle_trace = _pos_ctrl_state == POS_STATE_IDLE;
 
-		_debug_print_last_called = _now;
+		_debug_print_last_called = _timestamp;
 	}
 
 }
@@ -197,7 +197,7 @@ void RoverPositionControl::debugPrintArriveDepart()
 			//		 (double)_mission_turning_setpoint, (double)_mission_torque_effort, _cnt_run, _cnt_calc);
 		}
 
-		_debug_print1_last_called = _now;
+		_debug_print1_last_called = _timestamp;
 	}
 }
 
@@ -320,187 +320,184 @@ void RoverPositionControl::debugPrintManual()
 
 void RoverPositionControl::debugPublishAll()
 {
-	//if(_control_mode_current == UGV_POSCTRL_MODE_AUTO)	// only publish when in Mission -- this doesn't work, log file grows anyway
-	{
-		/*
-		 * Default MAVLINK forwarding rate is 1 HZ.
-		 * To change that (to 100Hz) see .../PX4-Autopilot/src/modules/mavlink/mavlink_main.cpp:1528,1589
-		 * We just need DEBUG_FLOAT_ARRAY at 100Hz in several places there:
-		 *
-			configure_stream_local("DEBUG", 1.0f);
-			configure_stream_local("DEBUG_FLOAT_ARRAY", 100.0f);    <--
-			configure_stream_local("DEBUG_VECT", 1.0f);
-			configure_stream_local("NAMED_VALUE_FLOAT", 1.0f);
-			configure_stream_local("LINK_NODE_STATUS", 1.0f);
-		 *
-		 * Make sure you have parameters set:
-		 *
-			# Logging to SD card:
-			param set-default SDLOG_MODE 0
-			#param set-default SDLOG_PROFILE 255   <-- no need to allow all. 123 is sufficient.
-			param set-default SDLOG_PROFILE 123
+	/*
+		* Default MAVLINK forwarding rate is 1 HZ.
+		* To change that (to 100Hz) see .../PX4-Autopilot/src/modules/mavlink/mavlink_main.cpp:1528,1589
+		* We just need DEBUG_FLOAT_ARRAY at 100Hz in several places there:
+		*
+		configure_stream_local("DEBUG", 1.0f);
+		configure_stream_local("DEBUG_FLOAT_ARRAY", 100.0f);    <--
+		configure_stream_local("DEBUG_VECT", 1.0f);
+		configure_stream_local("NAMED_VALUE_FLOAT", 1.0f);
+		configure_stream_local("LINK_NODE_STATUS", 1.0f);
+		*
+		* Make sure you have parameters set:
+		*
+		# Logging to SD card:
+		param set-default SDLOG_MODE 0
+		#param set-default SDLOG_PROFILE 255   <-- no need to allow all. 123 is sufficient.
+		param set-default SDLOG_PROFILE 123
 
-			# Bitmask SDLOG_PROFILE:
-			# 0: Default set (general log analysis)
-			# 1: Estimator replay (EKF2)
-			# 2: Thermal calibration
-			# 3: System identification
-			# 4: High rate
-			# 5: Debug
-			# 6: Sensor comparison
-			# 7: Computer Vision and Avoidance
-			# 8: Raw FIFO high-rate IMU (Gyro)
-			# 9: Raw FIFO high-rate IMU (Accel)
-			# 10: Mavlink tunnel message logging
+		# Bitmask SDLOG_PROFILE:
+		# 0: Default set (general log analysis)
+		# 1: Estimator replay (EKF2)
+		# 2: Thermal calibration
+		# 3: System identification
+		# 4: High rate
+		# 5: Debug
+		# 6: Sensor comparison
+		# 7: Computer Vision and Avoidance
+		# 8: Raw FIFO high-rate IMU (Gyro)
+		# 9: Raw FIFO high-rate IMU (Accel)
+		# 10: Mavlink tunnel message logging
 
-			# 123 = 0b01111011
-			# 131 = 0b10000011
+		# 123 = 0b01111011
+		# 131 = 0b10000011
 
-		 *
-		 */
-
-		_debug_data_last_called = _now = hrt_absolute_time();
-
-		//double ms = (_now - _app_started_time) / 1e+5d;
-
-		/*
-		 * these are several options on sending debug data:
-		 *
-		// send one named value:
-		_dbg_key.value = sin(ms);
-		_dbg_key.timestamp = _now;
-		orb_publish(ORB_ID(debug_key_value), _pub_dbg_key, &_dbg_key);
-
-		// send one indexed value:
-		_dbg_ind.value = sin(ms);
-		_dbg_ind.timestamp = _now;
-		orb_publish(ORB_ID(debug_value), _pub_dbg_ind, &_dbg_ind);
-
-		// send one vector:
-		_dbg_vect.x = PX4_ISFINITE(_heading_error)      ? _heading_error : 2.0f;			// radians, -1.57...+1.57 range
-		_dbg_vect.y = PX4_ISFINITE(_rates_setpoint_yaw) ? _rates_setpoint_yaw : 2.0f;
-		_dbg_vect.z = PX4_ISFINITE(_mission_torque_effort) ? _mission_torque_effort : 2.0f;		// -1...+1 range
-		_dbg_vect.timestamp = _now;
-		orb_publish(ORB_ID(debug_vect), _pub_dbg_vect, &_dbg_vect);
-
-		// test debug_vect with generated curves:
-		//_dbg_vect.x = ((int)ms) & 0x7; // sin(ms);
-		//_dbg_vect.y = (_cnt_run / 8) & 0x7; //cos(ms);
-		//_dbg_vect.z = since_sec * 800.0f;
-		//_dbg_vect.timestamp = _now;
-		//orb_publish(ORB_ID(debug_vect), _pub_dbg_vect, &_dbg_vect);
-
-		// test debug_vect with generated curves:
-		//_dbg_vect.x = ((int)ms) & 0x7; // sin(ms);
-		//_dbg_vect.y = cos(ms);
-		//_dbg_vect.z = -0.5f;
-		//_dbg_vect.timestamp = _now;
-		//orb_publish(ORB_ID(debug_vect), _pub_dbg_vect, &_dbg_vect);
+		*
 		*/
 
-		// send one array:
+	_debug_data_last_called = _timestamp;
 
-		/*
-		// test debug_array with generated curves:
-		for (size_t i = 0; i < debug_array_s::ARRAY_SIZE; i++) {
-			_dbg_array.data[i] = i * 0.01 * sin(ms);
-		*/
+	//double ms = (_timestamp - _app_started_time) / 1e+5d;
 
-		int i = 1;	// data[0] is reserved for total number of parameters, max 58
+	/*
+		* these are several options on sending debug data:
+		*
+	// send one named value:
+	_dbg_key.value = sin(ms);
+	_dbg_key.timestamp = _timestamp;
+	orb_publish(ORB_ID(debug_key_value), _pub_dbg_key, &_dbg_key);
 
-		// calculated by L1 controller, and are present as members of _gnd_control:
-		_dbg_array.data[i++] = math::degrees(_target_bearing);
-		_dbg_array.data[i++] = math::degrees(_nav_bearing);
-		_dbg_array.data[i++] = math::degrees(_current_heading);
-		_dbg_array.data[i++] = _crosstrack_error;	// meters
-		_dbg_array.data[i++] = _mission_torque_effort;
-		_dbg_array.data[i++] = _abbe_error; 		// meters
+	// send one indexed value:
+	_dbg_ind.value = sin(ms);
+	_dbg_ind.timestamp = _timestamp;
+	orb_publish(ORB_ID(debug_value), _pub_dbg_ind, &_dbg_ind);
 
-		// calculated values that become published actuator inputs:
-		_dbg_array.data[i++] = math::degrees(_current_heading);
-		_dbg_array.data[i++] = math::degrees(_heading_error);
-		_dbg_array.data[i++] = _mission_torque_effort;	// result of RateControl
-		_dbg_array.data[i++] = _torque_control;		// what is sent to actuators, smoothed and trimmed
-		_dbg_array.data[i++] = (float)_pos_ctrl_state;
+	// send one vector:
+	_dbg_vect.x = PX4_ISFINITE(_heading_error)      ? _heading_error : 2.0f;			// radians, -1.57...+1.57 range
+	_dbg_vect.y = PX4_ISFINITE(_rates_setpoint_yaw) ? _rates_setpoint_yaw : 2.0f;
+	_dbg_vect.z = PX4_ISFINITE(_mission_torque_effort) ? _mission_torque_effort : 2.0f;		// -1...+1 range
+	_dbg_vect.timestamp = _timestamp;
+	orb_publish(ORB_ID(debug_vect), _pub_dbg_vect, &_dbg_vect);
 
-		// When GND_HEADING_P is set to > SIGMA, PID heading error control is in effect:
-		_dbg_array.data[i++] = _current_heading;
-		_dbg_array.data[i++] = _mission_turning_setpoint; // what State Machine thinks of turning - based on heading error
-		_dbg_array.data[i++] = _rates_setpoint_yaw;	  // YAW rate setpoint
-		_dbg_array.data[i++] = _mission_torque_effort;	  // result of RateControl
-		_dbg_array.data[i++] = _z_yaw_rate;
+	// test debug_vect with generated curves:
+	//_dbg_vect.x = ((int)ms) & 0x7; // sin(ms);
+	//_dbg_vect.y = (_cnt_run / 8) & 0x7; //cos(ms);
+	//_dbg_vect.z = since_sec * 800.0f;
+	//_dbg_vect.timestamp = _timestamp;
+	//orb_publish(ORB_ID(debug_vect), _pub_dbg_vect, &_dbg_vect);
 
-		// computed or manual torque and thrust (thrust) here, before finally published in _act_controls:
-		_dbg_array.data[i++] = _mission_thrust_effort;
-		_dbg_array.data[i++] = _thrust_control;
+	// test debug_vect with generated curves:
+	//_dbg_vect.x = ((int)ms) & 0x7; // sin(ms);
+	//_dbg_vect.y = cos(ms);
+	//_dbg_vect.z = -0.5f;
+	//_dbg_vect.timestamp = _timestamp;
+	//orb_publish(ORB_ID(debug_vect), _pub_dbg_vect, &_dbg_vect);
+	*/
 
-		// some values that we calculate locally to decide on throttling thrust near waypoints:
-		_dbg_array.data[i++] = _ground_speed_abs;
-		_dbg_array.data[i++] = _x_vel;
-		_dbg_array.data[i++] = _ground_speed_ns;
+	// send one array:
 
-		// When GND_SP_CTRL_MODE = 1, PID speed control is in effect:
-		_dbg_array.data[i++] = _mission_velocity_setpoint;
-		_dbg_array.data[i++] = _x_vel;
-		_dbg_array.data[i++] = _x_vel_ema;
-		_dbg_array.data[i++] = _ekfGpsDeviation;	// meters
-		_dbg_array.data[i++] = _thrust_control;
+	/*
+	// test debug_array with generated curves:
+	for (size_t i = 0; i < debug_array_s::ARRAY_SIZE; i++) {
+		_dbg_array.data[i] = i * 0.01 * sin(ms);
+	*/
 
-		// distances:
-		_dbg_array.data[i++] = _dist_target;
-		_dbg_array.data[i++] = _wp_current_dist;
-		_dbg_array.data[i++] = _wp_previous_dist;
-		_dbg_array.data[i++] = _wp_next_dist;
+	int i = 1;	// data[0] is reserved for total number of parameters, max 58
 
-		// other important values:
-		_dbg_array.data[i++] = _nav_lateral_acceleration_demand;
-		_dbg_array.data[i++] = _mission_turning_setpoint;
-		_dbg_array.data[i++] = _wp_close_enough_rad;
-		_dbg_array.data[i++] = _acceptance_radius;
+	// calculated by L1 controller, and are present as members of _gnd_control:
+	_dbg_array.data[i++] = math::degrees(_target_bearing);
+	_dbg_array.data[i++] = math::degrees(_nav_bearing);
+	_dbg_array.data[i++] = math::degrees(_current_heading);
+	_dbg_array.data[i++] = _crosstrack_error;	// meters
+	_dbg_array.data[i++] = _mission_torque_effort;
+	_dbg_array.data[i++] = _abbe_error; 		// meters
 
-		// gps data - heading compared to EKF2:
-		_dbg_array.data[i++] = math::degrees(_ekf_current_heading);
-		_dbg_array.data[i++] = math::degrees(_mag_current_heading);
-		_dbg_array.data[i++] = math::degrees(_gps_current_heading);
-		_dbg_array.data[i++] = math::degrees(wrap_pi(_sensor_gps_data.cog_rad));
-		//_dbg_array.data[i++] = _sensor_gps_data.heading;			// only works with dual RTK GPS setup
-		//_dbg_array.data[i++] = _sensor_gps_data.heading_offset;
-		//_dbg_array.data[i++] = _sensor_gps_data.heading_accuracy;
+	// calculated values that become published actuator inputs:
+	_dbg_array.data[i++] = math::degrees(_current_heading);
+	_dbg_array.data[i++] = math::degrees(_heading_error);
+	_dbg_array.data[i++] = _mission_torque_effort;	// result of RateControl
+	_dbg_array.data[i++] = _torque_control;		// what is sent to actuators, smoothed and trimmed
+	_dbg_array.data[i++] = (float)_pos_ctrl_state;
 
-		// gps data - speed compared to EKF2:
-		_dbg_array.data[i++] = _gps_ground_speed_abs;
-		_dbg_array.data[i++] = _ekf_ground_speed_abs;
-		_dbg_array.data[i++] = _sensor_gps_data.vel_m_s;
-		_dbg_array.data[i++] = _sensor_gps_data.vel_n_m_s;
-		_dbg_array.data[i++] = _sensor_gps_data.vel_e_m_s;
-		_dbg_array.data[i++] = _sensor_gps_data.vel_ned_valid ? 1.0f : 0.0f;
+	// When GND_HEADING_P is set to > SIGMA, PID heading error control is in effect:
+	_dbg_array.data[i++] = _current_heading;
+	_dbg_array.data[i++] = _mission_turning_setpoint; // what State Machine thinks of turning - based on heading error
+	_dbg_array.data[i++] = _yaw_rate_setpoint;	  // YAW rate setpoint
+	_dbg_array.data[i++] = _mission_torque_effort;	  // result of RateControl
+	_dbg_array.data[i++] = _z_yaw_rate;
 
-		// gps data - performance:
-		_dbg_array.data[i++] = (float)_sensor_gps_data.fix_type;
-		_dbg_array.data[i++] = (float)_sensor_gps_data.satellites_used;
-		_dbg_array.data[i++] = (float)_sensor_gps_data.noise_per_ms;
-		_dbg_array.data[i++] = (float)_sensor_gps_data.jamming_indicator;
-		_dbg_array.data[i++] = (float)_sensor_gps_data.jamming_state;
+	// computed or manual torque and thrust (thrust) here, before finally published in _act_controls:
+	_dbg_array.data[i++] = _mission_thrust_effort;
+	_dbg_array.data[i++] = _thrust_control;
 
-		// servo positions after mixers:
-		_dbg_array.data[i++] = 	_gas_throttle_servo_position;
-		_dbg_array.data[i++] = 	_cutter_servo_position;
-		_dbg_array.data[i++] = 	_alarm_servo_position;
-		_dbg_array.data[i++] = 	_wheel_left_servo_position;
-		_dbg_array.data[i++] = 	_wheel_right_servo_position;
+	// some values that we calculate locally to decide on throttling thrust near waypoints:
+	_dbg_array.data[i++] = _ground_speed_abs;
+	_dbg_array.data[i++] = _x_vel;
+	_dbg_array.data[i++] = _ground_speed_ns;
 
-		_dbg_array.data[i++] = 	_crosstrack_error_avg;
-		_dbg_array.data[i++] = 	_crosstrack_error_max;
-		_dbg_array.data[i++] = 	_cte_count_outside;
+	// When GND_SP_CTRL_MODE = 1, PID speed control is in effect:
+	_dbg_array.data[i++] = _mission_velocity_setpoint;
+	_dbg_array.data[i++] = _x_vel;
+	_dbg_array.data[i++] = _x_vel_ema;
+	_dbg_array.data[i++] = _ekfGpsDeviation;	// meters
+	_dbg_array.data[i++] = _thrust_control;
 
-		_dbg_array.data[0] = i;	// must be less than 58, per size of the data[]
+	// distances:
+	_dbg_array.data[i++] = _dist_target;
+	_dbg_array.data[i++] = _wp_current_dist;
+	_dbg_array.data[i++] = _wp_previous_dist;
+	_dbg_array.data[i++] = _wp_next_dist;
 
-		_dbg_array.timestamp = hrt_absolute_time(); // hrt_elapsed_time(&_app_started_time);
+	// other important values:
+	_dbg_array.data[i++] = _nav_lateral_acceleration_demand;
+	_dbg_array.data[i++] = _mission_turning_setpoint;
+	_dbg_array.data[i++] = _wp_close_enough_rad;
+	_dbg_array.data[i++] = _acceptance_radius;
 
-		orb_publish(ORB_ID(debug_array), _pub_dbg_array, &_dbg_array);
+	// gps data - heading compared to EKF2:
+	_dbg_array.data[i++] = math::degrees(_ekf_current_heading);
+	_dbg_array.data[i++] = math::degrees(_mag_current_heading);
+	_dbg_array.data[i++] = math::degrees(_gps_current_heading);
+	_dbg_array.data[i++] = math::degrees(wrap_pi(_sensor_gps_data.cog_rad));
+	//_dbg_array.data[i++] = _sensor_gps_data.heading;			// only works with dual RTK GPS setup
+	//_dbg_array.data[i++] = _sensor_gps_data.heading_offset;
+	//_dbg_array.data[i++] = _sensor_gps_data.heading_accuracy;
 
-		//warnx("...sending debug data...");
-	}
+	// gps data - speed compared to EKF2:
+	_dbg_array.data[i++] = _gps_ground_speed_abs;
+	_dbg_array.data[i++] = _ekf_ground_speed_abs;
+	_dbg_array.data[i++] = _sensor_gps_data.vel_m_s;
+	_dbg_array.data[i++] = _sensor_gps_data.vel_n_m_s;
+	_dbg_array.data[i++] = _sensor_gps_data.vel_e_m_s;
+	_dbg_array.data[i++] = _sensor_gps_data.vel_ned_valid ? 1.0f : 0.0f;
+
+	// gps data - performance:
+	_dbg_array.data[i++] = (float)_sensor_gps_data.fix_type;
+	_dbg_array.data[i++] = (float)_sensor_gps_data.satellites_used;
+	_dbg_array.data[i++] = (float)_sensor_gps_data.noise_per_ms;
+	_dbg_array.data[i++] = (float)_sensor_gps_data.jamming_indicator;
+	_dbg_array.data[i++] = (float)_sensor_gps_data.jamming_state;
+
+	// servo positions after mixers:
+	_dbg_array.data[i++] = 	_gas_throttle_servo_position;
+	_dbg_array.data[i++] = 	_cutter_servo_position;
+	_dbg_array.data[i++] = 	_alarm_servo_position;
+	_dbg_array.data[i++] = 	_wheel_left_servo_position;
+	_dbg_array.data[i++] = 	_wheel_right_servo_position;
+
+	_dbg_array.data[i++] = 	_crosstrack_error_avg;
+	_dbg_array.data[i++] = 	_crosstrack_error_max;
+	_dbg_array.data[i++] = 	_cte_count_outside;
+
+	_dbg_array.data[0] = i;	// must be less than 58, per size of the data[]
+
+	_dbg_array.timestamp = _timestamp; // hrt_elapsed_time(&_app_started_time);
+
+	orb_publish(ORB_ID(debug_array), _pub_dbg_array, &_dbg_array);
+
+	//warnx("...sending debug data...");
 }
 #endif // DEBUG_MY_DATA
 

@@ -237,7 +237,7 @@ void RoverPositionControl::workStateMachine()
 				// This allows PID oscillations to cease in aggressive turns.
 
 				if (_turn_goal_last_reached == 0) {
-					_turn_goal_last_reached = _now;
+					_turn_goal_last_reached = _timestamp;
 				}
 
 				// GND_TURN_WAIT
@@ -246,42 +246,40 @@ void RoverPositionControl::workStateMachine()
 				if (turn_wait_sec < FLT_EPSILON || hrt_elapsed_time(&_turn_goal_last_reached) > turn_wait_sec * 1_s) {
 					_turn_goal_last_reached = 0;
 
-					bool is_first_leg = !PX4_ISFINITE(_wp_previous_dist) && PX4_ISFINITE(_wp_current_dist);
+					//bool is_first_leg = !PX4_ISFINITE(_wp_previous_dist) && PX4_ISFINITE(_wp_current_dist);
+					bool is_first_leg = !_pos_sp_triplet.previous.valid
+							    && PX4_ISFINITE(_prev_wp(0)) && PX4_ISFINITE(_prev_wp(1))
+							    && PX4_ISFINITE(_wp_current_dist);
 
 					_accel_dist = _param_accel_dist.get();	// GND_ACCEL_DIST (can be 0 to skip Departure phase)
 					_decel_dist = _param_decel_dist.get();	// GND_DECEL_DIST
 
+					_leg_distance = _wp_current_dist;
+
 					if (is_first_leg) {
 						// We are departing from landing point towards the first waypoint.
 
-						_leg_distance = NAN;
-						_accel_dist = 0.0f;
-						_decel_dist = _wp_current_dist + 0.2f;
+						PX4_WARN("WP_TURNING - first leg %.2f meters", (double)_leg_distance);
 
-						PX4_WARN("WP_TURNING - first leg");
-
-					} else {
-
-						_leg_distance = get_distance_to_next_waypoint(
-									_pos_sp_triplet.previous.lat, _pos_sp_triplet.previous.lon,
-									_pos_sp_triplet.current.lat, _pos_sp_triplet.current.lon
-								);
-
+						_wp_previous_dist = 0;
 					}
 
 					_is_short_leg = !is_first_leg && _leg_distance < (_accel_dist + _decel_dist);
 
 					if (_is_short_leg) {
 
-						PX4_WARN("WP_TURNING - short leg");
+						PX4_WARN("WP_TURNING - short leg %.2f meters", (double)_leg_distance);
 
 						// short leg, no L1 segment:
 						_accel_dist = _decel_dist = _wp_current_dist / 2.0f + 0.2f; // with little extra
 
 					}
 
-					if (is_first_leg || _is_short_leg) {
-						setStateMachineState(WP_ARRIVING); // Can't use L1 on the first leg or short legs
+					if (is_first_leg) {
+						setStateMachineState(L1_GOTO_WAYPOINT); // L1 on the first leg
+
+					} else if (_is_short_leg) {
+						setStateMachineState(WP_ARRIVING); // Don't use L1 on the short legs
 
 					} else {
 
@@ -378,8 +376,6 @@ void RoverPositionControl::workStateMachine()
 					} else {
 
 						// We are far from destination and more or less are pointed in its direction.
-
-						navigate_L1();	// compute all L1 variables
 
 						cte_compute();
 
@@ -482,33 +478,6 @@ void RoverPositionControl::workStateMachine()
 		resetThrustControls();
 	}
 
-}
-
-void RoverPositionControl::navigate_L1()
-{
-	// new version of L1 operates on float vectors:
-	Vector2f curr_pos_local{_local_pos.x, _local_pos.y};
-	Vector2f curr_wp_local = _global_local_proj_ref.project(_curr_wp(0), _curr_wp(1));
-	Vector2f prev_wp_local = _global_local_proj_ref.project(_prev_wp(0), _prev_wp(1));
-
-	//PX4_INFO_RAW("LOC:  (%f,%f) A: (%f,%f)  B: (%f,%f)\n", (double) curr_pos_local(0), (double) curr_pos_local(1), (double) prev_wp_local(0), (double) prev_wp_local(1), (double) curr_wp_local(0), (double) curr_wp_local(1));
-
-	//PX4_INFO_RAW("Speed: %.6f   %.6f\n", (double) _ground_speed_2d(0), (double) _ground_speed_2d(1));
-
-	// compute yaw (lateral) acceleration demand using L1 control:
-
-	_gnd_control.navigate_waypoints(prev_wp_local, curr_wp_local, curr_pos_local, _ground_speed_2d);
-
-	// store the result of above computation - collect all data from L1 controller and position triplet:
-	_nav_bearing = _gnd_control.nav_bearing();	// bearing from current position to L1 point
-	_target_bearing =
-		_gnd_control.target_bearing();		// the direction between the rover position and next (current) waypoint
-	_nav_lateral_acceleration_demand = _gnd_control.nav_lateral_acceleration_demand();
-
-	_crosstrack_error = _gnd_control.crosstrack_error();  // distance meters from AB line
-
-	//PX4_INFO_RAW("BEARING: tgt: %f  nav: %f   DEMAND: %f\n", (double)math::degrees(_target_bearing), (double)math::degrees(_nav_bearing), (double) _nav_lateral_acceleration_demand);
-	//PX4_INFO_RAW("CROSS: _crosstrack_error: %f\n", (double) _crosstrack_error+);
 }
 
 void RoverPositionControl::adjustAcuatorSetpoints()
@@ -618,7 +587,7 @@ bool RoverPositionControl::updateBearings()
 {
 	// get the direction errors between the current position and next (target) waypoint:
 
-	_target_bearing = get_bearing_to_next_waypoint(_current_position(0), _current_position(1), _curr_wp(0), _curr_wp(1));
+	_target_bearing = get_bearing_to_next_waypoint(_curr_pos(0), _curr_pos(1), _curr_wp(0), _curr_wp(1));
 
 	// don't touch double wrap!
 	_heading_error = _heading_error_vel = wrap_pi(_target_bearing - wrap_pi(_current_heading)); // where the robot faces
@@ -636,6 +605,8 @@ bool RoverPositionControl::updateBearings()
 		}
 		*/
 	}
+
+	compute_crosstrack_error();
 
 	// ~28.6 degrees deviation makes sense, NAN for more:
 	_abbe_error = abs(_heading_error) < 0.5f ? _wp_current_dist * sin(_heading_error) : NAN; // meters at target point

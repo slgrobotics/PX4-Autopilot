@@ -39,7 +39,6 @@ px4_add_module(
 #		-DDEBUG_MY_PRINT
 #		-DPUBLISH_THRUST_TORQUE
 	SRCS
-		DifferentialDriveKinematics.cpp
 		RoverPositionControl.cpp
 		RoverPositionControlStateMachine.cpp
 		RoverPositionControlCompute.cpp

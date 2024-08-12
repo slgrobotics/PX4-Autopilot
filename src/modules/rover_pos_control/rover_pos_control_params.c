@@ -340,22 +340,6 @@ PARAM_DEFINE_FLOAT(GND_SPEED_D, 0.0f);
 PARAM_DEFINE_FLOAT(GND_SPEED_IMAX, 0.3f);
 
 /**
- * Desired max ground speed on straight runs
- *
- *	1.80 m/s = 4.0 mph
- *	2.20 m/s = 5.0 mph
- *	2.67 m/s = 6.0 mph
- *
- * @unit m/s
- * @min 0.0
- * @max 40
- * @decimal 2
- * @increment 0.01
- * @group Rover Position Control
- */
-PARAM_DEFINE_FLOAT(GND_SPEED_TRIM, 1.5f);
-
-/**
  * Maximum output (thrust effort) of speed PID
  *
  *
@@ -635,7 +619,7 @@ PARAM_DEFINE_FLOAT(GND_RATE_IMINSPD, 0.1f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(RD_THRUST_SC, 1.0f);
+PARAM_DEFINE_FLOAT(GND_THRUST_SC, 1.0f);
 
 /**
  * Scaler to convert body torque to diff drive kinematics yaw rate
@@ -647,57 +631,9 @@ PARAM_DEFINE_FLOAT(RD_THRUST_SC, 1.0f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(RD_TORQUE_SC, 1.0f);
-
-/**
- * Wheel base. Distance from the center of the right wheel to the center of the left wheel
- *
- * @unit m
- * @min 0.01
- * @max 100.0
- * @decimal 3
- * @increment 0.001
- * @group Rover Position Control
- */
-PARAM_DEFINE_FLOAT(RD_WHEEL_BASE, 0.5f);
-
-/**
- * Wheel radius
- *
- * @unit m
- * @min 0.01
- * @max 100.0
- * @decimal 3
- * @increment 0.001
- * @group Rover Position Control
- */
-PARAM_DEFINE_FLOAT(RD_WHEEL_RADIUS, 0.2f);
-
-/**
- * Maximum wheel speed
- *
- * @unit rad/s
- * @min 0.0
- * @max 100.0
- * @decimal 2
- * @increment 0.001
- * @group Rover Position Control
- */
-PARAM_DEFINE_FLOAT(RD_WHEEL_SPEED, 0.3f);
+PARAM_DEFINE_FLOAT(GND_TORQUE_SC, 1.0f);
 
 // ================  Other parameters ===========================================================
-
-/**
- * R/C yaw scaler to control right stick horizontal movement effect
- *
- * @unit norm
- * @min 0.0
- * @max 1.0
- * @decimal 3
- * @increment 0.005
- * @group Rover Position Control
- */
-PARAM_DEFINE_FLOAT(GND_MAN_YAW_SC, 0.5f);
 
 /**
  * Tracing level, 5 - High  0 - no tracing

@@ -53,7 +53,7 @@ void RoverPositionControl::publishTorqueSetpoint(const hrt_abstime &timestamp_sa
 {
 	/*
 	vehicle_torque_setpoint_s v_torque_sp = {};
-	v_torque_sp.timestamp = _now = hrt_absolute_time();
+	v_torque_sp.timestamp = _timestamp;
 	v_torque_sp.timestamp_sample = timestamp_sample;
 	v_torque_sp.xyz[0] = 0;
 	v_torque_sp.xyz[1] = 0;
@@ -67,7 +67,7 @@ void RoverPositionControl::publishThrustSetpoint(const hrt_abstime &timestamp_sa
 {
 	/*
 	vehicle_thrust_setpoint_s v_thrust_sp = {};
-	v_thrust_sp.timestamp = _now = hrt_absolute_time();
+	v_thrust_sp.timestamp = _timestamp;
 	v_thrust_sp.timestamp_sample = timestamp_sample;
 	v_thrust_sp.xyz[0] = thrust;
 	v_thrust_sp.xyz[1] = 0.0f;
@@ -84,7 +84,7 @@ void RoverPositionControl::publishWheelMotors(const hrt_abstime &timestamp_sampl
 {
 	actuator_motors_s actuator_motors{};
 	actuator_motors.timestamp_sample = timestamp_sample;
-	actuator_motors.timestamp = _now = hrt_absolute_time();
+	actuator_motors.timestamp = _timestamp;
 
 	actuator_motors.reversible_flags = _param_r_rev.get(); // should be 3 see rc.rover_differential_defaults
 	_wheel_speeds.copyTo(actuator_motors.control);
@@ -98,7 +98,7 @@ void RoverPositionControl::publishWheelMotors(const hrt_abstime &timestamp_sampl
 void RoverPositionControl::publishAuxActuators(const hrt_abstime &timestamp_sample)
 {
 	/*
-	bool test_switch = _now - _debug_print_last_called > 250_ms;
+	bool test_switch = _timestamp - _debug_print_last_called > 250_ms;
 
 	//if(test_switch)	{ PX4_INFO("+"); } else { PX4_INFO("-"); }
 
@@ -115,7 +115,7 @@ void RoverPositionControl::publishAuxActuators(const hrt_abstime &timestamp_samp
 	// We can control three remaining PCA9685 outputs via CA "Servo6..8" assignment:
 	actuator_servos_s actuator_servos{};
 	actuator_servos.timestamp_sample = timestamp_sample;
-	actuator_servos.timestamp = _now = hrt_absolute_time();
+	actuator_servos.timestamp = _timestamp;
 
 	for (unsigned i = 0; i < 8; ++i) {
 		actuator_servos.control[i] = 0.0; //test_signal;
@@ -166,7 +166,7 @@ void RoverPositionControl::publishControllerStatus()
 		_acceptance_radius;	// if large enough, will be used for mission advancement to next WP
 	pos_ctrl_status.yaw_acceptance = NAN;
 
-	pos_ctrl_status.timestamp = _now = hrt_absolute_time();
+	pos_ctrl_status.timestamp = _timestamp;
 
 	_pos_ctrl_status_pub.publish(pos_ctrl_status);
 }

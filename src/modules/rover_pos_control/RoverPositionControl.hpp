@@ -53,6 +53,7 @@
 #include <lib/pid/pid.h>
 #include <lib/rate_control/rate_control.hpp>
 #include <lib/motion_planning/VelocitySmoothing.hpp>
+#include <lib/pure_pursuit/PurePursuit.hpp>
 
 #include <px4_platform_common/px4_config.h>
 #include <px4_platform_common/defines.h>
@@ -62,8 +63,6 @@
 #include <px4_platform_common/module_params.h>
 #include <px4_platform_common/px4_work_queue/WorkItem.hpp>
 #include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
-
-#include "DifferentialDriveKinematics.hpp"
 
 #include <uORB/Subscription.hpp>
 #include <uORB/SubscriptionCallback.hpp>
@@ -87,6 +86,7 @@
 #include <uORB/topics/vehicle_control_mode.h>
 #include <uORB/topics/sensor_gps.h>
 #include <uORB/topics/vehicle_magnetometer.h>
+#include <uORB/topics/home_position.h>
 #include <uORB/topics/vehicle_global_position.h>
 #include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/vehicle_local_position_setpoint.h>
@@ -198,23 +198,18 @@ private:
 
 	uORB::Subscription _parameter_update_sub{ORB_ID(parameter_update)};
 
-	uORB::Publication<vehicle_attitude_setpoint_s>	_attitude_sp_pub{ORB_ID(vehicle_attitude_setpoint)};
-	uORB::Publication<position_controller_status_s>	_pos_ctrl_status_pub{ORB_ID(position_controller_status)};  /**< navigation capabilities publication */
-	uORB::PublicationMulti<actuator_motors_s> 	_actuator_motors_pub{ORB_ID(actuator_motors)};
-	uORB::Publication<actuator_servos_s>		_actuator_servos_pub{ORB_ID(actuator_servos)};
-	uORB::PublicationMulti<rate_ctrl_status_s>	_controller_status_pub{ORB_ID(rate_ctrl_status)};
-
 	uORB::Subscription _control_mode_sub{ORB_ID(vehicle_control_mode)}; /**< control mode subscription */
-	uORB::Subscription _global_pos_sub{ORB_ID(vehicle_global_position)};
+	uORB::Subscription _local_position_sub{ORB_ID(vehicle_local_position)};
+	uORB::Subscription _global_position_sub{ORB_ID(vehicle_global_position)};
 	uORB::Subscription _sensor_gps_sub{ORB_ID(sensor_gps)};
 	uORB::Subscription _magnetometer_sub{ORB_ID(vehicle_magnetometer)};
-	uORB::Subscription _local_pos_sub{ORB_ID(vehicle_local_position)};
 	uORB::Subscription _manual_control_setpoint_sub{ORB_ID(manual_control_setpoint)}; /**< notification of manual control updates */
-	uORB::Subscription _pos_sp_triplet_sub{ORB_ID(position_setpoint_triplet)};
+	uORB::Subscription _position_setpoint_triplet_sub{ORB_ID(position_setpoint_triplet)};
 	uORB::Subscription _att_sub{ORB_ID(vehicle_attitude)};
 	uORB::Subscription _att_sp_sub{ORB_ID(vehicle_attitude_setpoint)};
 	//uORB::Subscription _trajectory_setpoint_sub{ORB_ID(trajectory_setpoint)};
 
+	uORB::Subscription _home_position_sub{ORB_ID(home_position)};
 	uORB::Subscription _mission_sub{ORB_ID(mission)}; /**< mission subscription */
 	uORB::Subscription _mission_result_sub{ORB_ID(mission_result)}; /**< mission result subscription */
 	uORB::Subscription _navigator_mission_item_sub{ORB_ID(navigator_mission_item)}; /**< navigator_mission_item subscription */
@@ -224,42 +219,43 @@ private:
 	uORB::Subscription _control_allocator_status_sub {ORB_ID(control_allocator_status)};	/**< for controller saturation status */
 #endif // PUBLISH_THRUST_TORQUE
 
-	manual_control_setpoint_s		_manual_control_setpoint{};			    /**< r/c channel data */
+	uORB::Publication<vehicle_attitude_setpoint_s>	_attitude_sp_pub{ORB_ID(vehicle_attitude_setpoint)};
+	uORB::Publication<position_controller_status_s>	_pos_ctrl_status_pub{ORB_ID(position_controller_status)};  /**< navigation capabilities publication */
+	uORB::PublicationMulti<actuator_motors_s> 	_actuator_motors_pub{ORB_ID(actuator_motors)};
+	uORB::Publication<actuator_servos_s>		_actuator_servos_pub{ORB_ID(actuator_servos)};
+	uORB::PublicationMulti<rate_ctrl_status_s>	_controller_status_pub{ORB_ID(rate_ctrl_status)};
+
+	manual_control_setpoint_s		_manual_control_setpoint{};	/**< r/c channel data */
 	position_setpoint_triplet_s		_pos_sp_triplet{};		/**< triplet of mission items */
 	vehicle_attitude_setpoint_s		_att_sp{};			/**< attitude setpoint > */
 	vehicle_control_mode_s			_control_mode{};		/**< control mode */
 	vehicle_global_position_s		_global_pos{};			/**< global vehicle position */
-	sensor_gps_s					_sensor_gps_data{};		/**< raw gps data */
+	sensor_gps_s				_sensor_gps_data{};		/**< raw gps data */
 	vehicle_magnetometer_s			_magnetometer{};		/**< raw magnetometer data */
 	vehicle_local_position_s		_local_pos{};			/**< global vehicle position */
-	vehicle_attitude_s				_vehicle_att{};
-	//trajectory_setpoint_s			_trajectory_setpoint{};	/**< speed or outboard control */
-	vehicle_angular_velocity_s		_angular_velocity{};	/**< store gyro changes */
+	vehicle_attitude_s			_vehicle_att{};
+	//trajectory_setpoint_s			_trajectory_setpoint{};		/**< speed or outboard control */
+	vehicle_angular_velocity_s		_angular_velocity{};		/**< store gyro changes */
 	vehicle_rates_setpoint_s		_rates_setpoint{};
 
-
-	mission_s						_mission{};					/**< mission */
-	mission_result_s				_mission_result{};			/**< mission result */
+	mission_s				_mission{};			/**< mission */
+	mission_result_s			_mission_result{};		/**< mission result */
 	navigator_mission_item_s		_navigator_mission_item{};	/**< navigator_mission_item */
-	vehicle_status_s				_vehicle_status{};			/**< commander state */
-	actuator_outputs_s				_actuator_outputs{};		/**< actuator outputs */
+	vehicle_status_s			_vehicle_status{};		/**< commander state */
+	actuator_outputs_s			_actuator_outputs{};		/**< actuator outputs */
 
 	uORB::Publication<vehicle_thrust_setpoint_s>	_vehicle_thrust_setpoint_pub{ORB_ID(vehicle_thrust_setpoint)};
 	uORB::Publication<vehicle_torque_setpoint_s>	_vehicle_torque_setpoint_pub{ORB_ID(vehicle_torque_setpoint)};
 
 	uORB::SubscriptionData<vehicle_acceleration_s>		_vehicle_acceleration_sub{ORB_ID(vehicle_acceleration)};
 
-	DifferentialDriveKinematics _differential_drive_kinematics{this};
-
 	perf_counter_t	_loop_perf;			/**< loop performance counter */
 
-	hrt_abstime _update_orientation_last_called{0}; 	/**<last call of update_orientation()  */
 	hrt_abstime _manual_setpoint_last_called{0};
 	hrt_abstime _turn_goal_last_reached{0};
-	hrt_abstime _first_leg_depart_started{0};
 	hrt_abstime _control_yaw_rate_last_called{0};
 
-	MapProjection _global_local_proj_ref{};
+	MapProjection _global_ned_proj_ref{};
 
 	// estimator reset counters
 	uint8_t _pos_reset_counter{0};		// captures the number of times the estimator has reset the horizontal position
@@ -272,18 +268,20 @@ private:
 
 	// PID controller for the Line Following:
 	PID_t _line_following_ctrl{};
+	float _max_yaw_rate{0.f};
+
+	// The PID controller for the heading (calculates yaw rate):
+	PID_t _pid_heading;
+	// The PID controller for yaw rate (calculates wheels speed difference)
+	PID_t _pid_yaw_rate;
 
 	// Line following controller:
-	ECL_L1_Pos_Controller				_gnd_control{};
+	ECL_L1_Pos_Controller _gnd_control{};
 
 	// Yaw rate controller:
-	RateControl							_rate_control{};
+	RateControl _rate_control{};
 
-	enum UGV_POSCTRL_MODE : int {
-		UGV_POSCTRL_MODE_AUTO,		// executing mission
-		UGV_POSCTRL_MODE_OTHER		// under manual control
-	} _control_mode_current{UGV_POSCTRL_MODE_OTHER}; // used to check the mode in the last control loop iteration. Use to check if the last iteration was in the same mode.
-
+	PurePursuit _pure_pursuit{this}; // Pure pursuit library
 
 	enum POS_CTRLSTATES : int {
 		POS_STATE_NONE,			// undefined/invalid state, no need controlling anything
@@ -302,16 +300,6 @@ private:
 
 	const char *waypoint_type_name(const uint8_t wptype);
 
-	/* previous waypoint, NOT the Mission triplet wp.
-	     This one is strictly for detecting arrival of new current wp,
-	     a new target, between the state machine cycles */
-	matrix::Vector2d _prev_curr_wp{0, 0};
-
-	enum class VelocityFrame {
-		NED,
-		BODY,
-	} _velocity_frame{VelocityFrame::NED};
-
 	// -----------------------------------------------------------------------------------------------------------------------------
 	// added to support heavy differential drive rover:
 
@@ -329,12 +317,15 @@ private:
 	void publishControllerStatus();
 
 	bool updateBearings();
+	void updateWaypoints();
+	void updateWaypointDistances();
 	void updateEkfGpsDeviation();
 	bool checkNewWaypointArrival();
-	float computeVelocitySetpoint();
+	float adjustMissionVelocitySetpoint();
 	float computeTurningSetpoint();
 	float computeTorqueEffort();
 	float computeThrustEffort();
+	void compute_crosstrack_error();
 	void adjustThrustAndTorque();
 	void resetTorqueControls();
 	void resetThrustControls();
@@ -352,12 +343,25 @@ private:
 
 	hrt_abstime _app_started_time{0};
 
-	matrix::Vector2d _curr_wp{0, 0};
-	matrix::Vector2d _prev_wp{0, 0};
+	/* previous waypoint, NOT the Mission triplet previous wp.
+	     This one is strictly for detecting arrival of a new current wp in checkNewWaypointArrival()
+	     a new target, between the state machine cycles */
+	Vector2d _prev_curr_wp{0, 0};
 
-	matrix::Vector2d _current_position{0, 0};
-	matrix::Vector3f _ground_speed{0, 0, 0};
-	matrix::Vector2f _ground_speed_2d{0, 0};
+	// Waypoints - from position_setpoint_triplet_s
+	Vector2d _curr_wp{0, 0};
+	Vector2f _curr_wp_ned{0, 0};
+	Vector2d _prev_wp{0, 0};
+	Vector2f _prev_wp_ned{0, 0};
+	Vector2d _next_wp{0, 0};
+
+	Vector2d _home_position{0, 0};
+
+	Vector2d _curr_pos{0, 0};
+	Vector2f _curr_pos_ned{0, 0};	// local projection - updated when polling
+
+	Vector3f _ground_speed{0, 0, 0};
+	Vector2f _ground_speed_2d{0, 0};
 
 	// these are calculated by L1 controller, and are present as members of _gnd_control:
 	float _target_bearing{0.0f};		// the direction between the rover position and next (current) waypoint
@@ -398,7 +402,7 @@ private:
 	inline void cte_begin()
 	{
 		_cte_accum = 0.0f; _cte_count = 0;
-		_cte_lf_started = _cte_lf_tick = _now;
+		_cte_lf_started = _cte_lf_tick = _timestamp;
 		_crosstrack_error_avg = NAN; _crosstrack_error_max = 0.0f;
 	};
 
@@ -419,7 +423,7 @@ private:
 
 				// every second we see if we are outside +-20 cm corridor, and count those seconds:
 
-				_cte_lf_tick = _now;
+				_cte_lf_tick = _timestamp;
 
 				if (cte_abs > 0.2f) {
 					++_cte_count_outside;
@@ -434,6 +438,18 @@ private:
 		_crosstrack_error_avg = _cte_accum / _cte_count;
 		_crosstrack_error_mission_avg = _cte_accum_mission / _cte_count_mission; // keep it current for tracing
 	};
+
+	// Compute desired yaw rate for the vehicle. See src/modules/rover_differential/RoverDifferential.cpp
+	struct differential_setpoint {
+		float desired_speed{0.f};
+		float desired_yaw_rate{0.f};
+	};
+
+	differential_setpoint _rd_guidance{0.0f, 0.0f};
+
+	void computeRdGuidance();
+
+	inline void resetRdGuidance() { _rd_guidance.desired_speed = _rd_guidance.desired_yaw_rate = 0.0f; };
 
 	// calculated values that become published actuator inputs:
 	float _mission_torque_effort{0.0f};	// Rate control output (yaw a.k.a. heading)
@@ -454,15 +470,11 @@ private:
 	bool _manual_using_pids{false};
 	bool _manual_drive_straight{false};
 
-	// To support Differential Drive module logic, whole body max speed and turn rate pre-calculated and stored here:
-	float _rd_max_speed{0.f};		// = RD_WHEEL_SPEED * RD_WHEEL_RADIUS
-	float _rd_max_angular_velocity{0.f};	// = _rd_max_speed / (RD_WHEEL_BASE / 2)
-
 	// Magnetometer sensor - variables and readings:
 	uint32_t _device_id_mag{0};
 	uint8_t _mag_calibration_count{0};
-	matrix::Vector3f _mag_reading3d{};
-	matrix::Vector2f _mag_reading2d{0.0f, 0.0f};
+	Vector3f _mag_reading3d{};
+	Vector2f _mag_reading2d{0.0f, 0.0f};
 	float _mag_current_heading{0.0f};	// radians to absolute North, -PI...PI
 
 	// RTK GPS calculated values:
@@ -497,7 +509,6 @@ private:
 	float _mission_turning_setpoint{0.0f};  // calculated Yaw effort, derived from L1 acceleration demand or heading error, -1..+1
 
 	// PID speed control related:
-	float _dt{0.0f};			// seconds between calling control loop, passed to PID
 	float _x_vel{0.0f};			// measured current velocity for PID speed control from EKF2
 	float _x_vel_ema{0.0f};			// meters per second, smoothed _x_vel for PID
 	Emaf  _velocity_measured_ema;		// to remove spikes in _x_vel
@@ -505,7 +516,7 @@ private:
 
 	// Yaw Rate Control input and output for logging:
 	float _z_yaw_rate{0.0f};		// measured current yaw rate from EKF2
-	float _rates_setpoint_yaw{0.0f};	// raw Rate Control output
+	float _yaw_rate_setpoint{0.0f};	// raw Rate Control output
 
 	// Waypoint navigation variables:
 	float _dist_target{NAN};		// meters
@@ -536,10 +547,11 @@ private:
 	bool _stateHasChanged{false};	// only good inside the loop
 
 	int _tracing_lev{0};			// tracing level, 5-high, 0-none  GND_TRACING_LEV
-	int _gps_minfix{0};				// minimal GPS fix when heading may be taken from GPS course-over-ground (cog)
+	int _gps_minfix{0};			// minimal GPS fix when heading may be taken from GPS course-over-ground (cog)
 
 	// timing and tracing helpers:
-	hrt_abstime _now{0};
+	hrt_abstime _timestamp{0};
+	float _dt{0.0f};			// seconds between calling control loop, usually passed to PIDs
 
 #ifdef DEBUG_MY_PRINT
 	hrt_abstime _debug_print_last_called {0};
@@ -581,6 +593,25 @@ private:
 	// -----------------------------------------------------------------------------------------------------------------------------
 
 	DEFINE_PARAMETERS(
+		(ParamFloat<px4::params::RD_HEADING_P>) _param_rd_p_gain_heading,
+		(ParamFloat<px4::params::RD_HEADING_I>) _param_rd_i_gain_heading,
+		(ParamFloat<px4::params::RD_SPEED_P>) _param_rd_p_gain_speed,
+		(ParamFloat<px4::params::RD_SPEED_I>) _param_rd_i_gain_speed,
+		(ParamFloat<px4::params::RD_MAX_SPEED>) _param_rd_max_speed,
+		(ParamFloat<px4::params::NAV_ACC_RAD>) _param_nav_acc_rad,
+		(ParamFloat<px4::params::RD_MAX_JERK>) _param_rd_max_jerk,
+		(ParamFloat<px4::params::RD_MAX_ACCEL>) _param_rd_max_accel,
+		(ParamFloat<px4::params::RD_MISS_SPD_DEF>) _param_rd_miss_spd_def,
+		(ParamFloat<px4::params::RD_MAX_YAW_RATE>) _param_rd_max_yaw_rate,
+		(ParamFloat<px4::params::RD_TRANS_TRN_DRV>) _param_rd_trans_trn_drv,
+		(ParamFloat<px4::params::RD_TRANS_DRV_TRN>) _param_rd_trans_drv_trn,
+
+		// R/C yaw scaler to control right stick horizontal movement effect, avoiding too sensitive feel:
+		(ParamFloat<px4::params::RD_MAN_YAW_SCALE>) _param_rd_man_yaw_scale,
+		(ParamFloat<px4::params::RD_YAW_RATE_P>) _param_rd_p_gain_yaw_rate,
+		(ParamFloat<px4::params::RD_YAW_RATE_I>) _param_rd_i_gain_yaw_rate,
+		(ParamInt<px4::params::CA_R_REV>) _param_r_rev,
+
 		(ParamFloat<px4::params::GND_L1_PERIOD>) _param_l1_period,
 		(ParamFloat<px4::params::GND_L1_DAMPING>) _param_l1_damping,
 		(ParamFloat<px4::params::GND_L1_SCALER>) _param_l1_scaler,
@@ -600,7 +631,6 @@ private:
 		(ParamInt<px4::params::GND_LF_USE_RATE>) _param_lf_use_rates_controller,
 
 		// PID-controlled speed setpoint, m/s:
-		(ParamFloat<px4::params::GND_SPEED_TRIM>) _param_gndspeed_trim,
 		(ParamFloat<px4::params::GND_SPEED_SP_EMA>) _param_speed_sp_ema_period,
 
 		(ParamInt<px4::params::GND_SP_MEAS_MODE>) _param_speed_measurement_mode,
@@ -643,20 +673,8 @@ private:
 		(ParamFloat<px4::params::GND_RATE_AD_TRIM>) _param_rate_depart_arrive_trim,
 		(ParamFloat<px4::params::GND_RATE_AD_SC>) _param_heading_ad_rate_scaler,
 
-		// R/C yaw scaler to control right stick horizontal movement effect, avoiding too sensitive feel:
-		(ParamFloat<px4::params::GND_MAN_YAW_SC>) _param_manual_yaw_scaler,
-
-		// Differential Drive module parameters used here:
-		(ParamFloat<px4::params::RD_WHEEL_SPEED>) _param_rd_max_wheel_speed,
-		(ParamFloat<px4::params::RD_WHEEL_BASE>) _param_rd_wheel_base,
-		(ParamFloat<px4::params::RD_WHEEL_RADIUS>) _param_rd_wheel_radius,
-
-		(ParamFloat<px4::params::RD_THRUST_SC>) _param_rd_thrust_scaler,
-		(ParamFloat<px4::params::RD_TORQUE_SC>) _param_rd_torque_scaler,
-
-		// Velocity smoothing parameters for speed control:
-		(ParamFloat<px4::params::RD_MAX_JERK>) _param_rd_max_jerk,
-		(ParamFloat<px4::params::RD_MAX_ACCEL>) _param_rd_max_accel,
+		(ParamFloat<px4::params::GND_THRUST_SC>) _param_gnd_thrust_scaler,
+		(ParamFloat<px4::params::GND_TORQUE_SC>) _param_gnd_torque_scaler,
 
 		(ParamInt<px4::params::GND_TRACING_LEV>) _param_tracing_lev,
 		(ParamInt<px4::params::GND_GPS_MINFIX>) _param_gps_minfix,
@@ -673,9 +691,7 @@ private:
 		(ParamFloat<px4::params::GND_GTL_TURN>) _param_gas_throttle_turning,
 		(ParamFloat<px4::params::GND_GTL_ARRIVE>) _param_gas_throttle_arriving,
 		(ParamFloat<px4::params::GND_GTL_STRAIGHT>) _param_gas_throttle_straight,
-		(ParamFloat<px4::params::GND_GTL_YAWF_MIN>) _param_gas_throttle_yaw_factor_min,
-
-		(ParamInt<px4::params::CA_R_REV>) _param_r_rev
+		(ParamFloat<px4::params::GND_GTL_YAWF_MIN>) _param_gas_throttle_yaw_factor_min
 	)
 
 	void		poll_everything();
@@ -698,8 +714,7 @@ private:
 	 */
 	void		update_orientation();
 	void		control_position_manual();
-	void		control_position(const matrix::Vector2d &global_pos);
-	void		navigate_L1();
+	void		control_position(const Vector2d &global_pos);
 	float		control_yaw_rate(const vehicle_angular_velocity_s &rates, const vehicle_rates_setpoint_s &rates_sp);
 
 };
