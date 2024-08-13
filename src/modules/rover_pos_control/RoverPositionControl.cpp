@@ -377,9 +377,9 @@ RoverPositionControl::control_yaw_rate()
 		const matrix::Vector3f rates_setpoint(_rates_setpoint.roll, _rates_setpoint.pitch,
 						      PX4_ISFINITE(_rates_setpoint.yaw) ? _rates_setpoint.yaw : 0.0f);
 
-		// when stopped, lock PID integrator:
-		bool is_stopped = bool(_ground_speed_abs <
-				       _param_rate_i_minspeed.get()); // if true, integral is not allowed to accumulate (I-component of PID disabled)
+		// when stopped, lock PID integrator.
+		// if true, integral is not allowed to accumulate (I-component of PID disabled)
+		bool is_stopped = bool(_ground_speed_abs < _param_rate_i_minspeed.get()); // GND_RATE_IMINSPD
 
 		const matrix::Vector3f angular_acceleration{_angular_velocity.xyz_derivative};	// measured angular accelerations
 
@@ -425,7 +425,7 @@ RoverPositionControl::control_yaw_rate()
 				const float speed_diff = yaw_rate_setpoint * 0.9f; // wheel base (track)
 
 				steering_input = math::interpolate<float>(speed_diff,
-						 -_param_rd_max_speed.get(),
+						 -_param_rd_max_speed.get(),	// RD_MAX_SPEED
 						 _param_rd_max_speed.get(),
 						 -1.f, 1.f);
 
