@@ -424,7 +424,7 @@ void RoverPositionControl::debugPublishAll()
 	// When GND_HEADING_P is set to > SIGMA, PID heading error control is in effect:
 	_dbg_array.data[i++] = _current_heading;
 	_dbg_array.data[i++] = _mission_turning_setpoint; // what State Machine thinks of turning - based on heading error
-	_dbg_array.data[i++] = _yaw_rate_setpoint;	  // YAW rate setpoint
+	_dbg_array.data[i++] = _rates_setpoint.yaw;	  // YAW rate setpoint
 	_dbg_array.data[i++] = _mission_torque_effort;	  // result of RateControl
 	_dbg_array.data[i++] = _z_yaw_rate;
 

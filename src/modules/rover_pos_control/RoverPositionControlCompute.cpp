@@ -192,9 +192,9 @@ float RoverPositionControl::computeTorqueEffort()
 
 	case L1_GOTO_WAYPOINT: {
 
-			_rates_setpoint.yaw = _yaw_rate_setpoint = _rd_guidance.desired_yaw_rate;
+			_rates_setpoint.yaw = _rd_guidance.desired_yaw_rate;
 
-			torque_effort = control_yaw_rate(_angular_velocity, _rates_setpoint);
+			torque_effort = control_yaw_rate();
 
 			/*
 			PX4_INFO_RAW("xtrk: %.1f cm  msn_trng: %.3f   yaw: %.4f  spd: %.3f  trq_eff: %.3f\n",
@@ -398,10 +398,9 @@ float RoverPositionControl::computeTorqueEffort()
 	case WP_TURNING:
 
 		// Just use constant yaw rate - GND_TURN_RATE:
-		_rates_setpoint.yaw = _yaw_rate_setpoint =
-					      sign(_mission_turning_setpoint) * _param_turn_rate_sp.get(); // GND_TURN_RATE
+		_rates_setpoint.yaw = sign(_mission_turning_setpoint) * _param_turn_rate_sp.get(); // GND_TURN_RATE
 
-		torque_effort = control_yaw_rate(_angular_velocity, _rates_setpoint);
+		torque_effort = control_yaw_rate();
 
 		break;
 
@@ -414,11 +413,11 @@ float RoverPositionControl::computeTorqueEffort()
 
 			float max_yaw_rate_setpoint = _param_rate_depart_arrive_trim.get(); // GND_RATE_AD_TRIM
 
-			_rates_setpoint.yaw = _yaw_rate_setpoint = math::constrain(
+			_rates_setpoint.yaw = math::constrain(
 						      _mission_turning_setpoint * _param_heading_ad_rate_scaler.get(), // GND_RATE_AD_SC
 						      -max_yaw_rate_setpoint, max_yaw_rate_setpoint); // constrained with GND_RATE_AD_TRIM
 
-			torque_effort = control_yaw_rate(_angular_velocity, _rates_setpoint);
+			torque_effort = control_yaw_rate();
 
 		}
 		break;
@@ -489,7 +488,8 @@ float RoverPositionControl::computeThrustEffort()
 	//float speed_err = _x_vel_ema - _mission_velocity_setpoint;
 	//PX4_INFO("SPEED: trgt: %.4f xvel: %.4f xvel_ema: %.4f err: %.4f thrust: %.4f", (double)_mission_velocity_setpoint, (double)_x_vel, (double)_x_vel_ema, (double)speed_err, (double)thrust);
 
-	return math::constrain(thrust, _param_thrust_min.get(),
+	return math::constrain(thrust * _param_gnd_thrust_scaler.get(),	// GND_THRUST_SC
+			       _param_thrust_min.get(),
 			       _param_thrust_max.get()); // can be NAN.  GND_THR_MIN, GND_THR_MAX
 }
 

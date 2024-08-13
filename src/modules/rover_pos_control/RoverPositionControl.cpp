@@ -326,15 +326,11 @@ bool RoverPositionControl::checkNewWaypointArrival()
 }
 
 float
-RoverPositionControl::control_yaw_rate(const vehicle_angular_velocity_s &rates,
-				       const vehicle_rates_setpoint_s &rates_sp)
+RoverPositionControl::control_yaw_rate()
 {
 	// code below is a combination of:
 	//                                  https://github.com/PX4/PX4-Autopilot/pull/20082
 	//                              and src/modules/mc_rate_control/MulticopterRateControl.cpp:185+
-
-	float dt = (_control_yaw_rate_last_called > 0) ? hrt_elapsed_time(&_control_yaw_rate_last_called) * 1e-6f : 0.01f;
-	_control_yaw_rate_last_called = _timestamp;
 
 	// reset integral if disarmed
 	if (!_control_mode.flag_armed) {
@@ -368,31 +364,81 @@ RoverPositionControl::control_yaw_rate(const vehicle_angular_velocity_s &rates,
 
 #endif // PUBLISH_THRUST_TORQUE
 
-	const matrix::Vector3f vehicle_rates(rates.xyz[0], rates.xyz[1], rates.xyz[2]);		// measured angular rates
-	const matrix::Vector3f rates_setpoint(rates_sp.roll, rates_sp.pitch, rates_sp.yaw);	// desired angular rates
+	float steering_input = 0.0f;
 
-	// when stopped, lock PID integrator:
-	bool is_stopped = bool(_ground_speed_abs <
-			       _param_rate_i_minspeed.get()); // if true, integral is not allowed to accumulate (I-component of PID disabled)
+	if (_param_rate_p.get() > FLT_EPSILON) {	// GND_RATE_P
 
-	const matrix::Vector3f angular_acceleration{rates.xyz_derivative};	// measured angular accelerations
+		// Using 3D Rate Control library:
 
-	// Now call the magic, assuming that it computes body torque action:
-	const matrix::Vector3f torque = _rate_control.update(vehicle_rates, rates_setpoint, angular_acceleration, dt,
-					is_stopped);
+		// measured angular rates:
+		const matrix::Vector3f vehicle_rates(_angular_velocity.xyz[0], _angular_velocity.xyz[1],
+						     _angular_velocity.xyz[2]);
+		// desired angular rates:
+		const matrix::Vector3f rates_setpoint(_rates_setpoint.roll, _rates_setpoint.pitch,
+						      PX4_ISFINITE(_rates_setpoint.yaw) ? _rates_setpoint.yaw : 0.0f);
 
-	// publish rate controller status
-	rate_ctrl_status_s rate_ctrl_status{};
-	_rate_control.getRateControlStatus(rate_ctrl_status);
-	rate_ctrl_status.timestamp = _timestamp;
-	_controller_status_pub.publish(rate_ctrl_status);
+		// when stopped, lock PID integrator:
+		bool is_stopped = bool(_ground_speed_abs <
+				       _param_rate_i_minspeed.get()); // if true, integral is not allowed to accumulate (I-component of PID disabled)
 
-	// only interested in yaw (z) axis:
-	float steering_input = math::constrain(torque(2), -1.0f, 1.0f);
+		const matrix::Vector3f angular_acceleration{_angular_velocity.xyz_derivative};	// measured angular accelerations
 
-	//PX4_WARN("mission_torque_effort: %.3f   steering_input: %.3f", (double)_mission_torque_effort, (double)steering_input);
+		float dt = (_control_yaw_rate_last_called > 0) ? hrt_elapsed_time(&_control_yaw_rate_last_called) * 1e-6f : 0.01f;
+		_control_yaw_rate_last_called = _timestamp;
 
-	return steering_input;
+		// Now call the magic, assuming that it computes body torque action:
+		const matrix::Vector3f torque = _rate_control.update(vehicle_rates, rates_setpoint, angular_acceleration, dt,
+						is_stopped);
+
+		// publish rate controller status
+		rate_ctrl_status_s rate_ctrl_status{};
+		_rate_control.getRateControlStatus(rate_ctrl_status);
+		rate_ctrl_status.timestamp = _timestamp;
+		_controller_status_pub.publish(rate_ctrl_status);
+
+		// only interested in yaw (z) axis:
+		steering_input = torque(2) *
+				 yaw_responsiveness_factor()	 // 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas)
+				 * _param_gnd_torque_scaler.get(); // GND_TORQUE_SC
+
+		//PX4_WARN("mission_torque_effort: %.3f   steering_input: %.3f", (double)_mission_torque_effort, (double)steering_input);
+
+	} else {
+
+		// GND_RATE_P == 0
+
+		// Using simplified PID-based controller:
+
+		float yaw_rate_setpoint = _rates_setpoint.yaw;	// desired angular rate
+
+		if (PX4_ISFINITE(yaw_rate_setpoint)) {
+
+			static constexpr float YAW_RATE_ERROR_THRESHOLD = 0.1f; // [rad/s] Error threshold for the closed loop yaw rate control
+
+			// Closed loop yaw rate control
+			if (fabsf(yaw_rate_setpoint - _z_yaw_rate) < YAW_RATE_ERROR_THRESHOLD) {
+
+				pid_reset_integral(&_pid_yaw_rate);
+
+			} else {
+				// Feedforward:
+				const float speed_diff = yaw_rate_setpoint * 0.9f; // wheel base (track)
+
+				steering_input = math::interpolate<float>(speed_diff,
+						 -_param_rd_max_speed.get(),
+						 _param_rd_max_speed.get(),
+						 -1.f, 1.f);
+
+				// Feedback:
+				steering_input += pid_calculate(&_pid_yaw_rate, yaw_rate_setpoint, _z_yaw_rate, 0, _dt);
+
+				steering_input *= (yaw_responsiveness_factor()	 // 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas)
+						   * _param_gnd_torque_scaler.get()); // GND_TORQUE_SC
+			}
+		}
+	}
+
+	return math::constrain(steering_input, -1.0f, 1.0f);
 }
 
 void
@@ -415,7 +461,7 @@ RoverPositionControl::Run()
 	_timestamp = hrt_absolute_time();
 	_dt = math::constrain(_timestamp - timestamp_prev, 1_ms, 5000_ms) * 1e-6f;
 
-	_yaw_rate_setpoint = NAN;	// for logging, will be set in control_position()
+	_rates_setpoint.yaw = NAN;	// for logging, will be set in control_position()
 	_z_yaw_rate = NAN;		//              will be set in poll_everything()
 
 	poll_everything();
@@ -504,45 +550,13 @@ RoverPositionControl::Run()
 
 		// see src/modules/rover_differential/RoverDifferential.cpp
 
-		float speed_diff_normalized = _torque_control
-					      * yaw_responsiveness_factor()	// 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas)
-					      * _param_gnd_torque_scaler.get();	// RD_TORQUE_SC
-
-		/*
-				float yaw_rate = 0.0f;
-
-				if (PX4_ISFINITE(_yaw_rate_setpoint)) {
-					_yaw_rate_setpoint = _yaw_rate_setpoint
-							     * yaw_responsiveness_factor()	// 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas)
-							     * _param_rd_torque_scaler.get();	// RD_TORQUE_SC
-
-					speed_diff_normalized = _yaw_rate_setpoint;
-					yaw_rate = _yaw_rate_setpoint;
-				}
-
-				static constexpr float YAW_RATE_ERROR_THRESHOLD = 0.1f; // [rad/s] Error threshold for the closed loop yaw rate control
-
-				// Closed loop yaw rate control
-				if (fabsf(yaw_rate - _z_yaw_rate) < YAW_RATE_ERROR_THRESHOLD) {
-					speed_diff_normalized = 0.f;
-					pid_reset_integral(&_pid_yaw_rate);
-
-				} else {
-					const float speed_diff = yaw_rate * _param_rd_wheel_track.get(); // Feedforward
-					speed_diff_normalized = math::interpolate<float>(speed_diff, -_param_rd_max_speed.get(),
-								_param_rd_max_speed.get(), -1.f, 1.f);
-					speed_diff_normalized = math::constrain(speed_diff_normalized +
-										pid_calculate(&_pid_yaw_rate, yaw_rate, _z_yaw_rate, 0, _dt),
-										-1.f, 1.f); // Feedback
-				}
-		*/
-
-		float forward_speed = _thrust_control * _param_gnd_thrust_scaler.get();	// RD_THRUST_SC
-		float speed_diff = speed_diff_normalized;
+		float forward_speed = _thrust_control;
+		float speed_diff = _torque_control;
 
 		float combined_velocity = fabsf(forward_speed) + fabsf(speed_diff);
 
-		if (combined_velocity > 1.0f) { // Prioritize yaw rate
+		if (combined_velocity > 1.0f) {
+			// Prioritize yaw rate
 			float excess_velocity = fabsf(combined_velocity - 1.0f);
 			forward_speed -= sign(forward_speed) * excess_velocity;
 		}
@@ -557,15 +571,11 @@ RoverPositionControl::Run()
 				(double)_torque_control, (double)_wheel_speeds(0), (double)_wheel_speeds(1));
 		*/
 
-		// Check if max_angular_wheel_speed is zero
-		//const bool setpoint_timeout = (_differential_drive_setpoint.timestamp + 100_ms) < now;
-		//const bool valid_max_speed = _param_rd_speed_scale.get() > FLT_EPSILON;
-
-		if (!_control_mode.flag_armed) { // || setpoint_timeout || !valid_max_speed) {
+		if (!_control_mode.flag_armed) {
 			_wheel_speeds = {0.0f, 0.0f}; // stop
 		}
 
-		_wheel_speeds = matrix::constrain(_wheel_speeds, -1.f, 1.f);
+		_wheel_speeds = matrix::constrain(_wheel_speeds, -1.0f, 1.0f);
 
 		// publish data to actuator_motors (output module):
 		// (does not work, as Control Allocator doesn't have suitable Effectiveness class)
@@ -574,8 +584,8 @@ RoverPositionControl::Run()
 		// "Servo" channels - Gas Engine Throttle, Cutter, Strobe, Horn, Alarm:
 		// (also publishes wheel speeds directly as Servo 1 and 2)
 		publishAuxActuators(timestamp_sample);
-#endif // PUBLISH_THRUST_TORQUE
 
+#endif // PUBLISH_THRUST_TORQUE
 	}
 
 #ifdef DEBUG_MY_DATA

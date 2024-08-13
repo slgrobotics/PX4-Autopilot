@@ -90,8 +90,8 @@ param set EKF2_REQ_GPS_H 5.0
 #param set SYS_HAS_NUM_ASPD 0
 
 # Lawnmower parameters to scale Differential Drive Kinematics output:
-param set-default RD_THRUST_SC 1.0
-param set-default RD_TORQUE_SC 3.0
+param set-default GND_THRUST_SC 1.0
+param set-default GND_TORQUE_SC 3.0
 
 # Rover parameters
 param set-default RD_MAN_YAW_SCALE 0.25

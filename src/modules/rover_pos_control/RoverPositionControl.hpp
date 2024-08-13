@@ -516,7 +516,6 @@ private:
 
 	// Yaw Rate Control input and output for logging:
 	float _z_yaw_rate{0.0f};		// measured current yaw rate from EKF2
-	float _yaw_rate_setpoint{0.0f};	// raw Rate Control output
 
 	// Waypoint navigation variables:
 	float _dist_target{NAN};		// meters
@@ -715,6 +714,6 @@ private:
 	void		update_orientation();
 	void		control_position_manual();
 	void		control_position(const Vector2d &global_pos);
-	float		control_yaw_rate(const vehicle_angular_velocity_s &rates, const vehicle_rates_setpoint_s &rates_sp);
+	float		control_yaw_rate();
 
 };

@@ -70,8 +70,8 @@ param set-default PP_LOOKAHD_MIN 2
 param set-default PP_LOOKAHD_GAIN 1
 
 # Lawnmower parameters to scale Differential Drive Kinematics output:
-param set-default RD_THRUST_SC 1.0
-param set-default RD_TORQUE_SC 1.0
+param set-default GND_THRUST_SC 1.0
+param set-default GND_TORQUE_SC 1.0
 
 # Parameters that "just work" in gz sim:
 #param set-default GND_LF_P 2
