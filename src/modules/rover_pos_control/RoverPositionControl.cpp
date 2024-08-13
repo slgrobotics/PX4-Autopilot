@@ -547,34 +547,7 @@ RoverPositionControl::Run()
 		publishAuxActuators(timestamp_sample);
 #else
 
-		// see src/modules/rover_differential/RoverDifferential.cpp
-
-		float forward_speed = _thrust_control;
-		float speed_diff = _torque_control;
-
-		float combined_velocity = fabsf(forward_speed) + fabsf(speed_diff);
-
-		if (combined_velocity > 1.0f) {
-			// Prioritize yaw rate
-			float excess_velocity = fabsf(combined_velocity - 1.0f);
-			forward_speed -= sign(forward_speed) * excess_velocity;
-		}
-
-		// Calculate the left and right wheel speeds
-		_wheel_speeds = Vector2f(forward_speed - speed_diff, forward_speed + speed_diff);
-
-		/*
-			PX4_INFO_RAW("Vsp: %.3f  THR %f ->  %f  TRQ %f -> %f  Whls: %f   %f\n",
-				(double)_mission_velocity_setpoint,
-				(double)_mission_thrust_effort, (double)_thrust_control, (double)_mission_torque_effort,
-				(double)_torque_control, (double)_wheel_speeds(0), (double)_wheel_speeds(1));
-		*/
-
-		if (!_control_mode.flag_armed) {
-			_wheel_speeds = {0.0f, 0.0f}; // stop
-		}
-
-		_wheel_speeds = matrix::constrain(_wheel_speeds, -1.0f, 1.0f);
+		computeWheelSpeeds();
 
 		// publish data to actuator_motors (output module):
 		// (does not work, as Control Allocator doesn't have suitable Effectiveness class)

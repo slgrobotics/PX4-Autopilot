@@ -325,7 +325,8 @@ private:
 	float computeTurningSetpoint();
 	float computeTorqueEffort();
 	float computeThrustEffort();
-	void compute_crosstrack_error();
+	void computeWheelSpeeds();
+	void computeCrosstrackError();
 	void adjustThrustAndTorque();
 	void resetTorqueControls();
 	void resetThrustControls();

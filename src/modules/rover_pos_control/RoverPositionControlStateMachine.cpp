@@ -606,7 +606,7 @@ bool RoverPositionControl::updateBearings()
 		*/
 	}
 
-	compute_crosstrack_error();
+	computeCrosstrackError();
 
 	// ~28.6 degrees deviation makes sense, NAN for more:
 	_abbe_error = abs(_heading_error) < 0.5f ? _wp_current_dist * sin(_heading_error) : NAN; // meters at target point
