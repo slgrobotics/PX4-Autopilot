@@ -435,7 +435,7 @@ PARAM_DEFINE_FLOAT(GND_WP_PRECISN, 0.5f);
 /**
  * When turning at waypoint, apply some forward or backward movement.
  *
- * @unit deg
+ * @unit m/s
  * @min -1.0
  * @max 1.0
  * @decimal 3
@@ -448,10 +448,10 @@ PARAM_DEFINE_FLOAT(GND_TURN_SPEED, 0.05f);
  * When turning at waypoint, what to consider a success
  *
  * @unit deg
- * @min 1.0
+ * @min 0.1
  * @max 20.0
  * @decimal 1
- * @increment 0.5
+ * @increment 0.1
  * @group Rover Position Control
  */
 PARAM_DEFINE_FLOAT(GND_TURN_PRECISN, 3.0f);
@@ -501,12 +501,12 @@ PARAM_DEFINE_FLOAT(GND_HEADING_DECL, 0.0f);
  *
  * @unit deg/s
  * @min 0.0
- * @max 100.0
+ * @max 90.0
  * @decimal 3
  * @increment 0.1
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_RATE_AD_TRIM, 0.8f);
+PARAM_DEFINE_FLOAT(GND_RATE_AD_TRIM, 30f);
 
 /**
  * When departing or arriving, controls yaw rate setpoint for Rate Control
@@ -525,12 +525,12 @@ PARAM_DEFINE_FLOAT(GND_RATE_AD_SC, 2.0f);
  *
  * @unit deg/s
  * @min 0.1
- * @max 10.0
- * @decimal 3
+ * @max 90.0
+ * @decimal 1
  * @increment 0.1
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_TURN_RATE, 0.5f);
+PARAM_DEFINE_FLOAT(GND_TURN_RATE, 30f);
 
 
 // ================  Line following - Yaw RateControl ====================================================
@@ -545,7 +545,7 @@ PARAM_DEFINE_FLOAT(GND_TURN_RATE, 0.5f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_RATE_P, 0.3f);
+PARAM_DEFINE_FLOAT(GND_RATE_P, 0.6f);
 
 /**
  * Rover Rate Integral Gain
@@ -557,7 +557,7 @@ PARAM_DEFINE_FLOAT(GND_RATE_P, 0.3f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_RATE_I, 0.08f);
+PARAM_DEFINE_FLOAT(GND_RATE_I, 0.2f);
 
 /**
  * Rover Rate Differential Gain
@@ -569,7 +569,7 @@ PARAM_DEFINE_FLOAT(GND_RATE_I, 0.08f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_RATE_D, 0.005f);
+PARAM_DEFINE_FLOAT(GND_RATE_D, 0.0f);
 
 /**
  * Rover Rate Feed Forward Gain
@@ -581,7 +581,7 @@ PARAM_DEFINE_FLOAT(GND_RATE_D, 0.005f);
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_RATE_FF, 0.3f);
+PARAM_DEFINE_FLOAT(GND_RATE_FF, 0.0f);
 
 /**
  * Rover Rate Maximum Integral Limit

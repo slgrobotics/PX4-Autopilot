@@ -231,7 +231,7 @@ void RoverPositionControl::workStateMachine()
 
 		if (updateBearings()) {
 
-			if (math::abs_t(_heading_error) < math::radians(_param_turn_precision.get())) {	// GND_TURN_PRECISN
+			if (math::abs_t(_heading_error) < math::radians(_param_turn_precision.get())) {	// GND_TURN_PRECISN, degrees
 
 				// When turning at waypoint, wait several seconds after turn goal is reached.
 				// This allows PID oscillations to cease in aggressive turns.

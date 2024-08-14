@@ -267,21 +267,21 @@ void RoverPositionControl::updateParams()
 	pid_reset_integral(&_line_following_ctrl);
 
 
-	pid_init(&_pid_heading, PID_MODE_DERIVATIV_NONE, 0.001f);
+	pid_init(&_pid_heading, PID_MODE_DERIVATIV_NONE, 0.01f);
 
-	_max_yaw_rate = _param_rd_max_yaw_rate.get() * M_DEG_TO_RAD_F;
+	_max_yaw_rate = math::radians(_param_rd_max_yaw_rate.get());	// RD_MAX_YAW_RATE
 	pid_set_parameters(&_pid_heading,
-			   _param_rd_p_gain_heading.get(),  // Proportional gain
-			   _param_rd_i_gain_heading.get(),  // Integral gain
+			   _param_rd_p_gain_heading.get(),  // Proportional gain - RD_HEADING_P
+			   _param_rd_i_gain_heading.get(),  // Integral gain - RD_HEADING_I
 			   0.f,  // Derivative gain
 			   _max_yaw_rate,  // Integral limit
 			   _max_yaw_rate);  // Output limit
 
-	pid_init(&_pid_yaw_rate, PID_MODE_DERIVATIV_NONE, 0.001f);
+	pid_init(&_pid_yaw_rate, PID_MODE_DERIVATIV_NONE, 0.01f);
 
 	pid_set_parameters(&_pid_yaw_rate,
-			   _param_rd_p_gain_yaw_rate.get(), // Proportional gain
-			   _param_rd_i_gain_yaw_rate.get(), // Integral gain
+			   _param_rd_p_gain_yaw_rate.get(), // Proportional gain - RD_YAW_RATE_P
+			   _param_rd_i_gain_yaw_rate.get(), // Integral gain - RD_YAW_RATE_I
 			   0.f, // Derivative gain
 			   1.f, // Integral limit
 			   1.f); // Output limit
@@ -311,7 +311,8 @@ void RoverPositionControl::updateParams()
 				  matrix::Vector3f(0.0f, 0.0f, _param_rate_d.get()));
 	_rate_control.setFeedForwardGain(
 		matrix::Vector3f(0.0f, 0.0f, 0.0f));	// will be set to GND_RATE_FF when in L1_GOTO_WAYPOINT
-	_rate_control.setIntegratorLimit(matrix::Vector3f(0.0f, 0.0f, _param_rate_imax.get()));
+
+	_rate_control.setIntegratorLimit(matrix::Vector3f(0.0f, 0.0f, _param_rate_imax.get()));	// GND_RATE_IMAX
 
 	_rate_control.resetIntegral();
 
@@ -399,7 +400,7 @@ RoverPositionControl::manual_control_setpoint_poll()
 
 		// Set heading torque from the manual roll input channel. See RD_MAN_YAW_SCALE - for smoother manual control.
 		_torque_control_manual = _manual_control_setpoint.roll *
-					 _param_rd_man_yaw_scale.get();		// Nominally yaw: _manual_control_setpoint.roll;  - this is right stick, horizontal movement, R/C CH1 "ailerons"
+					 _param_rd_man_yaw_scale.get();	// Nominally yaw: _manual_control_setpoint.roll;  - this is right stick, horizontal movement, R/C CH1 "ailerons"
 		// Set thrust from the manual throttle channel
 		_thrust_control_manual =
 			_manual_control_setpoint.throttle;	// this is right stick, vertical movement, R/C CH2 "elevator"

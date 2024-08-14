@@ -398,7 +398,8 @@ float RoverPositionControl::computeTorqueEffort()
 	case WP_TURNING:
 
 		// Just use constant yaw rate - GND_TURN_RATE:
-		_rates_setpoint.yaw = sign(_mission_turning_setpoint) * _param_turn_rate_sp.get(); // GND_TURN_RATE
+		_rates_setpoint.yaw = sign(_mission_turning_setpoint)
+				      * math::radians(_param_turn_rate_sp.get()); // GND_TURN_RATE, deg/s
 
 		torque_effort = control_yaw_rate();
 
@@ -411,7 +412,7 @@ float RoverPositionControl::computeTorqueEffort()
 
 			// Departures and Arrivals, use heading error for yaw rate setpoint:
 
-			float max_yaw_rate_setpoint = _param_rate_depart_arrive_trim.get(); // GND_RATE_AD_TRIM
+			float max_yaw_rate_setpoint = math::radians(_param_rate_depart_arrive_trim.get()); // GND_RATE_AD_TRIM, deg/s
 
 			_rates_setpoint.yaw = math::constrain(
 						      _mission_turning_setpoint * _param_heading_ad_rate_scaler.get(), // GND_RATE_AD_SC

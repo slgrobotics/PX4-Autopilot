@@ -90,23 +90,23 @@ param set EKF2_REQ_GPS_H 5.0
 #param set SYS_HAS_NUM_ASPD 0
 
 # Lawnmower parameters to scale Differential Drive Kinematics output:
-param set-default GND_THRUST_SC 1.0
-param set-default GND_TORQUE_SC 3.0
+#param set-default GND_THRUST_SC 1.0
+#param set-default GND_TORQUE_SC 1.0
 
 # Rover parameters
 param set-default RD_MAN_YAW_SCALE 0.25
-param set-default RD_YAW_RATE_I 0.1
-param set-default RD_YAW_RATE_P 5
+param set-default RD_YAW_RATE_I 0.08
+param set-default RD_YAW_RATE_P 0.3
 param set-default RD_MAX_ACCEL 1.0
 param set-default RD_MAX_JERK 1.0
-param set-default RD_HEADING_P 5
-param set-default RD_HEADING_I 0.1
+param set-default RD_HEADING_P 1.5
+param set-default RD_HEADING_I 0.3
 param set-default RD_MAX_YAW_RATE 30
 param set-default RD_TRANS_DRV_TRN 0.349066
 param set-default RD_TRANS_TRN_DRV 0.174533
 
 # Pure pursuit parameters
-param set-default PP_LOOKAHD_MAX 30
+param set-default PP_LOOKAHD_MAX 10
 param set-default PP_LOOKAHD_MIN 2
 param set-default PP_LOOKAHD_GAIN 1
 
@@ -150,11 +150,8 @@ else
 	# Set Differential Drive Kinematics Library parameters:
 	param set RD_WHEEL_TRACK 0.9
 
-	param set RD_MAX_SPEED 2.0
+	param set RD_MAX_SPEED 1.6
 	param set RD_MISS_SPD_DEF 1.5
-
-	# Decrease right stick horizontal (yaw) response when in Manual mode:
-	param set RD_MAN_YAW_SCALE 0.25
 
 	param set SYS_HAS_BARO 0
 	param set EKF2_BARO_CTRL 0
