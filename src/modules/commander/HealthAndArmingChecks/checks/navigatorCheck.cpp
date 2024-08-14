@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2014 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2024 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,70 +30,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
-/**
- * @file navigator_mode.cpp
- *
- * Base class for different modes in navigator
- *
- * @author Julian Oes <julian@oes.ch>
- * @author Anton Babushkin <anton.babushkin@me.com>
- */
 
-#include "navigator_mode.h"
-#include "navigator.h"
+#include "navigatorCheck.hpp"
 
-NavigatorMode::NavigatorMode(Navigator *navigator, uint8_t navigator_state_id) :
-	_navigator(navigator),
-	_navigator_state_id(navigator_state_id)
+void NavigatorChecks::checkAndReport(const Context &context, Report &reporter)
 {
-	/* set initial mission items */
-	on_inactivation();
-	on_inactive();
-}
+	navigator_status_s status;
 
-void
-NavigatorMode::run(bool active)
-{
-	if (active) {
-		if (!_active) {
-			on_activation();
-
-		} else {
-			/* periodic updates when active */
-			on_active();
-		}
-
-	} else {
-		/* periodic updates when inactive */
-		if (_active) {
-			on_inactivation();
-
-		} else {
-			on_inactive();
-		}
+	if (!_navigator_status_sub.copy(&status)) {
+		status = {};
 	}
 
-	_active = active;
-}
+	if (context.status().nav_state == status.nav_state) {
 
-void
-NavigatorMode::on_inactive()
-{
-}
+		reporter.failsafeFlags().navigator_failure = (status.failure != navigator_status_s::FAILURE_NONE);
 
-void
-NavigatorMode::on_inactivation()
-{
-}
-
-void
-NavigatorMode::on_activation()
-{
-	/* invalidate position setpoint by default */
-	_navigator->get_position_setpoint_triplet()->current.valid = false;
-}
-
-void
-NavigatorMode::on_active()
-{
+		if (status.failure == navigator_status_s::FAILURE_HAGL) {
+			/* EVENT
+			 */
+			reporter.armingCheckFailure(NavModes::All,
+						    health_component_t::system,
+						    events::ID("check_navigator_failure_hagl"),
+						    events::Log::Error,
+						    "Waypoint above maximum height");
+		}
+	}
 }
