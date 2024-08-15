@@ -457,9 +457,10 @@ RoverPositionControl::Run()
 	_cnt_run++;
 #endif // DEBUG_MY_PRINT
 
+	// produce timestamp and dt to be used everywhere:
 	hrt_abstime timestamp_prev = _timestamp;
 	_timestamp = hrt_absolute_time();
-	_dt = math::constrain(_timestamp - timestamp_prev, 1_ms, 5000_ms) * 1e-6f;
+	_dt = math::constrain(_timestamp - timestamp_prev, 1_ms, 1000_ms) * 1e-6f;
 
 	_rates_setpoint.yaw = NAN;	// for logging, will be set in control_position()
 	_z_yaw_rate = NAN;		//              will be set in poll_everything()
@@ -547,6 +548,7 @@ RoverPositionControl::Run()
 		publishAuxActuators(timestamp_sample);
 #else
 
+		// convert _torque_control and _thrust_control to _wheel_speeds:
 		computeWheelSpeeds();
 
 		// publish data to actuator_motors (output module):

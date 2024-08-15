@@ -190,8 +190,10 @@ private:
 #if defined(CONFIG_ARCH_BOARD_PX4_SITL)
 	static const hrt_abstime	kINTERVAL {2_ms};	/**< Sim with Gazebo requires 2_ms = 500Hz, and runs on a PC with x86 CPU at 250Hz with attitute update cycle */
 #else
-	static const hrt_abstime	kINTERVAL {10_ms};	/**< 10_ms = 100Hz base rate for arm boards like Raspberry Pi with cortex-a53 CPU, runs as scheduled */
+	static const hrt_abstime	kINTERVAL {5_ms};	/**< 5_ms = 200Hz base rate for arm boards like Raspberry Pi with cortex-a53 CPU, runs as scheduled */
 #endif // CONFIG_ARCH_BOARD_PX4_SITL
+
+	const float MIN_PID_INTERVAL {0.001f}; // seconds - only matters for PID_MODE_DERIVATIV_CALC or PID_MODE_DERIVATIV_CALC_NO_SP
 
 	uORB::Subscription _vehicle_angular_velocity_sub{ORB_ID(vehicle_angular_velocity)};
 	uORB::Subscription _vehicle_rates_setpoint_sub{ORB_ID(vehicle_rates_setpoint)};

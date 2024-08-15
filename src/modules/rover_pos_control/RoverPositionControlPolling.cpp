@@ -256,7 +256,7 @@ void RoverPositionControl::updateParams()
 	_gnd_control.set_l1_period(_param_l1_period.get());	// GND_L1_PERIOD
 
 	// to provide for Line Following when in modified L1 mode:
-	pid_init(&_line_following_ctrl, PID_MODE_DERIVATIV_CALC, 0.01f);
+	pid_init(&_line_following_ctrl, PID_MODE_DERIVATIV_CALC, MIN_PID_INTERVAL);
 	pid_set_parameters(&_line_following_ctrl,
 			   _param_line_following_p.get(),	// GND_LF_P
 			   _param_line_following_i.get(),
@@ -267,7 +267,7 @@ void RoverPositionControl::updateParams()
 	pid_reset_integral(&_line_following_ctrl);
 
 
-	pid_init(&_pid_heading, PID_MODE_DERIVATIV_NONE, 0.01f);
+	pid_init(&_pid_heading, PID_MODE_DERIVATIV_NONE, MIN_PID_INTERVAL);
 
 	_max_yaw_rate = math::radians(_param_rd_max_yaw_rate.get());	// RD_MAX_YAW_RATE
 	pid_set_parameters(&_pid_heading,
@@ -277,7 +277,7 @@ void RoverPositionControl::updateParams()
 			   _max_yaw_rate,  // Integral limit
 			   _max_yaw_rate);  // Output limit
 
-	pid_init(&_pid_yaw_rate, PID_MODE_DERIVATIV_NONE, 0.01f);
+	pid_init(&_pid_yaw_rate, PID_MODE_DERIVATIV_NONE, MIN_PID_INTERVAL);
 
 	pid_set_parameters(&_pid_yaw_rate,
 			   _param_rd_p_gain_yaw_rate.get(), // Proportional gain - RD_YAW_RATE_P
@@ -286,11 +286,21 @@ void RoverPositionControl::updateParams()
 			   1.f, // Integral limit
 			   1.f); // Output limit
 
+	// Turn rate control parameters (z-axis only):
+	_rate_control.setPidGains(matrix::Vector3f(0.0f, 0.0f, _param_rate_p.get()),	// GND_RATE_P
+				  matrix::Vector3f(0.0f, 0.0f, _param_rate_i.get()),
+				  matrix::Vector3f(0.0f, 0.0f, _param_rate_d.get()));
+	_rate_control.setFeedForwardGain(
+		matrix::Vector3f(0.0f, 0.0f, 0.0f));	// will be set to GND_RATE_FF when in L1_GOTO_WAYPOINT
+
+	_rate_control.setIntegratorLimit(matrix::Vector3f(0.0f, 0.0f, _param_rate_imax.get()));	// GND_RATE_IMAX
+
+	_rate_control.resetIntegral();
 
 	// PID_MODE_DERIVATIV_CALC calculates discrete derivative from previous error, val_dot in pid_calculate() will be ignored
 
 	// to stabilize speed at desired level, given by RD_MISS_SPD_DEF (m/s):
-	pid_init(&_speed_ctrl, PID_MODE_DERIVATIV_CALC, 0.01f);
+	pid_init(&_speed_ctrl, PID_MODE_DERIVATIV_CALC, MIN_PID_INTERVAL);
 	pid_set_parameters(&_speed_ctrl,
 			   _param_speed_p.get(),	// GND_SPEED_P
 			   _param_speed_i.get(),
@@ -304,17 +314,6 @@ void RoverPositionControl::updateParams()
 	_forwards_velocity_smoothing.setMaxJerk(_param_rd_max_jerk.get());	// RD_MAX_JERK
 	_forwards_velocity_smoothing.setMaxAccel(_param_rd_max_accel.get());	// RD_MAX_ACCEL
 	_forwards_velocity_smoothing.setMaxVel(_param_rd_miss_spd_def.get());	// RD_MISS_SPD_DEF - not RD_MAX_SPEED
-
-	// Turn rate control parameters (z-axis only):
-	_rate_control.setPidGains(matrix::Vector3f(0.0f, 0.0f, _param_rate_p.get()),	// GND_RATE_P
-				  matrix::Vector3f(0.0f, 0.0f, _param_rate_i.get()),
-				  matrix::Vector3f(0.0f, 0.0f, _param_rate_d.get()));
-	_rate_control.setFeedForwardGain(
-		matrix::Vector3f(0.0f, 0.0f, 0.0f));	// will be set to GND_RATE_FF when in L1_GOTO_WAYPOINT
-
-	_rate_control.setIntegratorLimit(matrix::Vector3f(0.0f, 0.0f, _param_rate_imax.get()));	// GND_RATE_IMAX
-
-	_rate_control.resetIntegral();
 
 	// Set up measurements smoothing:
 	int ema_period = _param_measurements_ema_period.get();	// GND_EMA_M_PERIOD
