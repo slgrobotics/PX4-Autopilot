@@ -1,6 +1,6 @@
 ############################################################################
 #
-#   Copyright (c) 2020 PX4 Development Team. All rights reserved.
+#   Copyright (c) 2021 PX4 Development Team. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -30,6 +30,36 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ############################################################################
+if("${PX4_BOARD_LABEL}" STREQUAL  "bootloader")
+	add_library(drivers_board
+		bootloader_main.c
+		usb.c
+	)
+	target_link_libraries(drivers_board
+		PRIVATE
+			nuttx_arch
+			nuttx_drivers
+			bootloader
+	)
+	target_include_directories(drivers_board PRIVATE ${PX4_SOURCE_DIR}/platforms/nuttx/src/bootloader/common)
 
-add_subdirectory(bmm150)
-add_subdirectory(bmm350)
+else()
+	add_library(drivers_board
+		i2c.cpp
+		init.c
+		led.c
+		spi.cpp
+		timer_config.cpp
+		usb.c
+	)
+
+	target_link_libraries(drivers_board
+		PRIVATE
+			arch_io_pins
+			arch_spi
+			drivers__led
+			nuttx_arch
+			nuttx_drivers
+			px4_layer
+	)
+endif()
