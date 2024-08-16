@@ -769,5 +769,43 @@ PARAM_DEFINE_INT32(GND_MAN_USE_PID, 0);
  */
 PARAM_DEFINE_INT32(GND_MAN_STRAIGHT, 0);
 
+// ------------------------------------
+
+/**
+ * When the yaw rate setpoint is that close to actual yaw rate, sets the torque to RD_RATE_ZTRQ
+ *
+ * @unit deg/s
+ * @min 0.0
+ * @max 60.0
+ * @decimal 3
+ * @increment 0.1
+ * @group Rover Position Control
+ */
+PARAM_DEFINE_FLOAT(RD_RATE_FRW, 1.0f);
+
+/**
+ * A "zero torque correction" - torque value when we just need to go straight
+ *
+ * @unit norm
+ * @min -1.0
+ * @max 1.0
+ * @decimal 2
+ * @increment 0.01
+ * @group Rover Position Control
+ */
+PARAM_DEFINE_FLOAT(RD_RATE_ZTRQ, 0.0f);
+
+/**
+ * A "torque correction" - torque multiplier when we just need to go straight
+ *
+ * @unit norm
+ * @min 0
+ * @max 10.0
+ * @decimal 2
+ * @increment 0.01
+ * @group Rover Position Control
+ */
+PARAM_DEFINE_FLOAT(RD_RATE_FTRQ, 1.0f);
+
 // end heavy rover additions
 // -----------------------------------------------------------------------------------------------------------------------------

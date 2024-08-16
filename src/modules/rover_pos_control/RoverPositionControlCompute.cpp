@@ -106,7 +106,7 @@ void RoverPositionControl::computeRdGuidance()
 
 	const float pp_heading_error = matrix::wrap_pi(pp_desired_heading - yaw);
 
-	float desired_yaw_rate = pid_calculate(&_pid_heading, pp_heading_error, 0.f, 0.f, _dt);
+	float desired_yaw_rate = -pid_calculate(&_pid_heading, 0.f, pp_heading_error, 0.f, _dt);
 
 	desired_yaw_rate = math::constrain(desired_yaw_rate, -_max_yaw_rate, _max_yaw_rate);
 

@@ -413,21 +413,33 @@ RoverPositionControl::control_yaw_rate()
 
 		if (PX4_ISFINITE(yaw_rate_setpoint)) {
 
-			static constexpr float YAW_RATE_ERROR_THRESHOLD = 0.1f; // [rad/s] Error threshold for the closed loop yaw rate control
+			float yaw_error_abs = fabsf(yaw_rate_setpoint - _z_yaw_rate);
+			float yaw_error_treshold = math::radians(
+							   _param_rd_rate_frw.get()); // RD_RATE_FRW [deg/s] Error "freewheeling" threshold
 
 			// Closed loop yaw rate control
-			if (fabsf(yaw_rate_setpoint - _z_yaw_rate) < YAW_RATE_ERROR_THRESHOLD) {
+			if (yaw_error_treshold > FLT_EPSILON && yaw_error_abs < yaw_error_treshold && PX4_ISFINITE(_crosstrack_error)
+			    && _crosstrack_error < 0.1f) {
 
 				pid_reset_integral(&_pid_yaw_rate);
+				steering_input = pid_calculate(&_pid_yaw_rate, yaw_rate_setpoint, _z_yaw_rate, 0, _dt);
+
+				// RD_RATE_FTRQ, RD_RATE_ZTRQ - small adustment for servo discrepancies on a straight line
+				steering_input = steering_input * _param_rd_rate_ftrq.get() + _param_rd_rate_ztrq.get();
+
+				PX4_WARN("YAW RATE FREEWHEELING sp: %.4f  yaw_rate: %.4f   diff: %.4f", (double)yaw_rate_setpoint, (double)_z_yaw_rate,
+					 (double)fabsf(yaw_rate_setpoint - _z_yaw_rate));
 
 			} else {
-				// Feedforward:
-				const float speed_diff = yaw_rate_setpoint * 0.9f; // wheel base (track)
+				// Feed forward:
+				const float speed_diff = yaw_rate_setpoint * _param_rd_wheel_track.get(); // RD_WHEEL_TRACK wheel base (track)
 
 				steering_input = math::interpolate<float>(speed_diff,
 						 -_param_rd_max_speed.get(),	// RD_MAX_SPEED
 						 _param_rd_max_speed.get(),
 						 -1.f, 1.f);
+
+				steering_input *= _param_rate_ff.get();
 
 				// Feedback:
 				steering_input += pid_calculate(&_pid_yaw_rate, yaw_rate_setpoint, _z_yaw_rate, 0, _dt);

@@ -267,22 +267,22 @@ void RoverPositionControl::updateParams()
 	pid_reset_integral(&_line_following_ctrl);
 
 
-	pid_init(&_pid_heading, PID_MODE_DERIVATIV_NONE, MIN_PID_INTERVAL);
+	pid_init(&_pid_heading, PID_MODE_DERIVATIV_CALC, MIN_PID_INTERVAL);
 
 	_max_yaw_rate = math::radians(_param_rd_max_yaw_rate.get());	// RD_MAX_YAW_RATE
 	pid_set_parameters(&_pid_heading,
 			   _param_rd_p_gain_heading.get(),  // Proportional gain - RD_HEADING_P
 			   _param_rd_i_gain_heading.get(),  // Integral gain - RD_HEADING_I
-			   0.f,  // Derivative gain
+			   _param_line_following_d.get(),  // Derivative gain
 			   _max_yaw_rate,  // Integral limit
 			   _max_yaw_rate);  // Output limit
 
-	pid_init(&_pid_yaw_rate, PID_MODE_DERIVATIV_NONE, MIN_PID_INTERVAL);
+	pid_init(&_pid_yaw_rate, PID_MODE_DERIVATIV_CALC, MIN_PID_INTERVAL);
 
 	pid_set_parameters(&_pid_yaw_rate,
 			   _param_rd_p_gain_yaw_rate.get(), // Proportional gain - RD_YAW_RATE_P
 			   _param_rd_i_gain_yaw_rate.get(), // Integral gain - RD_YAW_RATE_I
-			   0.f, // Derivative gain
+			   _param_rate_d.get(), // Derivative gain
 			   1.f, // Integral limit
 			   1.f); // Output limit
 

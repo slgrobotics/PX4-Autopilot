@@ -608,8 +608,13 @@ private:
 		(ParamFloat<px4::params::RD_TRANS_TRN_DRV>) _param_rd_trans_trn_drv,
 		(ParamFloat<px4::params::RD_TRANS_DRV_TRN>) _param_rd_trans_drv_trn,
 
+		(ParamFloat<px4::params::RD_RATE_FRW>) _param_rd_rate_frw,
+		(ParamFloat<px4::params::RD_RATE_ZTRQ>) _param_rd_rate_ztrq,
+		(ParamFloat<px4::params::RD_RATE_FTRQ>) _param_rd_rate_ftrq,
+
 		// R/C yaw scaler to control right stick horizontal movement effect, avoiding too sensitive feel:
 		(ParamFloat<px4::params::RD_MAN_YAW_SCALE>) _param_rd_man_yaw_scale,
+		(ParamFloat<px4::params::RD_WHEEL_TRACK>) _param_rd_wheel_track,
 		(ParamFloat<px4::params::RD_YAW_RATE_P>) _param_rd_p_gain_yaw_rate,
 		(ParamFloat<px4::params::RD_YAW_RATE_I>) _param_rd_i_gain_yaw_rate,
 		(ParamInt<px4::params::CA_R_REV>) _param_r_rev,
