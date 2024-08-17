@@ -66,6 +66,7 @@ void RoverPositionControl::workStateMachine()
 	_nav_lateral_acceleration_demand = NAN;
 
 	// preset outputs. In certain cases (turning or moving must be stopped) NAN is returned:
+	resetRdGuidance();
 	_mission_yaw_rate_setpoint = NAN;
 	_mission_velocity_setpoint = NAN;
 

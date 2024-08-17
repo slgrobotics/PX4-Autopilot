@@ -474,7 +474,7 @@ float RoverPositionControl::adjustMissionVelocitySetpoint()
 	case WP_DEPARTING:		// we turned to next waypoint and must accelerate
 	case L1_GOTO_WAYPOINT: {
 
-			float max_velocity = _rd_guidance.desired_speed; // already limited by _mission_velocity_setpoint
+			float max_velocity = PX4_ISFINITE(_rd_guidance.desired_speed) ? _rd_guidance.desired_speed : _mission_velocity_setpoint;
 
 			_forwards_velocity_smoothing.updateDurations(max_velocity);
 

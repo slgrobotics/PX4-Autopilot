@@ -452,7 +452,7 @@ private:
 
 	void computeRdGuidance();
 
-	inline void resetRdGuidance() { _rd_guidance.desired_speed = _rd_guidance.desired_yaw_rate = 0.0f; };
+	inline void resetRdGuidance() { _rd_guidance.desired_speed = _rd_guidance.desired_yaw_rate = NAN; };
 
 	// calculated values that become published actuator inputs:
 	float _mission_torque_effort{0.0f};	// Rate control output (yaw a.k.a. heading)

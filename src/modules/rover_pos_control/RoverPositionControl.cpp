@@ -436,15 +436,18 @@ RoverPositionControl::control_yaw_rate()
 				// Far from centerline, normal law:
 
 				// Feed forward - anticipating some output based on the intent:
-				//const float speed_diff = yaw_rate_setpoint * _param_rd_wheel_track.get(); // RD_WHEEL_TRACK wheel base (track)
-				const float speed_diff = _heading_error * _param_rd_wheel_track.get(); // RD_WHEEL_TRACK wheel base (track)
+				if (abs(_heading_error) < math::radians(10.0f)) {
 
-				steering_input = math::interpolate<float>(speed_diff,
-						 -_param_rd_max_speed.get(),	// RD_MAX_SPEED
-						 _param_rd_max_speed.get(),
-						 -1.f, 1.f);
+					//const float speed_diff = yaw_rate_setpoint * _param_rd_wheel_track.get(); // RD_WHEEL_TRACK wheel base (track)
+					const float speed_diff = _heading_error * _param_rd_wheel_track.get(); // RD_WHEEL_TRACK wheel base (track)
 
-				steering_input *= _param_rate_ff.get();	// GND_RATE_FF
+					steering_input = math::interpolate<float>(speed_diff,
+							 -_param_rd_max_speed.get(),	// RD_MAX_SPEED
+							 _param_rd_max_speed.get(),
+							 -1.f, 1.f);
+
+					steering_input *= _param_rate_ff.get();	// GND_RATE_FF
+				}
 
 				// Feedback:
 				steering_input += pid_calculate(&_pid_yaw_rate, yaw_rate_setpoint, _z_yaw_rate, 0, _dt);
