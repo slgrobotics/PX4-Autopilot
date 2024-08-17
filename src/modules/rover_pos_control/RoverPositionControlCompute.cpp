@@ -49,7 +49,7 @@
 
 // computing actuator responses for heavy differential drive rover:
 
-float RoverPositionControl::computeTurningSetpoint()
+float RoverPositionControl::computeYawRateSetpoint()
 {
 	// In most states we just convert Heading error (radians) to Turning Setpoint. It could be scaled later:
 	float turning_setpoint = PX4_ISFINITE(_heading_error) ? _heading_error : 0.0f;
@@ -104,15 +104,14 @@ void RoverPositionControl::computeRdGuidance()
 	const float pp_desired_heading = _pure_pursuit.calcDesiredHeading(_curr_wp_ned, _prev_wp_ned, _curr_pos_ned,
 					 math::max(actual_speed, 0.f));
 
-	const float pp_heading_error = matrix::wrap_pi(pp_desired_heading - yaw);
+	// make Pure Pursuit heading error global:
+	_heading_error = matrix::wrap_pi(pp_desired_heading - yaw);
 
-	float desired_yaw_rate = -pid_calculate(&_pid_heading, 0.f, pp_heading_error, 0.f, _dt);
+	float desired_yaw_rate = -pid_calculate(&_pid_heading, 0.f, _heading_error, 0.f, _dt);
 
 	desired_yaw_rate = math::constrain(desired_yaw_rate, -_max_yaw_rate, _max_yaw_rate);
 
-	_heading_error = pp_heading_error; // make Pure Pursuit heading error global
-
-	// now speed:
+	// now speed, see setDefaultMissionSpeed():
 	float desired_speed =
 		_mission_velocity_setpoint; // RD_MISS_SPD_DEF - default mission speed, superceeded by leg speed from triplet
 
@@ -173,10 +172,10 @@ void RoverPositionControl::computeRdGuidance()
 
 float RoverPositionControl::computeTorqueEffort()
 {
-	if (!PX4_ISFINITE(_mission_turning_setpoint)) {
+	if (!PX4_ISFINITE(_mission_yaw_rate_setpoint)) {
 		// we are in overshot or stopping at waypoint, or otherwise don't want to turn:
 
-		//PX4_WARN("_mission_turning_setpoint=%f  in computeTorqueEffort()", (double)_mission_turning_setpoint);
+		//PX4_WARN("_mission_yaw_rate_setpoint=%f  in computeTorqueEffort()", (double)_mission_yaw_rate_setpoint);
 
 		return NAN;
 	}
@@ -192,14 +191,14 @@ float RoverPositionControl::computeTorqueEffort()
 
 	case L1_GOTO_WAYPOINT: {
 
-			_rates_setpoint.yaw = _rd_guidance.desired_yaw_rate;
+			_rates_setpoint.yaw = _mission_yaw_rate_setpoint;
 
 			torque_effort = control_yaw_rate();
 
 			/*
 			PX4_INFO_RAW("xtrk: %.1f cm  msn_trng: %.3f   yaw: %.4f  spd: %.3f  trq_eff: %.3f\n",
 					(double)(_crosstrack_error * 100.0f),
-					(double)_mission_turning_setpoint,
+					(double)_mission_yaw_rate_setpoint,
 					(double)_yaw_rate_setpoint,
 					(double)_rd_guidance.desired_speed,
 					(double)torque_effort);
@@ -208,7 +207,7 @@ float RoverPositionControl::computeTorqueEffort()
 #ifdef OLD_L1_LOGIC
 			// Start with Arrive-Depart calculations (heading error based):
 
-			float turning_setpoint_hdg = _mission_turning_setpoint *
+			float turning_setpoint_hdg = _mission_yaw_rate_setpoint *
 						     _param_line_following_heading_error_scaler.get(); // GND_LF_HDG_SC
 
 			// See what L1 could add to this:
@@ -267,7 +266,7 @@ float RoverPositionControl::computeTorqueEffort()
 			PX4_INFO_RAW("%.4f/%.4f/%.4f  xtrk: %.1f cm   msn_trng_sp: %.3f   sp_yaw: %.3f  torque_effort: %.3f\n",
 				     (double)turning_setpoint_hdg, (double)turning_setpoint_l1, (double)turning_setpoint_lf,
 				     (double)(_crosstrack_error * 100.0f),
-				     (double)_mission_turning_setpoint,
+				     (double)_mission_yaw_rate_setpoint,
 				     (double)_rates_setpoint_yaw,
 				     (double)torque_effort);
 			*/
@@ -276,7 +275,7 @@ float RoverPositionControl::computeTorqueEffort()
 			// Far from the line use traditional L1 Controller, _nav_lateral_acceleration_demand as it was intended:
 
 			float setpoint_yaw =
-				_mission_turning_setpoint; // for the Rate Controller below, basically scaled _nav_lateral_acceleration_demand
+				_mission_yaw_rate_setpoint; // for the Rate Controller below, basically scaled _nav_lateral_acceleration_demand
 
 			float lf_corridor_boundary = _param_line_following_width.get() / 2.0f;	// GND_LF_WIDTH - set to 0 for pure L1 control
 
@@ -336,7 +335,7 @@ float RoverPositionControl::computeTorqueEffort()
 						// we need much weaker correction if we are already moving towards the centerline:
 
 						//setpoint_yaw = total_error * 0.01f; // _crosstrack_error;
-						//setpoint_yaw = _mission_turning_setpoint; // ok
+						//setpoint_yaw = _mission_yaw_rate_setpoint; // ok
 						//setpoint_yaw = 0.0f; // not good
 						setpoint_yaw = setpoint_yaw_hdg;
 
@@ -359,17 +358,17 @@ float RoverPositionControl::computeTorqueEffort()
 				}
 
 				//PX4_INFO_RAW("err xtrk: %.1f cm abbe: %.2f m  msn_trng_sp: %.3f  sp_yaw_hdg: %.3f  pid_adj: %.3f  sp_yaw: %.3f\n",
-				//	     (double)(_crosstrack_error * 100.0f), (double)_abbe_error, (double)_mission_turning_setpoint, (double)setpoint_yaw_hdg,
+				//	     (double)(_crosstrack_error * 100.0f), (double)_abbe_error, (double)_mission_yaw_rate_setpoint, (double)setpoint_yaw_hdg,
 				//	     (double)pid_adjustment, (double)setpoint_yaw);
 
 				//PX4_INFO_RAW("%.3f/%.3f err xtrk: %.1f cm abbe: %.2f m  msn_trng_sp: %.3f  sp_yaw_hdg: %.3f  pid_adj: %.3f  sp_yaw: %.3f\n",
 				//	     (double)hdg_err_weight, (double)l1_weight,
-				//	     (double)(_crosstrack_error * 100.0f), (double)_abbe_error, (double)_mission_turning_setpoint, (double)setpoint_yaw_hdg,
+				//	     (double)(_crosstrack_error * 100.0f), (double)_abbe_error, (double)_mission_yaw_rate_setpoint, (double)setpoint_yaw_hdg,
 				//	     (double)pid_adjustment, (double)setpoint_yaw);
 
 				//PX4_INFO_RAW("%.4f/%.4f  xtrk: %.1f cm   msn_trng_sp: %.3f  setpoint_yaw_hdg: %.3f  pid_adj: %.3f  sp_yaw: %.3f\n",
 				//		(double)hdg_err_weight, (double)l1_weight,
-				//		(double)(_crosstrack_error * 100.0f), (double)_mission_turning_setpoint, (double)setpoint_yaw_hdg,
+				//		(double)(_crosstrack_error * 100.0f), (double)_mission_yaw_rate_setpoint, (double)setpoint_yaw_hdg,
 				//		(double)pid_adjustment, (double)setpoint_yaw);
 
 			}
@@ -398,7 +397,7 @@ float RoverPositionControl::computeTorqueEffort()
 	case WP_TURNING:
 
 		// Just use constant yaw rate - GND_TURN_RATE:
-		_rates_setpoint.yaw = sign(_mission_turning_setpoint)
+		_rates_setpoint.yaw = sign(_mission_yaw_rate_setpoint)
 				      * math::radians(_param_turn_rate_sp.get()); // GND_TURN_RATE, deg/s
 
 		torque_effort = control_yaw_rate();
@@ -415,7 +414,7 @@ float RoverPositionControl::computeTorqueEffort()
 			float max_yaw_rate_setpoint = math::radians(_param_rate_depart_arrive_trim.get()); // GND_RATE_AD_TRIM, deg/s
 
 			_rates_setpoint.yaw = math::constrain(
-						      _mission_turning_setpoint * _param_heading_ad_rate_scaler.get(), // GND_RATE_AD_SC
+						      _mission_yaw_rate_setpoint * _param_heading_ad_rate_scaler.get(), // GND_RATE_AD_SC
 						      -max_yaw_rate_setpoint, max_yaw_rate_setpoint); // constrained with GND_RATE_AD_TRIM
 
 			torque_effort = control_yaw_rate();
@@ -428,7 +427,7 @@ float RoverPositionControl::computeTorqueEffort()
 		break;
 	}
 
-	//PX4_WARN("Y-RATE: trng_efrt: %.3f  rates_sp_yaw: %.3f  torq_efrt: %.3f", (double)_mission_turning_setpoint, (double)_rates_setpoint_yaw, (double)torque_effort);
+	//PX4_WARN("Y-RATE: trng_efrt: %.3f  rates_sp_yaw: %.3f  torq_efrt: %.3f", (double)_mission_yaw_rate_setpoint, (double)_rates_setpoint_yaw, (double)torque_effort);
 
 	return math::constrain(torque_effort, -1.0f, 1.0f);
 }
@@ -528,7 +527,7 @@ float RoverPositionControl::computeThrustEffort()
 
 void RoverPositionControl::adjustThrustAndTorque()
 {
-	// computes _mission_thrust (by PID or for slowing down) and computes _mission_torque_effort from _mission_turning_setpoint (for more gentle turns).
+	// computes _mission_thrust (by PID or for slowing down) and computes _mission_torque_effort from _mission_yaw_rate_setpoint (for more gentle turns).
 
 	if (!_control_mode.flag_armed) {
 
@@ -537,8 +536,6 @@ void RoverPositionControl::adjustThrustAndTorque()
 		_mission_torque_effort = _mission_thrust_effort = NAN;
 
 	} else {
-
-		computeRdGuidance();	// computes desired speed and yaw rate in _rd_guidance
 
 		/*
 		PX4_INFO_RAW("des_yaw: %.4f  des_spd: %.4f  mis_vel_sp: %.3f\n",

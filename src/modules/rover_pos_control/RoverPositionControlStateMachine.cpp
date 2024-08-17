@@ -48,7 +48,7 @@
 #include "RoverPositionControl.hpp"
 
 //
-// perform some state changes, compute _mission_turning_setpoint and _mission_velocity_setpoint
+// perform some state changes, compute _mission_yaw_rate_setpoint and _mission_velocity_setpoint
 //
 
 void RoverPositionControl::workStateMachine()
@@ -66,7 +66,7 @@ void RoverPositionControl::workStateMachine()
 	_nav_lateral_acceleration_demand = NAN;
 
 	// preset outputs. In certain cases (turning or moving must be stopped) NAN is returned:
-	_mission_turning_setpoint = NAN;
+	_mission_yaw_rate_setpoint = NAN;
 	_mission_velocity_setpoint = NAN;
 
 	// Mission (navigator) can change target waypoint any time:
@@ -176,7 +176,7 @@ void RoverPositionControl::workStateMachine()
 				// See above when we analyzed how close to target wp we are, to switch to POS_STATE_STOPPING
 				// Here we just head straight to target wp:
 
-				_mission_turning_setpoint = computeTurningSetpoint();
+				_mission_yaw_rate_setpoint = computeYawRateSetpoint();
 
 				setDefaultMissionSpeed();	// will be adusted later by adjustThrustAndYaw()
 			}
@@ -199,7 +199,7 @@ void RoverPositionControl::workStateMachine()
 
 		_acceptance_radius *= 2.0f;  // We hit the radius and decelerated to a stop. Make sure we advance the mission.
 
-		// Leave _mission_turning_setpoint and _mission_velocity_setpoint as NANs
+		// Leave _mission_yaw_rate_setpoint and _mission_velocity_setpoint as NANs
 
 		if (!updateBearings()) {
 			PX4_WARN("WP_ARRIVED: Lost _heading_error");
@@ -299,7 +299,7 @@ void RoverPositionControl::workStateMachine()
 				}
 
 			} else {
-				_mission_turning_setpoint = computeTurningSetpoint();
+				_mission_yaw_rate_setpoint = computeYawRateSetpoint();
 				const float turn_speed = _param_turn_speed.get();	// GND_TURN_SPEED
 				_mission_velocity_setpoint = abs(turn_speed) < FLT_EPSILON ? NAN : turn_speed;
 
@@ -322,7 +322,7 @@ void RoverPositionControl::workStateMachine()
 		if (updateBearings()) {
 
 			if (_wp_previous_dist < _accel_dist) {
-				_mission_turning_setpoint = computeTurningSetpoint();
+				_mission_yaw_rate_setpoint = computeYawRateSetpoint();
 
 				setDefaultMissionSpeed();	// will be adusted later by adjustThrustAndYaw()
 
@@ -360,6 +360,8 @@ void RoverPositionControl::workStateMachine()
 
 				if (updateBearings()) {
 
+					setDefaultMissionSpeed();	// will be adusted later by adjustThrustAndYaw()
+
 					if (fabsf(_heading_error) > 1.0f && PX4_ISFINITE(_wp_previous_dist) && _wp_previous_dist > _accel_dist * 1.5f) {
 #ifdef DEBUG_MY_PRINT
 						PX4_INFO("==== Overshot: aceptnce_rad: %.2f  hdng_err: %.2f", (double)_acceptance_radius,
@@ -370,8 +372,7 @@ void RoverPositionControl::workStateMachine()
 						// we are so much off course, or overshot the waypoint, that we need to switch to non-L1 algorithm:
 						setStateMachineState(WP_ARRIVING);
 						cte_end();
-						_mission_turning_setpoint = 0.0f;
-						setDefaultMissionSpeed();	// will be adusted later by adjustThrustAndYaw()
+						_mission_yaw_rate_setpoint = 0.0f;
 
 					} else {
 
@@ -379,9 +380,13 @@ void RoverPositionControl::workStateMachine()
 
 						cte_compute();
 
-						_mission_turning_setpoint = computeTurningSetpoint();
+						computeRdGuidance();	// computes desired speed and yaw rate in _rd_guidance
 
-						setDefaultMissionSpeed();	// will be adusted later by adjustThrustAndYaw()
+						// Computed setpoints:
+						// _rd_guidance.desired_speed;
+						// _rd_guidance.desired_yaw_rate;
+
+						_mission_yaw_rate_setpoint = _rd_guidance.desired_yaw_rate;
 					}
 
 				} else {
@@ -398,7 +403,7 @@ void RoverPositionControl::workStateMachine()
 
 		// We are required to stop, watch the speed decreasing.
 
-		// Leave _mission_turning_setpoint and _mission_velocity_setpoint as NANs
+		// Leave _mission_yaw_rate_setpoint and _mission_velocity_setpoint as NANs
 
 #ifdef DEBUG_MY_PRINT
 

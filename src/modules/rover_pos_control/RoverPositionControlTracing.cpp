@@ -183,7 +183,7 @@ void RoverPositionControl::debugPrintArriveDepart()
 			PX4_INFO_RAW("--- %s hdg_err: %.2f / %.2f abbe: %.2f m  turn_sp: %.4f  miss_torq_efrt: %.4f\n",
 				     control_state_name(_pos_ctrl_state),
 				     (double)math::degrees(_heading_error), (double)math::degrees(_heading_error_vel),
-				     (double)_abbe_error, (double)_mission_turning_setpoint,
+				     (double)_abbe_error, (double)_mission_yaw_rate_setpoint,
 				     (double)_mission_torque_effort);
 
 			PX4_INFO_RAW("---     misn_vel_sp: %.2f  misn_thrst_eff: %.2f  grd_spd_abs: %.4f  yaw_rate: %.1f\n",
@@ -194,7 +194,7 @@ void RoverPositionControl::debugPrintArriveDepart()
 				     (double)_dist_target, (double)_wp_previous_dist, (double)_wp_close_enough_rad, (double)_x_vel);
 
 			//PX4_INFO_RAW("--- turn_sp: %.4f  miss_torq_efrt: %.4f   cnt_run: %d  cnt_calc: %d\n",
-			//		 (double)_mission_turning_setpoint, (double)_mission_torque_effort, _cnt_run, _cnt_calc);
+			//		 (double)_mission_yaw_rate_setpoint, (double)_mission_torque_effort, _cnt_run, _cnt_calc);
 		}
 
 		_debug_print1_last_called = _timestamp;
@@ -271,7 +271,7 @@ void RoverPositionControl::debugPrintAll()
 			     (int)_vehicle_status.nav_state);
 
 		PX4_INFO_RAW("---    misn_turn_sp: %.4f  misn_torq_effrt: %.4f  cnt_run: %d  cnt_calc: %d\n",
-			     (double)_mission_turning_setpoint, (double)_mission_torque_effort, _cnt_run, _cnt_calc);
+			     (double)_mission_yaw_rate_setpoint, (double)_mission_torque_effort, _cnt_run, _cnt_calc);
 	}
 
 	_cnt_run = 0;
@@ -423,7 +423,7 @@ void RoverPositionControl::debugPublishAll()
 
 	// When GND_HEADING_P is set to > SIGMA, PID heading error control is in effect:
 	_dbg_array.data[i++] = _current_heading;
-	_dbg_array.data[i++] = _mission_turning_setpoint; // what State Machine thinks of turning - based on heading error
+	_dbg_array.data[i++] = _mission_yaw_rate_setpoint; // what State Machine thinks of turning - based on heading error
 	_dbg_array.data[i++] = _rates_setpoint.yaw;	  // YAW rate setpoint
 	_dbg_array.data[i++] = _mission_torque_effort;	  // result of RateControl
 	_dbg_array.data[i++] = _z_yaw_rate;
@@ -452,7 +452,7 @@ void RoverPositionControl::debugPublishAll()
 
 	// other important values:
 	_dbg_array.data[i++] = _nav_lateral_acceleration_demand;
-	_dbg_array.data[i++] = _mission_turning_setpoint;
+	_dbg_array.data[i++] = _mission_yaw_rate_setpoint;
 	_dbg_array.data[i++] = _wp_close_enough_rad;
 	_dbg_array.data[i++] = _acceptance_radius;
 

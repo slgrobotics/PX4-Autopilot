@@ -287,7 +287,7 @@ RoverPositionControl::control_position(const matrix::Vector2d &current_position)
 
 	// ============= Work the State machine:  ====================================
 
-	workStateMachine();	// computes _mission_turning_setpoint and _mission_velocity_setpoint
+	workStateMachine();	// computes _mission_yaw_rate_setpoint and _mission_velocity_setpoint
 
 	// ============= Pass speed/thrust/torque to actuators: =======================
 
@@ -617,8 +617,8 @@ void RoverPositionControl::control_position_manual()
 
 		if (_manual_using_pids) {
 			// diviision below compensates for prior scaling, so stick inputs become +-1.0:
-			_mission_turning_setpoint = _torque_control_manual /
-						    _param_rd_man_yaw_scale.get(); // RD_MAN_YAW_SCALE +- 1.0 controlled by right stick horizontal movement
+			_mission_yaw_rate_setpoint = _torque_control_manual /
+						     _param_rd_man_yaw_scale.get(); // RD_MAN_YAW_SCALE +- 1.0 controlled by right stick horizontal movement
 
 			// stick inputs become +-RD_MAX_SPEED:
 			_mission_velocity_setpoint = _thrust_control_manual *

@@ -324,7 +324,7 @@ private:
 	void updateEkfGpsDeviation();
 	bool checkNewWaypointArrival();
 	float adjustMissionVelocitySetpoint();
-	float computeTurningSetpoint();
+	float computeYawRateSetpoint();
 	float computeTorqueEffort();
 	float computeThrustEffort();
 	void computeWheelSpeeds();
@@ -509,7 +509,7 @@ private:
 
 	// main calculated setpoints:
 	float _mission_velocity_setpoint{0.0f}; // target velocity for PID speed control
-	float _mission_turning_setpoint{0.0f};  // calculated Yaw effort, derived from L1 acceleration demand or heading error, -1..+1
+	float _mission_yaw_rate_setpoint{0.0f};  // calculated Yaw effort, derived from L1 acceleration demand or heading error, -1..+1
 
 	// PID speed control related:
 	float _x_vel{0.0f};			// measured current velocity for PID speed control from EKF2
