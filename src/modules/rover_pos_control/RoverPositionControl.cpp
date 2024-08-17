@@ -421,32 +421,40 @@ RoverPositionControl::control_yaw_rate()
 			if (yaw_error_treshold > FLT_EPSILON && yaw_error_abs < yaw_error_treshold && PX4_ISFINITE(_crosstrack_error)
 			    && _crosstrack_error < 0.1f) {
 
+				// Close to centerline, low yaw rate - accelerated law:
+
 				pid_reset_integral(&_pid_yaw_rate);
 				steering_input = pid_calculate(&_pid_yaw_rate, yaw_rate_setpoint, _z_yaw_rate, 0, _dt);
 
-				// RD_RATE_FTRQ, RD_RATE_ZTRQ - small adustment for servo discrepancies on a straight line
-				steering_input = steering_input * _param_rd_rate_ftrq.get() + _param_rd_rate_ztrq.get();
+				// RD_RATE_FTRQ - a close-to-line multiplier:
+				steering_input *= _param_rd_rate_ftrq.get();
 
 				PX4_WARN("YAW RATE FREEWHEELING sp: %.4f  yaw_rate: %.4f   diff: %.4f", (double)yaw_rate_setpoint, (double)_z_yaw_rate,
 					 (double)fabsf(yaw_rate_setpoint - _z_yaw_rate));
 
 			} else {
-				// Feed forward:
-				const float speed_diff = yaw_rate_setpoint * _param_rd_wheel_track.get(); // RD_WHEEL_TRACK wheel base (track)
+				// Far from centerline, normal law:
+
+				// Feed forward - anticipating some output based on the intent:
+				//const float speed_diff = yaw_rate_setpoint * _param_rd_wheel_track.get(); // RD_WHEEL_TRACK wheel base (track)
+				const float speed_diff = _heading_error * _param_rd_wheel_track.get(); // RD_WHEEL_TRACK wheel base (track)
 
 				steering_input = math::interpolate<float>(speed_diff,
 						 -_param_rd_max_speed.get(),	// RD_MAX_SPEED
 						 _param_rd_max_speed.get(),
 						 -1.f, 1.f);
 
-				steering_input *= _param_rate_ff.get();
+				steering_input *= _param_rate_ff.get();	// GND_RATE_FF
 
 				// Feedback:
 				steering_input += pid_calculate(&_pid_yaw_rate, yaw_rate_setpoint, _z_yaw_rate, 0, _dt);
-
-				steering_input *= (yaw_responsiveness_factor()	 // 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas)
-						   * _param_gnd_torque_scaler.get()); // GND_TORQUE_SC
 			}
+
+			steering_input *= (yaw_responsiveness_factor()	 // 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas)
+					   * _param_gnd_torque_scaler.get()); // GND_TORQUE_SC
+
+			steering_input +=
+				_param_rd_rate_ztrq.get(); // RD_RATE_ZTRQ - small adustment for servo discrepancies on a straight line
 		}
 	}
 

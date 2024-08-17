@@ -404,8 +404,9 @@ then
 	# start BN-880 GPS compass on I2C bus, address 0x1e:
 	hmc5883 -X -R 0 start
 else
-	# start u-blox ZED-F9P - dual GPS for heading:
-	gps start -d /dev/ttyACM1 -b 460800 -e /dev/ttyACM0 -g 460800
+	# start u-blox ZED-F9P - dual GPS for heading (originally at /dev/ttyACM1 ACM0):
+	# follow https://github.com/slgrobotics/robots_bringup/tree/main/Docs/Dragger to assign links:
+	gps start -d /dev/ttyGPS_MAIN -b 460800 -e /dev/ttyGPS_SEC -g 460800
 
 	# start PNI RM3100 compass on I2C address 0x23=35:
 	rm3100 -X start
