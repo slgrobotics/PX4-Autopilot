@@ -455,9 +455,6 @@ RoverPositionControl::control_yaw_rate()
 
 			steering_input *= (yaw_responsiveness_factor()	 // 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas)
 					   * _param_gnd_torque_scaler.get()); // GND_TORQUE_SC
-
-			steering_input +=
-				_param_rd_rate_ztrq.get(); // RD_RATE_ZTRQ - small adustment for servo discrepancies on a straight line
 		}
 	}
 

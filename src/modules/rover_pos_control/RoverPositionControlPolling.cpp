@@ -71,7 +71,11 @@ void RoverPositionControl::poll_everything()
 
 	_z_yaw_rate = _angular_velocity.xyz[2];	// for logging/tracing
 
-	_vehicle_acceleration_sub.update();
+	//vehicle_acceleration_s vehicle_acceleration;
+
+	//if (_vehicle_acceleration_sub.update(&vehicle_acceleration)) {
+	//	_acceleration = matrix::Vector3f{vehicle_acceleration.xyz};
+	//}
 
 	/* check vehicle control mode for changes */
 	vehicle_control_mode_poll();

@@ -207,6 +207,7 @@ private:
 	uORB::Subscription _magnetometer_sub{ORB_ID(vehicle_magnetometer)};
 	uORB::Subscription _manual_control_setpoint_sub{ORB_ID(manual_control_setpoint)}; /**< notification of manual control updates */
 	uORB::Subscription _position_setpoint_triplet_sub{ORB_ID(position_setpoint_triplet)};
+	//uORB::Subscription _vehicle_acceleration_sub{ORB_ID(vehicle_acceleration)};
 	uORB::Subscription _att_sub{ORB_ID(vehicle_attitude)};
 	uORB::Subscription _att_sp_sub{ORB_ID(vehicle_attitude_setpoint)};
 	//uORB::Subscription _trajectory_setpoint_sub{ORB_ID(trajectory_setpoint)};
@@ -227,6 +228,9 @@ private:
 	uORB::Publication<actuator_servos_s>		_actuator_servos_pub{ORB_ID(actuator_servos)};
 	uORB::PublicationMulti<rate_ctrl_status_s>	_controller_status_pub{ORB_ID(rate_ctrl_status)};
 
+	uORB::Publication<vehicle_thrust_setpoint_s>	_vehicle_thrust_setpoint_pub{ORB_ID(vehicle_thrust_setpoint)};
+	uORB::Publication<vehicle_torque_setpoint_s>	_vehicle_torque_setpoint_pub{ORB_ID(vehicle_torque_setpoint)};
+
 	manual_control_setpoint_s		_manual_control_setpoint{};	/**< r/c channel data */
 	position_setpoint_triplet_s		_pos_sp_triplet{};		/**< triplet of mission items */
 	vehicle_attitude_setpoint_s		_att_sp{};			/**< attitude setpoint > */
@@ -245,11 +249,6 @@ private:
 	navigator_mission_item_s		_navigator_mission_item{};	/**< navigator_mission_item */
 	vehicle_status_s			_vehicle_status{};		/**< commander state */
 	actuator_outputs_s			_actuator_outputs{};		/**< actuator outputs */
-
-	uORB::Publication<vehicle_thrust_setpoint_s>	_vehicle_thrust_setpoint_pub{ORB_ID(vehicle_thrust_setpoint)};
-	uORB::Publication<vehicle_torque_setpoint_s>	_vehicle_torque_setpoint_pub{ORB_ID(vehicle_torque_setpoint)};
-
-	uORB::SubscriptionData<vehicle_acceleration_s>		_vehicle_acceleration_sub{ORB_ID(vehicle_acceleration)};
 
 	perf_counter_t	_loop_perf;			/**< loop performance counter */
 
@@ -363,6 +362,7 @@ private:
 	Vector2d _curr_pos{0, 0};
 	Vector2f _curr_pos_ned{0, 0};	// local projection - updated when polling
 
+	//Vector3f _acceleration{0, 0, 0};
 	Vector3f _ground_speed{0, 0, 0};
 	Vector2f _ground_speed_2d{0, 0};
 

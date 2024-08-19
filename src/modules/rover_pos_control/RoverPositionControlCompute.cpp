@@ -437,7 +437,7 @@ void RoverPositionControl::computeWheelSpeeds()
 	// see src/modules/rover_differential/RoverDifferential.cpp
 
 	float forward_speed = _thrust_control;
-	float speed_diff = _torque_control;
+	float speed_diff = _torque_control + _param_rd_rate_ztrq.get(); // RD_RATE_ZTRQ - small adustment for servo discrepancies on a straight line
 
 	float combined_velocity = fabsf(forward_speed) + fabsf(speed_diff);
 
