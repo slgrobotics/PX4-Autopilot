@@ -122,7 +122,10 @@ public:
 	const auto &aid_src_optical_flow() const { return _aid_src_optical_flow; }
 
 	const Vector2f &getFlowVelBody() const { return _flow_vel_body; }
-	const Vector2f &getFlowVelNE() const { return _flow_vel_ne; }
+	Vector2f getFlowVelNE() const { return Vector2f(_R_to_earth * Vector3f(getFlowVelBody()(0), getFlowVelBody()(1), 0.f)); }
+
+	const Vector2f &getFilteredFlowVelBody() const { return _flow_vel_body_lpf.getState(); }
+	Vector2f getFilteredFlowVelNE() const { return Vector2f(_R_to_earth * Vector3f(getFilteredFlowVelBody()(0), getFilteredFlowVelBody()(1), 0.f)); }
 
 	const Vector2f &getFlowCompensated() const { return _flow_rate_compensated; }
 	const Vector2f &getFlowUncompensated() const { return _flow_sample_delayed.flow_rate; }
@@ -259,7 +262,6 @@ public:
 	// return true if the origin is valid
 	bool getEkfGlobalOrigin(uint64_t &origin_time, double &latitude, double &longitude, float &origin_alt) const;
 	bool setEkfGlobalOrigin(double latitude, double longitude, float altitude, float eph = 0.f, float epv = 0.f);
-	void updateWmm(double lat, double lon);
 
 	// get the 1-sigma horizontal and vertical position uncertainty of the ekf WGS-84 position
 	void get_ekf_gpos_accuracy(float *ekf_eph, float *ekf_epv) const;
@@ -466,6 +468,9 @@ public:
 #endif // CONFIG_EKF2_GNSS
 
 #if defined(CONFIG_EKF2_MAGNETOMETER)
+	// set the magnetic field data returned by the geo library using position
+	bool updateWorldMagneticModel(const double latitude_deg, const double longitude_deg);
+
 	const auto &aid_src_mag() const { return _aid_src_mag; }
 #endif // CONFIG_EKF2_MAGNETOMETER
 
@@ -632,9 +637,11 @@ private:
 
 	// optical flow processing
 	Vector3f _flow_gyro_bias{};	///< bias errors in optical flow sensor rate gyro outputs (rad/sec)
-	Vector2f _flow_vel_body{};	///< velocity from corrected flow measurement (body frame)(m/s)
-	Vector2f _flow_vel_ne{};		///< velocity from corrected flow measurement (local frame) (m/s)
 	Vector3f _ref_body_rate{};
+
+	Vector2f _flow_vel_body{};                      ///< velocity from corrected flow measurement (body frame)(m/s)
+	AlphaFilter<Vector2f> _flow_vel_body_lpf{0.1f}; ///< filtered velocity from corrected flow measurement (body frame)(m/s)
+	uint32_t _flow_counter{0};                      ///< number of flow samples read for initialization
 
 	Vector2f _flow_rate_compensated{}; ///< measured angular rate of the image about the X and Y body axes after removal of body rotation (rad/s), RH rotation is positive
 #endif // CONFIG_EKF2_OPTICAL_FLOW
@@ -770,8 +777,8 @@ private:
 		     bool update_all_states = false, bool update_tilt = false);
 
 	// fuse magnetometer declination measurement
-	// argument passed in is the declination uncertainty in radians
-	bool fuseDeclination(float decl_sigma);
+	//  R: declination observation variance (rad**2)
+	bool fuseDeclination(const float decl_measurement_rad, const float R, bool update_all_states = false);
 
 #endif // CONFIG_EKF2_MAGNETOMETER
 
@@ -871,7 +878,7 @@ private:
 #if defined(CONFIG_EKF2_OPTICAL_FLOW)
 	// control fusion of optical flow observations
 	void controlOpticalFlowFusion(const imuSample &imu_delayed);
-	void resetFlowFusion();
+	void resetFlowFusion(const flowSample &flow_sample);
 	void stopFlowFusion();
 
 	void updateOnGroundMotionForOpticalFlowChecks();
@@ -1106,7 +1113,8 @@ private:
 	void resetQuatCov(const Vector3f &rot_var_ned);
 
 #if defined(CONFIG_EKF2_MAGNETOMETER)
-	void resetMagCov();
+	void resetMagEarthCov();
+	void resetMagBiasCov();
 #endif // CONFIG_EKF2_MAGNETOMETER
 
 #if defined(CONFIG_EKF2_WIND)
