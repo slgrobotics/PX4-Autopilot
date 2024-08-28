@@ -58,8 +58,8 @@ const char *RoverPositionControl::control_state_name(const POS_CTRLSTATES state)
 	case POS_STATE_IDLE:				// idle state, no need controlling anything
 		return "POS_STATE_IDLE";
 
-	case L1_GOTO_WAYPOINT:				// target waypoint is far away, we can use L1 and cruise speed
-		return _param_line_following_p.get() > FLT_EPSILON ? "L1_GOTO_WAYPOINT (PID)" : "L1_GOTO_WAYPOINT (L1)";
+	case L1_GOTO_WAYPOINT:				// target waypoint is far away, we can use Pursuit and cruise speed
+		return _param_line_following_p.get() > FLT_EPSILON ? "L1_GOTO_WAYPOINT (GND_LF_P)" : "L1_GOTO_WAYPOINT";
 
 	case WP_ARRIVING:					// target waypoint is close, we need to slow down and head straight to it till stop
 		return "WP_ARRIVING";
@@ -224,13 +224,10 @@ void RoverPositionControl::debugPrintAll()
 				     (double) math::degrees(_heading_error), (double) math::degrees(_heading_error_vel));
 
 			if (_pos_ctrl_state == L1_GOTO_WAYPOINT) {
-				PX4_INFO_RAW("---    XTrack err: %.1f cm    L1 acc_demand: %.4f\n",
-					     (double)(_crosstrack_error * 100.0f),
-					     (double)_nav_lateral_acceleration_demand);
-
+				PX4_INFO_RAW("---    XTrack err: %.1f cm\n",
+					     (double)(_crosstrack_error * 100.0f));
 			}
 		}
-
 	}
 
 	if (_tracing_lev > 3) {
@@ -239,10 +236,8 @@ void RoverPositionControl::debugPrintAll()
 			     (double) math::degrees(_nav_bearing));
 
 		if (_pos_ctrl_state == L1_GOTO_WAYPOINT) {
-			PX4_INFO_RAW("---    XTrack err: %.1f cm    L1 acc_demand: %.4f\n",
-				     (double)(_crosstrack_error * 100.0f),
-				     (double)_nav_lateral_acceleration_demand);
-
+			PX4_INFO_RAW("---    XTrack err: %.1f cm\n",
+				     (double)(_crosstrack_error * 100.0f));
 		}
 
 		PX4_INFO_RAW("---    hdg_er: %.4f / %.4f  abbe: %.2f m   gas: %.2f tool: %.2f alrm: %.1f\n",
@@ -406,7 +401,7 @@ void RoverPositionControl::debugPublishAll()
 
 	int i = 1;	// data[0] is reserved for total number of parameters, max 58
 
-	// calculated by L1 controller, and are present as members of _gnd_control:
+	// calculated by Pursuit controller, and are present as members of _gnd_control:
 	_dbg_array.data[i++] = math::degrees(_target_bearing);
 	_dbg_array.data[i++] = math::degrees(_nav_bearing);
 	_dbg_array.data[i++] = math::degrees(_current_heading);
@@ -435,7 +430,7 @@ void RoverPositionControl::debugPublishAll()
 	// some values that we calculate locally to decide on throttling thrust near waypoints:
 	_dbg_array.data[i++] = _ground_speed_abs;
 	_dbg_array.data[i++] = _x_vel;
-	_dbg_array.data[i++] = _ground_speed_ns;
+	_dbg_array.data[i++] = NAN; // TBD
 
 	// When GND_SP_CTRL_MODE = 1, PID speed control is in effect:
 	_dbg_array.data[i++] = _mission_velocity_setpoint;

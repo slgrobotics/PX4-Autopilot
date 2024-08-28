@@ -48,48 +48,6 @@
  * Controller parameters, accessible via MAVLink
  */
 
-/**
- * L1 period
- *
- * This is the L1 distance and defines the tracking
- * point ahead of the rover it's following.
- * Use values around 2-5m for a 0.3m wheel base. Tuning instructions: Shorten
- * slowly during tuning until response is sharp without oscillation.
- *
- * @unit m
- * @min 0.5
- * @max 50.0
- * @decimal 1
- * @increment 0.5
- * @group Rover Position Control
- */
-PARAM_DEFINE_FLOAT(GND_L1_PERIOD, 10.0f);
-
-/**
- * L1 damping
- *
- * Damping factor for L1 control.
- *
- * @min 0.6
- * @max 1.0
- * @decimal 2
- * @increment 0.05
- * @group Rover Position Control
- */
-PARAM_DEFINE_FLOAT(GND_L1_DAMPING, 0.8f);
-
-/**
- * L1 Control Effort additional multiplier when under L1 control
- *
- * @unit norm
- * @min 0.0
- * @max 10.0
- * @decimal 3
- * @increment 0.005
- * @group Rover Position Control
- */
-PARAM_DEFINE_FLOAT(GND_L1_SCALER, 2.0f);
-
 //========================= PID controller for Line Following ===================================================
 
 /**
@@ -161,48 +119,6 @@ PARAM_DEFINE_FLOAT(GND_LF_IMAX, 0.2f);
  * @group Rover Position Control
  */
 PARAM_DEFINE_FLOAT(GND_LF_MAX, 0.8f);
-
-/**
- * When Line Following, scales PID output to be mixed into the input of Rate Controller
- *
- * mixed with L1 and heading_error for precision driving
- *
- * @unit norm
- * @min 0.0
- * @max 10.0
- * @decimal 2
- * @increment 0.005
- * @group Rover Position Control
- */
-PARAM_DEFINE_FLOAT(GND_LF_PID_SC, 1.0f);
-
-/**
- * Line Following path width
- *
- * Outside of this path L1 rules apply, inside - weighted L1 and heading deviation
- *
- * @unit norm
- * @min 0.005
- * @max 50.0
- * @decimal 3
- * @increment 0.005
- * @group Rover Position Control
- */
-PARAM_DEFINE_FLOAT(GND_LF_WIDTH, 0.6f);
-
-/**
- * When Line Following, scales heading error to become input to LF PID
- *
- * LF PID output is scaled as torque effort, which is fed to Yaw Rate Controller input
- *
- * @unit norm
- * @min 0.0
- * @max 10.0
- * @decimal 2
- * @increment 0.005
- * @group Rover Position Control
- */
-PARAM_DEFINE_FLOAT(GND_LF_HDG_SC, 2.0);
 
 /**
  * When in Line Following State, use Rate Controller for yaw output
@@ -369,7 +285,7 @@ PARAM_DEFINE_FLOAT(GND_SPEED_SP_EMA, 5);
 // ================  Acceleration (wp departure) and deceleration (wp arrival) tuning =========================
 
 /**
- * Distance to accelerate from a waypoint before using L1 control
+ * Distance to accelerate from a waypoint before using Pursuit control
  *
  * @unit m
  * @min 0.0

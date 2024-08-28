@@ -157,25 +157,51 @@ void RoverPositionControl::poll_everything()
 		//PX4_WARN("Home Position: lat: %.3f  lon: %.3f", (double)_home_position(0), (double)_home_position(1));
 	}
 
-	// store position change:
-	if (_local_position_sub.update(&_local_pos)) {
+	// store global and local position change:
+	if (_global_position_sub.update(&_global_pos)) {
+		// see how far EKF-calculated position is from RTK GPS position:
+		updateEkfGpsDeviation();
+	}
+
+	if (_local_position_sub.updated()) {
+		_local_position_sub.copy(&_local_pos);
 
 		_ekf_data_good = _local_pos.xy_valid && _local_pos.v_xy_valid && _local_pos.heading_good_for_control;
 		_ekf_flags = {_local_pos.xy_valid, _local_pos.v_xy_valid, _local_pos.heading_good_for_control};
 
-		if (_ekf_data_good && (!_global_ned_proj_ref.isInitialized()
-				       || (_global_ned_proj_ref.getProjectionReferenceTimestamp() != _local_pos.ref_timestamp))) {
+		if (!_global_ned_proj_ref.isInitialized()
+		    || (_global_ned_proj_ref.getProjectionReferenceTimestamp() != _local_pos.ref_timestamp)) {
 
 			_global_ned_proj_ref.initReference(_local_pos.ref_lat, _local_pos.ref_lon,
 							   _local_pos.ref_timestamp);
 		}
 
 		_curr_pos_ned = Vector2f(_local_pos.x, _local_pos.y);
-	}
 
-	if (_global_position_sub.update(&_global_pos)) {
-		// see how far EKF-calculated position is from RTK GPS position:
-		updateEkfGpsDeviation();
+		if (_local_pos.v_xy_valid) {
+
+			_ground_speed = Vector3f{_local_pos.vx, _local_pos.vy, _local_pos.vz};
+			_ekf_ground_speed_abs = _ground_speed.norm();	// a.k.a. _actual_speed
+
+			// Velocity in body frame:
+			const Dcmf R_to_body(Quatf(_vehicle_att.q).inversed());
+			const Vector3f vel = R_to_body * _ground_speed;
+			_x_vel = vel(0);
+
+			_current_heading_vel = wrap_pi(atan2f(_local_pos.vy, _local_pos.vx));
+
+			const matrix::Vector2f gs2d(_ground_speed);
+			_ground_speed_2d = gs2d;
+
+		} else {
+			_x_vel = NAN;
+			_current_heading_vel = NAN;
+			_ground_speed = Vector3f{NAN, NAN, NAN};
+			_ground_speed_2d = Vector2f{NAN, NAN};
+			_ekf_ground_speed_abs = NAN;
+		}
+
+
 	}
 
 	if (_ekf_override_by_gps && _sensor_gps_data.fix_type == 6) {	// GND_EKF_OVERRIDE
@@ -256,10 +282,7 @@ void RoverPositionControl::updateParams()
 
 	_ekf_heading_correction = math::radians(_param_heading_err_decl.get());	// GND_HEADING_DECL
 
-	_gnd_control.set_l1_damping(_param_l1_damping.get());	// GND_L1_DAMPING
-	_gnd_control.set_l1_period(_param_l1_period.get());	// GND_L1_PERIOD
-
-	// to provide for Line Following when in modified L1 mode:
+	// to provide for Line Following when in modified Pursuit mode:
 	pid_init(&_line_following_ctrl, PID_MODE_DERIVATIV_CALC, MIN_PID_INTERVAL);
 	pid_set_parameters(&_line_following_ctrl,
 			   _param_line_following_p.get(),	// GND_LF_P
@@ -277,7 +300,7 @@ void RoverPositionControl::updateParams()
 	pid_set_parameters(&_pid_heading,
 			   _param_rd_p_gain_heading.get(),  // Proportional gain - RD_HEADING_P
 			   _param_rd_i_gain_heading.get(),  // Integral gain - RD_HEADING_I
-			   _param_line_following_d.get(),  // Derivative gain
+			   _param_line_following_d.get(),  // Derivative gain - GND_LF_D
 			   _max_yaw_rate,  // Integral limit
 			   _max_yaw_rate);  // Output limit
 
@@ -286,7 +309,7 @@ void RoverPositionControl::updateParams()
 	pid_set_parameters(&_pid_yaw_rate,
 			   _param_rd_p_gain_yaw_rate.get(), // Proportional gain - RD_YAW_RATE_P
 			   _param_rd_i_gain_yaw_rate.get(), // Integral gain - RD_YAW_RATE_I
-			   _param_rate_d.get(), // Derivative gain
+			   _param_rate_d.get(), // Derivative gain - GND_RATE_D
 			   1.f, // Integral limit
 			   1.f); // Output limit
 
@@ -313,11 +336,6 @@ void RoverPositionControl::updateParams()
 			   _param_speed_max.get());
 
 	pid_reset_integral(&_speed_ctrl);
-
-	// Velocity setpoint smoothing parameters:
-	_forwards_velocity_smoothing.setMaxJerk(_param_rd_max_jerk.get());	// RD_MAX_JERK
-	_forwards_velocity_smoothing.setMaxAccel(_param_rd_max_accel.get());	// RD_MAX_ACCEL
-	_forwards_velocity_smoothing.setMaxVel(_param_rd_miss_spd_def.get());	// RD_MISS_SPD_DEF - not RD_MAX_SPEED
 
 	// Set up measurements smoothing:
 	int ema_period = _param_measurements_ema_period.get();	// GND_EMA_M_PERIOD
@@ -487,7 +505,7 @@ RoverPositionControl::position_setpoint_triplet_poll()
 
 			updateWaypointDistances();
 
-			//setStateMachineState(POS_STATE_IDLE);
+			setMaxLegSpeed();
 		}
 	}
 }

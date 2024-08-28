@@ -57,7 +57,7 @@ void RoverPositionControl::workStateMachine()
 
 	POS_CTRLSTATES pos_ctrl_state_prev = _pos_ctrl_state;
 
-	// clear intermediate L1 variables:
+	// clear intermediate Pursuit variables:
 	_nav_bearing = NAN;
 	_target_bearing = NAN;
 	_crosstrack_error = NAN;
@@ -67,8 +67,8 @@ void RoverPositionControl::workStateMachine()
 
 	// preset outputs. In certain cases (turning or moving must be stopped) NAN is returned:
 	resetRdGuidance();
-	_mission_yaw_rate_setpoint = NAN;
-	_mission_velocity_setpoint = NAN;
+	_mission_yaw_rate_setpoint = 0.0f;
+	_mission_velocity_setpoint = 0.0f;
 
 	// Mission (navigator) can change target waypoint any time:
 	if (checkNewWaypointArrival()) {
@@ -144,6 +144,11 @@ void RoverPositionControl::workStateMachine()
 
 		if (updateBearings()) {
 
+			computeRdGuidance();
+
+			_mission_velocity_setpoint = _rd_guidance.desired_speed;
+			_mission_yaw_rate_setpoint = _rd_guidance.desired_yaw_rate;
+
 			// while arriving, we can hit waypoint so closely, that Mission will advance before we get here.
 			// in this case a new waypoint will arrive and cause immediate change of state to WP_TURNING
 			// and WP_ARRIVED will not be hit. That's normal.
@@ -162,7 +167,7 @@ void RoverPositionControl::workStateMachine()
 				   && fabsf(_heading_error) < 0.1f) {
 
 #ifdef DEBUG_MY_PRINT
-				PX4_INFO_RAW("OK: L1 heading recovered, switching to L1_GOTO_WAYPOINT ===========================\n");
+				PX4_INFO_RAW("OK: Pursuit heading recovered, switching to L1_GOTO_WAYPOINT ===========================\n");
 				PX4_INFO_RAW("*** trgt_berng: %.2f  curr_hdg: %.2f  hdg_error: %.2f\n",
 					     (double) math::degrees(_target_bearing), (double) math::degrees(_current_heading),
 					     (double) math::degrees(_heading_error));
@@ -178,8 +183,6 @@ void RoverPositionControl::workStateMachine()
 				// Here we just head straight to target wp:
 
 				_mission_yaw_rate_setpoint = computeYawRateSetpoint();
-
-				setDefaultMissionSpeed();	// will be adusted later by adjustThrustAndYaw()
 			}
 
 #ifdef DEBUG_MY_PRINT
@@ -261,8 +264,6 @@ void RoverPositionControl::workStateMachine()
 						// We are departing from landing point towards the first waypoint.
 
 						PX4_WARN("WP_TURNING - first leg %.2f meters", (double)_leg_distance);
-
-						_wp_previous_dist = 0;
 					}
 
 					_is_short_leg = !is_first_leg && _leg_distance < (_accel_dist + _decel_dist);
@@ -271,16 +272,16 @@ void RoverPositionControl::workStateMachine()
 
 						PX4_WARN("WP_TURNING - short leg %.2f meters", (double)_leg_distance);
 
-						// short leg, no L1 segment:
+						// short leg, no Pursuit segment:
 						_accel_dist = _decel_dist = _wp_current_dist / 2.0f + 0.2f; // with little extra
 
 					}
 
 					if (is_first_leg) {
-						setStateMachineState(L1_GOTO_WAYPOINT); // L1 on the first leg
+						setStateMachineState(L1_GOTO_WAYPOINT); // Pursuit on the first leg
 
 					} else if (_is_short_leg) {
-						setStateMachineState(WP_ARRIVING); // Don't use L1 on the short legs
+						setStateMachineState(WP_ARRIVING); // Don't use Pursuit on the short legs
 
 					} else {
 
@@ -295,8 +296,6 @@ void RoverPositionControl::workStateMachine()
 							setStateMachineState(L1_GOTO_WAYPOINT);
 						}
 					}
-
-					resetVelocitySmoothing(); // trajectory computation starts here
 				}
 
 			} else {
@@ -322,10 +321,13 @@ void RoverPositionControl::workStateMachine()
 
 		if (updateBearings()) {
 
+			computeRdGuidance();
+
+			_mission_velocity_setpoint = _rd_guidance.desired_speed;
+			_mission_yaw_rate_setpoint = _rd_guidance.desired_yaw_rate;
+
 			if (_wp_previous_dist < _accel_dist) {
 				_mission_yaw_rate_setpoint = computeYawRateSetpoint();
-
-				setDefaultMissionSpeed();	// will be adusted later by adjustThrustAndYaw()
 
 				// we can turn on tools (cutting deck) as we know the previous waypoint exists, i.e. we are on the business part of the mission:
 				_cutter_setpoint = ACTUATOR_ON;
@@ -335,7 +337,7 @@ void RoverPositionControl::workStateMachine()
 #endif // DEBUG_MY_PRINT
 
 			} else {
-				// we are far enough from departure waypoint and not heading to the first waypoint, switch to L1:
+				// we are far enough from departure waypoint and not heading to the first waypoint, switch to Pursuit:
 				setStateMachineState(L1_GOTO_WAYPOINT);
 				cte_begin();
 			}
@@ -347,21 +349,20 @@ void RoverPositionControl::workStateMachine()
 
 		break;
 
-	case L1_GOTO_WAYPOINT: {	// target waypoint is far away, we can use L1 and cruise speed
+	case L1_GOTO_WAYPOINT: {	// target waypoint is far away, we can use Pursuit and cruise speed
 
-			bool is_arriving = PX4_ISFINITE(_wp_current_dist) ? _wp_current_dist < _decel_dist :
-					   false;		// GND_DECEL_DIST or half leg
+			bool is_arriving = PX4_ISFINITE(_wp_current_dist) ?
+					   _wp_current_dist < _decel_dist : // GND_DECEL_DIST or half leg
+					   false;
 
 			if (is_arriving) {
-				// Close enough to destination waypoint, switch from L1 to direct heading:
+				// Close enough to destination waypoint, switch from Pursuit to direct heading:
 				setStateMachineState(WP_ARRIVING);
 				cte_end();
 
 			} else {
 
 				if (updateBearings()) {
-
-					setDefaultMissionSpeed();	// will be adusted later by adjustThrustAndYaw()
 
 					if (fabsf(_heading_error) > 1.0f && PX4_ISFINITE(_wp_previous_dist) && _wp_previous_dist > _accel_dist * 1.5f) {
 #ifdef DEBUG_MY_PRINT
@@ -370,24 +371,52 @@ void RoverPositionControl::workStateMachine()
 
 						debugPrintAll();
 #endif // DEBUG_MY_PRINT
-						// we are so much off course, or overshot the waypoint, that we need to switch to non-L1 algorithm:
+						// we are so much off course, or overshot the waypoint, that we need to switch to non-Pursuit algorithm:
+						_mission_yaw_rate_setpoint = 0.0f;
 						setStateMachineState(WP_ARRIVING);
 						cte_end();
-						_mission_yaw_rate_setpoint = 0.0f;
 
 					} else {
 
 						// We are far from destination and more or less are pointed in its direction.
 
-						cte_compute();
+						// see src/modules/rover_differential/RoverDifferentialGuidance/RoverDifferentialGuidance.cpp
 
-						computeRdGuidance();	// computes desired speed and yaw rate in _rd_guidance
+						const float yaw = _current_heading;	// The yaw orientation of the vehicle in radians.
+						float actual_speed = _x_vel_ema;	// The forward velocity of the vehicle on the plane.
 
-						// Computed setpoints:
-						// _rd_guidance.desired_speed;
-						// _rd_guidance.desired_yaw_rate;
+						/*
+						_nav_bearing = _pure_pursuit.calcDesiredHeading(_curr_wp_ned, _prev_wp_ned, _curr_pos_ned,
+										math::max(actual_speed, 0.f));
+						*/
 
-						_mission_yaw_rate_setpoint = _rd_guidance.desired_yaw_rate;
+						_nav_bearing = _stanley_pursuit.calcDesiredHeading(_curr_wp_ned, _prev_wp_ned, _curr_pos_ned,
+								actual_speed);
+
+						if (PX4_ISFINITE(_nav_bearing)) {
+
+							// make Pursuit heading error global:
+							_heading_error = matrix::wrap_pi(_nav_bearing - yaw);
+
+							_heading_error = math::constrain(_heading_error, -0.1f, 0.1f); // +- 6 degrees
+
+							cte_compute();
+
+							computeRdGuidance();	// computes desired speed and yaw rate in _rd_guidance
+
+							// Computed setpoints:
+							// _rd_guidance.desired_speed;
+							// _rd_guidance.desired_yaw_rate;
+
+							_mission_velocity_setpoint = _rd_guidance.desired_speed;
+							_mission_yaw_rate_setpoint = _rd_guidance.desired_yaw_rate;
+
+						} else {
+							_heading_error = NAN;
+							resetRdGuidance();
+							setStateMachineState(WP_ARRIVING);
+							cte_end();
+						}
 					}
 
 				} else {
@@ -523,7 +552,7 @@ void RoverPositionControl::adjustAcuatorSetpoints()
 
 		break;
 
-	case L1_GOTO_WAYPOINT: 	// target waypoint is far away, we can use L1 and cruise speed
+	case L1_GOTO_WAYPOINT: 	// target waypoint is far away, we can use Pursuit and cruise speed
 
 		_gas_engine_throttle = _param_gas_throttle_straight.get();	// GND_GTL_STRAIGHT *1.0
 

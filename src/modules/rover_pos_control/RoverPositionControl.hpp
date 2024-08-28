@@ -47,13 +47,12 @@
 
 #include <drivers/drv_hrt.h>
 #include <lib/geo/geo.h>
-#include <lib/l1/ECL_L1_Pos_Controller.hpp>
 #include <lib/mathlib/mathlib.h>
 #include <lib/perf/perf_counter.h>
 #include <lib/pid/pid.h>
 #include <lib/rate_control/rate_control.hpp>
-#include <lib/motion_planning/VelocitySmoothing.hpp>
-#include <lib/pure_pursuit/PurePursuit.hpp>
+//#include <lib/pure_pursuit/PurePursuit.hpp>
+#include <lib/stanley_pursuit/StanleyPursuit.hpp>
 
 #include <px4_platform_common/px4_config.h>
 #include <px4_platform_common/defines.h>
@@ -264,9 +263,6 @@ private:
 	// PID controller for the speed:
 	PID_t _speed_ctrl{};
 
-	// velocity smoothing for forward motion:
-	VelocitySmoothing _forwards_velocity_smoothing;
-
 	// PID controller for the Line Following:
 	PID_t _line_following_ctrl{};
 	float _max_yaw_rate{0.f};
@@ -276,18 +272,16 @@ private:
 	// The PID controller for yaw rate (calculates wheels speed difference)
 	PID_t _pid_yaw_rate;
 
-	// Line following controller:
-	ECL_L1_Pos_Controller _gnd_control{};
-
 	// Yaw rate controller:
 	RateControl _rate_control{};
 
-	PurePursuit _pure_pursuit{this}; // Pure pursuit library
+	//PurePursuit _pure_pursuit{this}; // Pure pursuit library
+	StanleyPursuit _stanley_pursuit{this}; // Stanley pursuit library
 
 	enum POS_CTRLSTATES : int {
 		POS_STATE_NONE,			// undefined/invalid state, no need controlling anything
 		POS_STATE_IDLE,			// idle state, no need controlling anything
-		L1_GOTO_WAYPOINT,		// target waypoint is far away, we can use L1 and cruise speed
+		L1_GOTO_WAYPOINT,		// target waypoint is far away, we can use Pursuit logic and cruise speed
 		WP_ARRIVING,			// target waypoint is close, we need to slow down and head straight to it till stop
 		WP_ARRIVED,			// reached waypoint, completely stopped. Make sure mission knows about it
 		WP_TURNING,			// we need to turn in place to the next waypoint
@@ -322,7 +316,6 @@ private:
 	void updateWaypointDistances();
 	void updateEkfGpsDeviation();
 	bool checkNewWaypointArrival();
-	float adjustMissionVelocitySetpoint();
 	float computeYawRateSetpoint();
 	float computeTorqueEffort();
 	float computeThrustEffort();
@@ -331,8 +324,7 @@ private:
 	void adjustThrustAndTorque();
 	void resetTorqueControls();
 	void resetThrustControls();
-	void resetVelocitySmoothing();
-	void setDefaultMissionSpeed();
+	void setMaxLegSpeed();
 	bool detectOvershot();
 	void adjustAcuatorSetpoints();
 	void setActControls();
@@ -366,9 +358,9 @@ private:
 	Vector3f _ground_speed{0, 0, 0};
 	Vector2f _ground_speed_2d{0, 0};
 
-	// these are calculated by L1 controller, and are present as members of _gnd_control:
+	// these are calculated by Pursuit controller, and are present as members of _gnd_control:
 	float _target_bearing{0.0f};		// the direction between the rover position and next (current) waypoint
-	float _nav_bearing{0.0f};		// bearing from current position to L1 point
+	float _nav_bearing{0.0f};		// bearing from current position to a point on the line
 	float _crosstrack_error{0.0f};		// meters, how far we are from the A-B line (A = previous, visited waypoint, B = current waypoint, target)
 	float _ekfGpsDeviation{0.0f};		// meters, how far is EKF2 calculated position from GPS reading
 	bool _ekf_data_good{false};		// combination of: _local_pos.xy_valid && v_xy_valid && heading_good_for_control
@@ -487,7 +479,7 @@ private:
 	// EKF2 calculated values and correction:
 	float _ekf_current_heading{0.0f};	// radians to absolute North, -PI...PI
 	float _ekf_heading_correction{0.0f};	// GND_HEADING_DECL, radians
-	float _ekf_ground_speed_abs{0.0f};	// meters per second
+	float _ekf_ground_speed_abs{0.0f};	// meters per second, a.k.a. _actual_speed
 
 	// EKF2 or RTK GPS measurement priority:
 	bool _speed_prefer_gps{false};
@@ -496,7 +488,7 @@ private:
 
 	// some values that we calculate locally to decide on throttling thrust near waypoints:
 	float _current_heading{0.0f};		// radians to absolute North, selected between EKF and GPS values above
-	float _current_heading_vel{NAN};	// radians to absolute North, derived from _local_pos.vx/vy
+	float _current_heading_vel{NAN};	// radians to absolute North, derived from _local_pos.vx/vy, if _local_pos.v_xy_valid
 	float _heading_error{0.0f};		// radians
 	float _heading_error_vel{0.0f};		// radians - from _current_heading_vel above
 	float _abbe_error{0.0f};		// meters, heading error at the target point
@@ -505,16 +497,16 @@ private:
 	inline float yaw_responsiveness_factor() { return 1.0f - (1.0f - _param_gas_throttle_yaw_factor_min.get()) * _gas_engine_throttle; };
 
 	float _ground_speed_abs{0.0f};		// meters per second, selected between EKF and GPS values above
-	float _ground_speed_ns{0.0f};		// just storing ground_speed_2d.norm_squared() here for L1 desired_r calculation
 
 	// main calculated setpoints:
 	float _mission_velocity_setpoint{0.0f}; // target velocity for PID speed control
-	float _mission_yaw_rate_setpoint{0.0f};  // calculated Yaw effort, derived from L1 acceleration demand or heading error, -1..+1
+	float _mission_yaw_rate_setpoint{0.0f};  // calculated Yaw effort, derived from Pursuit or heading error, -1..+1
 
 	// PID speed control related:
 	float _x_vel{0.0f};			// measured current velocity for PID speed control from EKF2
 	float _x_vel_ema{0.0f};			// meters per second, smoothed _x_vel for PID
 	Emaf  _velocity_measured_ema;		// to remove spikes in _x_vel
+	float _max_leg_speed{0.0f};
 	Emaf  _velocity_setpoint_ema;		// to remove spikes in _mission_velocity_setpoint
 
 	// Yaw Rate Control input and output for logging:
@@ -619,20 +611,12 @@ private:
 		(ParamFloat<px4::params::RD_YAW_RATE_I>) _param_rd_i_gain_yaw_rate,
 		(ParamInt<px4::params::CA_R_REV>) _param_r_rev,
 
-		(ParamFloat<px4::params::GND_L1_PERIOD>) _param_l1_period,
-		(ParamFloat<px4::params::GND_L1_DAMPING>) _param_l1_damping,
-		(ParamFloat<px4::params::GND_L1_SCALER>) _param_l1_scaler,
-
-		// PID controller for Line Following (L1 derived):
+		// PID controller for Line Following:
 		(ParamFloat<px4::params::GND_LF_P>) _param_line_following_p,
 		(ParamFloat<px4::params::GND_LF_I>) _param_line_following_i,
 		(ParamFloat<px4::params::GND_LF_D>) _param_line_following_d,
 		(ParamFloat<px4::params::GND_LF_IMAX>) _param_line_following_imax,
 		(ParamFloat<px4::params::GND_LF_MAX>) _param_line_following_max,
-		(ParamFloat<px4::params::GND_LF_PID_SC>) _param_line_following_pid_output_scaler,
-
-		(ParamFloat<px4::params::GND_LF_WIDTH>) _param_line_following_width,
-		(ParamFloat<px4::params::GND_LF_HDG_SC>) _param_line_following_heading_error_scaler,
 
 		// Whether to use Yaw Rate Controller while line following:
 		(ParamInt<px4::params::GND_LF_USE_RATE>) _param_lf_use_rates_controller,

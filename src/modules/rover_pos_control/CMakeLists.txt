@@ -50,4 +50,6 @@ px4_add_module(
 		l1
 		RateControl
 		pid
+		pure_pursuit
+		stanley_pursuit
 	)

@@ -51,7 +51,7 @@
 using namespace matrix;
 
 /**
- * L1 control app start / stop handling function
+ * Pursuit control app start / stop handling function
  *
  * @ingroup apps
  */
@@ -136,9 +136,6 @@ static double _last_alt_e {0};
 void
 RoverPositionControl::update_orientation()
 {
-	matrix::Vector3f gs(_local_pos.vx, _local_pos.vy,  _local_pos.vz);
-	_ground_speed = gs;
-
 	double f_lat = _sensor_gps_data.latitude_deg;	// must be float64 for RTK precision
 	double f_lon = _sensor_gps_data.longitude_deg;
 #ifdef PRINT_GPS_WALK
@@ -198,29 +195,11 @@ RoverPositionControl::update_orientation()
 
 #endif // PRINT_GPS_WALK
 
-	if (_local_pos.v_xy_valid) {
-		// Velocity in body frame
-		const Dcmf R_to_body(Quatf(_vehicle_att.q).inversed());
-		const Vector3f vel = R_to_body * Vector3f(_local_pos.vx, _local_pos.vy, _local_pos.vz);
-		_x_vel = vel(0);
-		_current_heading_vel = wrap_pi(atan2f(_local_pos.vy, _local_pos.vx));
-
-	} else {
-		_x_vel = NAN;
-		_current_heading_vel = NAN;
-	}
-
-
-	const matrix::Vector2f gs2d(_ground_speed);
-	_ground_speed_2d = gs2d;
-	_ground_speed_ns = _ground_speed_2d.norm_squared();		// L1 desired_r is dependent on this
-	_ekf_ground_speed_abs = _ground_speed_2d.length();
-
-	_ground_speed_abs = _ekf_ground_speed_abs;
-
 	_ekf_current_heading = Eulerf(Quatf(_vehicle_att.q)).psi();
 
 	_current_heading = wrap_pi(_ekf_current_heading + _ekf_heading_correction);	// radians to absolute North, -PI...PI
+
+	_ground_speed_abs = _ekf_ground_speed_abs;
 
 #if !defined(CONFIG_ARCH_BOARD_PX4_SITL)
 	// based on preference and availability, reassign speed and/or measurements to RTK GPS:
@@ -230,7 +209,8 @@ RoverPositionControl::update_orientation()
 			   && PX4_ISFINITE(_gps_current_heading) ? _gps_current_heading : _ekf_current_heading;
 #endif
 
-	_x_vel_ema = _velocity_measured_ema.Compute(_x_vel);	// smooth the jitter for the PID's input
+	// smooth the jitter for the PID's input:
+	_x_vel_ema = _velocity_measured_ema.Compute(PX4_ISFINITE(_x_vel) ? _x_vel : 0.0f);
 }
 
 void
@@ -287,13 +267,17 @@ RoverPositionControl::control_position(const matrix::Vector2d &current_position)
 
 	// ============= Work the State machine:  ====================================
 
-	workStateMachine();	// computes _mission_yaw_rate_setpoint and _mission_velocity_setpoint
+	// computes _mission_yaw_rate_setpoint and _mission_velocity_setpoint:
+	workStateMachine();
 
 	// ============= Pass speed/thrust/torque to actuators: =======================
 
-	adjustThrustAndTorque();	// have PIDs work on control_effort and _mission_velocity_setpoint for smooth control, computes _mission_thrust_effort and _mission_torque_effort
+	// have PIDs work on control_effort and _mission_velocity_setpoint for smooth control,
+	// computes _mission_thrust_effort and _mission_torque_effort:
+	adjustThrustAndTorque();
 
-	setActControls();		// sends _mission_thrust_effort and _mission_torque_effort to actuators
+	// sends _mission_thrust_effort and _mission_torque_effort to actuators:
+	setActControls();
 
 #ifdef DEBUG_MY_PRINT
 	debugPrint();
@@ -684,7 +668,7 @@ int RoverPositionControl::print_usage(const char *reason)
 	PRINT_MODULE_DESCRIPTION(
 		R"DESCR_STR(
 ### Description
-Controls the position of a ground rover using an L1 controller.
+Controls the position of a ground rover using an Pursuit controller.
 
 Publishes `vehicle_thrust_setpoint (only in x) and vehicle_torque_setpoint (only yaw)` messages at IMU_GYRO_RATEMAX.
 
