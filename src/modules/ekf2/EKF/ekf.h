@@ -261,7 +261,11 @@ public:
 	// get the ekf WGS-84 origin position and height and the system time it was last set
 	// return true if the origin is valid
 	bool getEkfGlobalOrigin(uint64_t &origin_time, double &latitude, double &longitude, float &origin_alt) const;
-	bool setEkfGlobalOrigin(double latitude, double longitude, float altitude, float eph = 0.f, float epv = 0.f);
+	bool checkLatLonValidity(double latitude, double longitude);
+	bool checkAltitudeValidity(float altitude);
+	bool setEkfGlobalOrigin(double latitude, double longitude, float altitude, float eph = NAN, float epv = NAN);
+	bool setEkfGlobalOriginFromCurrentPos(double latitude, double longitude, float altitude, float eph = NAN,
+					      float epv = NAN);
 
 	// get the 1-sigma horizontal and vertical position uncertainty of the ekf WGS-84 position
 	void get_ekf_gpos_accuracy(float *ekf_eph, float *ekf_epv) const;
@@ -529,7 +533,7 @@ public:
 		return true;
 	}
 
-	bool resetGlobalPosToExternalObservation(double lat_deg, double lon_deg, float accuracy,
+	bool resetGlobalPosToExternalObservation(double latitude, double longitude, float altitude, float eph, float epv,
 			uint64_t timestamp_observation);
 
 	/**
@@ -764,6 +768,12 @@ private:
 		P.uncorrelateCovarianceSetVariance<S.dof>(S.idx, 0.0f);
 		P.slice<S.dof, S.dof>(S.idx, S.idx) = cov;
 	}
+
+	bool setLatLonOrigin(double latitude, double longitude, float eph = NAN);
+	bool setAltOrigin(float altitude, float epv = NAN);
+
+	bool setLatLonOriginFromCurrentPos(double latitude, double longitude, float eph = NAN);
+	bool setAltOriginFromCurrentPos(float altitude, float epv = NAN);
 
 	// update quaternion states and covariances using an innovation, observation variance and Jacobian vector
 	bool fuseYaw(estimator_aid_source1d_s &aid_src_status, const VectorState &H_YAW);
