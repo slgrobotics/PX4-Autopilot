@@ -584,9 +584,9 @@ private:
 	// -----------------------------------------------------------------------------------------------------------------------------
 
 	DEFINE_PARAMETERS(
-		(ParamFloat<px4::params::RD_HEADING_P>) _param_rd_p_gain_heading,
-		(ParamFloat<px4::params::RD_HEADING_I>) _param_rd_i_gain_heading,
-		(ParamFloat<px4::params::RD_HEADING_D>) _param_rd_d_gain_heading,
+		(ParamFloat<px4::params::RD_YAW_P>) _param_rd_p_gain_yaw,
+		(ParamFloat<px4::params::RD_YAW_I>) _param_rd_i_gain_yaw,
+		(ParamFloat<px4::params::RD_YAW_D>) _param_rd_d_gain_yaw,
 		(ParamFloat<px4::params::RD_SPEED_P>) _param_rd_p_gain_speed,
 		(ParamFloat<px4::params::RD_SPEED_I>) _param_rd_i_gain_speed,
 		(ParamFloat<px4::params::RD_MAX_SPEED>) _param_rd_max_speed,

@@ -85,7 +85,7 @@ PARAM_DEFINE_FLOAT(GND_LF_P, 1.0f);
  * @increment 0.001
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(RD_HEADING_D, 0.0f);
+PARAM_DEFINE_FLOAT(RD_YAW_D, 0.0f);
 
 //===============================================================================================================
 

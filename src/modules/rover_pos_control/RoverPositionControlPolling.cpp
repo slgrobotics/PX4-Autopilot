@@ -286,9 +286,9 @@ void RoverPositionControl::updateParams()
 
 	_max_yaw_rate = math::radians(_param_rd_max_yaw_rate.get());	// RD_MAX_YAW_RATE
 	pid_set_parameters(&_pid_heading,
-			   _param_rd_p_gain_heading.get(),  // Proportional gain - RD_HEADING_P
-			   _param_rd_i_gain_heading.get(),  // Integral gain - RD_HEADING_I
-			   _param_rd_d_gain_heading.get(),  // Derivative gain - RD_HEADING_D
+			   _param_rd_p_gain_yaw.get(),  // Proportional gain - RD_YAW_P
+			   _param_rd_i_gain_yaw.get(),  // Integral gain - RD_YAW_I
+			   _param_rd_d_gain_yaw.get(),  // Derivative gain - RD_YAW_D
 			   _max_yaw_rate,  // Integral limit
 			   _max_yaw_rate);  // Output limit
 
