@@ -51,7 +51,16 @@
 //========================= PID controller for Line Following ===================================================
 
 /**
- * Line Following proportional gain
+ * When in Line Following State, use Rate Controller for yaw output
+ *
+ * @min 0
+ * @max 1
+ * @group Rover Position Control
+ */
+PARAM_DEFINE_INT32(GND_LF_USE_RATE, 1);
+
+/**
+ * Line Following proportional gain for heading error when GND_LF_USE_RATE=0
  *
  * This is the proportional gain for the Line Following closed loop controller
  *
@@ -62,72 +71,21 @@
  * @increment 0.005
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_LF_P, 0.3f);
+PARAM_DEFINE_FLOAT(GND_LF_P, 1.0f);
 
 /**
- * Line Following Integral gain
+ * Derivative gain for heading error controller
  *
- * This is the integral gain for the Line Following closed loop controller
- *
- * @unit norm
- * @min 0.00
- * @max 50.0
- * @decimal 3
- * @increment 0.005
- * @group Rover Position Control
- */
-PARAM_DEFINE_FLOAT(GND_LF_I, 0.1f);
-
-/**
- * Line Following derivative gain
- *
- * This is the derivative gain for the Line Following closed loop controller
- *
- * @unit norm
- * @min 0.00
- * @max 50.0
- * @decimal 3
- * @increment 0.005
- * @group Rover Position Control
- */
-PARAM_DEFINE_FLOAT(GND_LF_D, 0.0f);
-
-/**
- * Line Following integral maximum value
- *
- * This is the maxim value the integral can reach to prevent wind-up.
- *
- * @unit norm
- * @min 0.005
- * @max 50.0
- * @decimal 3
- * @increment 0.005
- * @group Rover Position Control
- */
-PARAM_DEFINE_FLOAT(GND_LF_IMAX, 0.2f);
-
-/**
- * Line Following effort limit max
- *
- * This is the maximum Line Following effort that can be used by the controller.
+ * This is the derivative gain for the Heading closed loop controller
  *
  * @unit norm
  * @min 0.0
- * @max 10.0
- * @decimal 2
- * @increment 0.005
+ * @max 1.0
+ * @decimal 3
+ * @increment 0.001
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_LF_MAX, 0.8f);
-
-/**
- * When in Line Following State, use Rate Controller for yaw output
- *
- * @min 0
- * @max 1
- * @group Rover Position Control
- */
-PARAM_DEFINE_INT32(GND_LF_USE_RATE, 1);
+PARAM_DEFINE_FLOAT(RD_HEADING_D, 0.0f);
 
 //===============================================================================================================
 
@@ -688,19 +646,19 @@ PARAM_DEFINE_INT32(GND_MAN_STRAIGHT, 0);
 // ------------------------------------
 
 /**
- * When the yaw rate setpoint is that close to actual yaw rate, sets the torque to RD_RATE_ZTRQ
+ * When the yaw rate setpoint is that close to actual yaw rate, sets the torque to zero
  *
  * @unit deg/s
  * @min 0.0
  * @max 60.0
  * @decimal 3
- * @increment 0.1
+ * @increment 0.01
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(RD_RATE_FRW, 1.0f);
+PARAM_DEFINE_FLOAT(RD_RATE_FRW, 0.0f);
 
 /**
- * A "zero torque correction" - torque value when we just need to go straight
+ * A "zero torque correction" - added to torque value
  *
  * @unit norm
  * @min -1.0

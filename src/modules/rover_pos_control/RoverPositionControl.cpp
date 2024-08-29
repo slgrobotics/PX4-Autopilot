@@ -350,96 +350,58 @@ RoverPositionControl::control_yaw_rate()
 
 	float steering_input = 0.0f;
 
-	if (_param_rate_p.get() > FLT_EPSILON) {	// GND_RATE_P
+	float yaw_rate_setpoint = PX4_ISFINITE(_rates_setpoint.yaw) ? _rates_setpoint.yaw : 0.0f;	// desired angular rate
 
-		// Using 3D Rate Control library:
+	// when stopped, lock PID integrator.
+	// if true, integral is not allowed to accumulate (I-component of PID disabled)
+	bool is_stopped = PX4_ISFINITE(_rates_setpoint.yaw)
+			  || bool(_ground_speed_abs < _param_rate_i_minspeed.get()); // GND_RATE_IMINSPD
 
-		// measured angular rates:
-		const matrix::Vector3f vehicle_rates(_angular_velocity.xyz[0], _angular_velocity.xyz[1],
-						     _angular_velocity.xyz[2]);
-		// desired angular rates:
-		const matrix::Vector3f rates_setpoint(_rates_setpoint.roll, _rates_setpoint.pitch,
-						      PX4_ISFINITE(_rates_setpoint.yaw) ? _rates_setpoint.yaw : 0.0f);
+	// Using 3D Rate Control library:
 
-		// when stopped, lock PID integrator.
-		// if true, integral is not allowed to accumulate (I-component of PID disabled)
-		bool is_stopped = bool(_ground_speed_abs < _param_rate_i_minspeed.get()); // GND_RATE_IMINSPD
+	// measured angular rates:
+	const matrix::Vector3f vehicle_rates(_angular_velocity.xyz[0], _angular_velocity.xyz[1],
+					     _angular_velocity.xyz[2]);
+	// desired angular rates:
+	const matrix::Vector3f rates_setpoint(_rates_setpoint.roll, _rates_setpoint.pitch,
+					      PX4_ISFINITE(_rates_setpoint.yaw) ? _rates_setpoint.yaw : 0.0f);
 
-		const matrix::Vector3f angular_acceleration{_angular_velocity.xyz_derivative};	// measured angular accelerations
+	const matrix::Vector3f angular_acceleration{_angular_velocity.xyz_derivative};	// measured angular accelerations
 
-		float dt = (_control_yaw_rate_last_called > 0) ? hrt_elapsed_time(&_control_yaw_rate_last_called) * 1e-6f : 0.01f;
-		_control_yaw_rate_last_called = _timestamp;
+	float dt = (_control_yaw_rate_last_called > 0) ? hrt_elapsed_time(&_control_yaw_rate_last_called) * 1e-6f : 0.01f;
+	_control_yaw_rate_last_called = _timestamp;
 
-		// Now call the magic, assuming that it computes body torque action:
-		const matrix::Vector3f torque = _rate_control.update(vehicle_rates, rates_setpoint, angular_acceleration, dt,
-						is_stopped);
+	// Now call the magic, assuming that it computes body torque action:
+	const matrix::Vector3f torque = _rate_control.update(vehicle_rates, rates_setpoint, angular_acceleration, dt,
+					is_stopped);
 
-		// publish rate controller status
-		rate_ctrl_status_s rate_ctrl_status{};
-		_rate_control.getRateControlStatus(rate_ctrl_status);
-		rate_ctrl_status.timestamp = _timestamp;
-		_controller_status_pub.publish(rate_ctrl_status);
+	// publish rate controller status
+	rate_ctrl_status_s rate_ctrl_status{};
+	_rate_control.getRateControlStatus(rate_ctrl_status);
+	rate_ctrl_status.timestamp = _timestamp;
+	_controller_status_pub.publish(rate_ctrl_status);
 
-		// only interested in yaw (z) axis:
-		steering_input = torque(2) *
-				 yaw_responsiveness_factor()	 // 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas)
-				 * _param_gnd_torque_scaler.get(); // GND_TORQUE_SC
+	// only interested in yaw (z) axis:
+	steering_input = torque(2) *
+			 yaw_responsiveness_factor()	 // 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas)
+			 * _param_gnd_torque_scaler.get(); // GND_TORQUE_SC
 
-		//PX4_WARN("mission_torque_effort: %.3f   steering_input: %.3f", (double)_mission_torque_effort, (double)steering_input);
+	//PX4_WARN("mission_torque_effort: %.3f   steering_input: %.3f", (double)_mission_torque_effort, (double)steering_input);
 
-	} else {
+	float yaw_error_abs = fabsf(yaw_rate_setpoint - _z_yaw_rate);
+	float yaw_error_treshold = math::radians(_param_rd_rate_frw.get()); // RD_RATE_FRW [deg/s] "freewheeling" threshold
 
-		// GND_RATE_P == 0
+	if (yaw_error_treshold > FLT_EPSILON && yaw_error_abs < yaw_error_treshold && PX4_ISFINITE(_crosstrack_error)
+	    && _crosstrack_error < 0.1f) {
 
-		// Using simplified PID-based controller:
+		// Close to centerline, low yaw rate - accelerated law:
 
-		float yaw_rate_setpoint = _rates_setpoint.yaw;	// desired angular rate
+		// RD_RATE_FTRQ - a close-to-line multiplier:
+		steering_input *= _param_rd_rate_ftrq.get();
 
-		if (PX4_ISFINITE(yaw_rate_setpoint)) {
+		PX4_WARN("YAW RATE FREEWHEELING sp: %.4f  yaw_rate: %.4f   diff: %.4f", (double)yaw_rate_setpoint, (double)_z_yaw_rate,
+			 (double)fabsf(yaw_rate_setpoint - _z_yaw_rate));
 
-			float yaw_error_abs = fabsf(yaw_rate_setpoint - _z_yaw_rate);
-			float yaw_error_treshold = math::radians(
-							   _param_rd_rate_frw.get()); // RD_RATE_FRW [deg/s] Error "freewheeling" threshold
-
-			// Closed loop yaw rate control
-			if (yaw_error_treshold > FLT_EPSILON && yaw_error_abs < yaw_error_treshold && PX4_ISFINITE(_crosstrack_error)
-			    && _crosstrack_error < 0.1f) {
-
-				// Close to centerline, low yaw rate - accelerated law:
-
-				pid_reset_integral(&_pid_yaw_rate);
-				steering_input = pid_calculate(&_pid_yaw_rate, yaw_rate_setpoint, _z_yaw_rate, 0, _dt);
-
-				// RD_RATE_FTRQ - a close-to-line multiplier:
-				steering_input *= _param_rd_rate_ftrq.get();
-
-				PX4_WARN("YAW RATE FREEWHEELING sp: %.4f  yaw_rate: %.4f   diff: %.4f", (double)yaw_rate_setpoint, (double)_z_yaw_rate,
-					 (double)fabsf(yaw_rate_setpoint - _z_yaw_rate));
-
-			} else {
-				// Far from centerline, normal law:
-
-				// Feed forward - anticipating some output based on the intent:
-				if (abs(_heading_error) < math::radians(10.0f)) {
-
-					//const float speed_diff = yaw_rate_setpoint * _param_rd_wheel_track.get(); // RD_WHEEL_TRACK wheel base (track)
-					const float speed_diff = _heading_error * _param_rd_wheel_track.get(); // RD_WHEEL_TRACK wheel base (track)
-
-					steering_input = math::interpolate<float>(speed_diff,
-							 -_param_rd_max_speed.get(),	// RD_MAX_SPEED
-							 _param_rd_max_speed.get(),
-							 -1.f, 1.f);
-
-					steering_input *= _param_rate_ff.get();	// GND_RATE_FF
-				}
-
-				// Feedback:
-				steering_input += pid_calculate(&_pid_yaw_rate, yaw_rate_setpoint, _z_yaw_rate, 0, _dt);
-			}
-
-			steering_input *= (yaw_responsiveness_factor()	 // 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas)
-					   * _param_gnd_torque_scaler.get()); // GND_TORQUE_SC
-		}
 	}
 
 	return math::constrain(steering_input, -1.0f, 1.0f);

@@ -291,7 +291,6 @@ void RoverPositionControl::resetTorqueControls()
 	//PX4_WARN("resetTorqueControls");
 
 	_rate_control.resetIntegral();
-	pid_reset_integral(&_line_following_ctrl);
 	pid_reset_integral(&_pid_heading);
 
 	_mission_torque_ema.Reset();

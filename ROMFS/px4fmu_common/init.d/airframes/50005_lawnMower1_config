@@ -146,8 +146,9 @@ else
 	# Set Differential Drive Kinematics Library parameters:
 	param set RD_WHEEL_TRACK 0.9
 
-	param set RD_MAX_SPEED 1.6
-	param set RD_MISS_SPD_DEF 1.5
+	param set RD_MAX_SPEED 2.9
+	param set RD_MISS_SPD_DEF 2.0
+	param set RD_RATE_ZTRQ 0.08
 
 	param set SYS_HAS_BARO 0
 	param set EKF2_BARO_CTRL 0

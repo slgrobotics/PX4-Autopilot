@@ -263,14 +263,11 @@ private:
 	// PID controller for the speed:
 	PID_t _speed_ctrl{};
 
-	// PID controller for the Line Following:
-	PID_t _line_following_ctrl{};
-	float _max_yaw_rate{0.f};
-
 	// The PID controller for the heading (calculates yaw rate):
 	PID_t _pid_heading;
 	// The PID controller for yaw rate (calculates wheels speed difference)
 	PID_t _pid_yaw_rate;
+	float _max_yaw_rate{0.f};
 
 	// Yaw rate controller:
 	RateControl _rate_control{};
@@ -589,6 +586,7 @@ private:
 	DEFINE_PARAMETERS(
 		(ParamFloat<px4::params::RD_HEADING_P>) _param_rd_p_gain_heading,
 		(ParamFloat<px4::params::RD_HEADING_I>) _param_rd_i_gain_heading,
+		(ParamFloat<px4::params::RD_HEADING_D>) _param_rd_d_gain_heading,
 		(ParamFloat<px4::params::RD_SPEED_P>) _param_rd_p_gain_speed,
 		(ParamFloat<px4::params::RD_SPEED_I>) _param_rd_i_gain_speed,
 		(ParamFloat<px4::params::RD_MAX_SPEED>) _param_rd_max_speed,
@@ -611,15 +609,9 @@ private:
 		(ParamFloat<px4::params::RD_YAW_RATE_I>) _param_rd_i_gain_yaw_rate,
 		(ParamInt<px4::params::CA_R_REV>) _param_r_rev,
 
-		// PID controller for Line Following:
-		(ParamFloat<px4::params::GND_LF_P>) _param_line_following_p,
-		(ParamFloat<px4::params::GND_LF_I>) _param_line_following_i,
-		(ParamFloat<px4::params::GND_LF_D>) _param_line_following_d,
-		(ParamFloat<px4::params::GND_LF_IMAX>) _param_line_following_imax,
-		(ParamFloat<px4::params::GND_LF_MAX>) _param_line_following_max,
-
 		// Whether to use Yaw Rate Controller while line following:
 		(ParamInt<px4::params::GND_LF_USE_RATE>) _param_lf_use_rates_controller,
+		(ParamFloat<px4::params::GND_LF_P>) _param_line_following_p,
 
 		// PID-controlled speed setpoint, m/s:
 		(ParamFloat<px4::params::GND_SPEED_SP_EMA>) _param_speed_sp_ema_period,

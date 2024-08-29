@@ -282,25 +282,13 @@ void RoverPositionControl::updateParams()
 
 	_ekf_heading_correction = math::radians(_param_heading_err_decl.get());	// GND_HEADING_DECL
 
-	// to provide for Line Following when in modified Pursuit mode:
-	pid_init(&_line_following_ctrl, PID_MODE_DERIVATIV_CALC, MIN_PID_INTERVAL);
-	pid_set_parameters(&_line_following_ctrl,
-			   _param_line_following_p.get(),	// GND_LF_P
-			   _param_line_following_i.get(),
-			   _param_line_following_d.get(),
-			   _param_line_following_imax.get(),
-			   _param_line_following_max.get());
-
-	pid_reset_integral(&_line_following_ctrl);
-
-
 	pid_init(&_pid_heading, PID_MODE_DERIVATIV_CALC, MIN_PID_INTERVAL);
 
 	_max_yaw_rate = math::radians(_param_rd_max_yaw_rate.get());	// RD_MAX_YAW_RATE
 	pid_set_parameters(&_pid_heading,
 			   _param_rd_p_gain_heading.get(),  // Proportional gain - RD_HEADING_P
 			   _param_rd_i_gain_heading.get(),  // Integral gain - RD_HEADING_I
-			   _param_line_following_d.get(),  // Derivative gain - GND_LF_D
+			   _param_rd_d_gain_heading.get(),  // Derivative gain - RD_HEADING_D
 			   _max_yaw_rate,  // Integral limit
 			   _max_yaw_rate);  // Output limit
 
