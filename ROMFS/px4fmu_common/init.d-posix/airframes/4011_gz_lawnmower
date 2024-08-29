@@ -51,15 +51,15 @@ param set CA_AIRFRAME 6
 
 # Rover parameters
 param set-default RD_WHEEL_TRACK 0.9
-param set-default RD_HEADING_P 10.0
-param set-default RD_HEADING_I 0.01
-param set-default RD_YAW_RATE_I 0.08
-param set-default RD_YAW_RATE_P 0.6
-param set-default RD_MAX_YAW_RATE 30
 param set-default RD_MAN_YAW_SCALE 0.25
-param set-default RD_MAX_ACCEL 0.5
+param set-default RD_YAW_RATE_I 0.08
+param set-default RD_YAW_RATE_P 5
+param set-default RD_MAX_ACCEL 1
 param set-default RD_MAX_JERK 0.3
 param set-default RD_MAX_SPEED 2.9
+param set-default RD_YAW_P 8
+param set-default RD_YAW_I 0.01
+param set-default RD_MAX_YAW_RATE 30
 param set-default RD_MISS_SPD_DEF 2.0
 
 # Lawnmower parameters to scale Differential Drive Kinematics output:
