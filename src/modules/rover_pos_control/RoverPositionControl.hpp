@@ -265,8 +265,6 @@ private:
 
 	// The PID controller for the heading (calculates yaw rate):
 	PID_t _pid_heading;
-	// The PID controller for yaw rate (calculates wheels speed difference)
-	PID_t _pid_yaw_rate;
 	float _max_yaw_rate{0.f};
 
 	// Yaw rate controller:
@@ -598,15 +596,13 @@ private:
 		(ParamFloat<px4::params::RD_TRANS_TRN_DRV>) _param_rd_trans_trn_drv,
 		(ParamFloat<px4::params::RD_TRANS_DRV_TRN>) _param_rd_trans_drv_trn,
 
-		(ParamFloat<px4::params::RD_RATE_FRW>) _param_rd_rate_frw,
+		(ParamFloat<px4::params::RD_RATE_CORW>) _param_rd_rate_corw,
 		(ParamFloat<px4::params::RD_RATE_ZTRQ>) _param_rd_rate_ztrq,
 		(ParamFloat<px4::params::RD_RATE_FTRQ>) _param_rd_rate_ftrq,
 
 		// R/C yaw scaler to control right stick horizontal movement effect, avoiding too sensitive feel:
 		(ParamFloat<px4::params::RD_MAN_YAW_SCALE>) _param_rd_man_yaw_scale,
 		(ParamFloat<px4::params::RD_WHEEL_TRACK>) _param_rd_wheel_track,
-		(ParamFloat<px4::params::RD_YAW_RATE_P>) _param_rd_p_gain_yaw_rate,
-		(ParamFloat<px4::params::RD_YAW_RATE_I>) _param_rd_i_gain_yaw_rate,
 		(ParamInt<px4::params::CA_R_REV>) _param_r_rev,
 
 		// Whether to use Yaw Rate Controller while line following:

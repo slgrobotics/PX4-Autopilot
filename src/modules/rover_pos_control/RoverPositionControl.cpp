@@ -388,20 +388,20 @@ RoverPositionControl::control_yaw_rate()
 
 	//PX4_WARN("mission_torque_effort: %.3f   steering_input: %.3f", (double)_mission_torque_effort, (double)steering_input);
 
-	float yaw_error_abs = fabsf(yaw_rate_setpoint - _z_yaw_rate);
-	float yaw_error_treshold = math::radians(_param_rd_rate_frw.get()); // RD_RATE_FRW [deg/s] "freewheeling" threshold
+	const float rate_corridor_width = _param_rd_rate_corw.get() / 2.0f;	// RD_RATE_CORW
 
-	if (yaw_error_treshold > FLT_EPSILON && yaw_error_abs < yaw_error_treshold && PX4_ISFINITE(_crosstrack_error)
-	    && _crosstrack_error < 0.1f) {
+	if (rate_corridor_width > FLT_EPSILON
+	    && abs(yaw_rate_setpoint) < 0.1f
+	    && PX4_ISFINITE(_crosstrack_error) && abs(_crosstrack_error) < rate_corridor_width) {
 
-		// Close to centerline, low yaw rate - accelerated law:
+		// Close to centerline and almost pointed parallel to line - accelerated law:
 
 		// RD_RATE_FTRQ - a close-to-line multiplier:
 		steering_input *= _param_rd_rate_ftrq.get();
 
-		PX4_WARN("YAW RATE FREEWHEELING sp: %.4f  yaw_rate: %.4f   diff: %.4f", (double)yaw_rate_setpoint, (double)_z_yaw_rate,
-			 (double)fabsf(yaw_rate_setpoint - _z_yaw_rate));
-
+		//PX4_WARN("YAW RATE CORRIDOR yaw_rate_sp: %.4f  yaw_rate: %.4f   steering: %.4f",
+		//	 (double)yaw_rate_setpoint, (double)_z_yaw_rate,
+		//	 (double)steering_input);
 	}
 
 	return math::constrain(steering_input, -1.0f, 1.0f);

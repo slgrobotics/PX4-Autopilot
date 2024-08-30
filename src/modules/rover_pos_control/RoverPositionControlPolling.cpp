@@ -292,15 +292,6 @@ void RoverPositionControl::updateParams()
 			   _max_yaw_rate,  // Integral limit
 			   _max_yaw_rate);  // Output limit
 
-	pid_init(&_pid_yaw_rate, PID_MODE_DERIVATIV_CALC, MIN_PID_INTERVAL);
-
-	pid_set_parameters(&_pid_yaw_rate,
-			   _param_rd_p_gain_yaw_rate.get(), // Proportional gain - RD_YAW_RATE_P
-			   _param_rd_i_gain_yaw_rate.get(), // Integral gain - RD_YAW_RATE_I
-			   _param_rate_d.get(), // Derivative gain - GND_RATE_D
-			   1.f, // Integral limit
-			   1.f); // Output limit
-
 	// Turn rate control parameters (z-axis only):
 	_rate_control.setPidGains(matrix::Vector3f(0.0f, 0.0f, _param_rate_p.get()),	// GND_RATE_P
 				  matrix::Vector3f(0.0f, 0.0f, _param_rate_i.get()),
