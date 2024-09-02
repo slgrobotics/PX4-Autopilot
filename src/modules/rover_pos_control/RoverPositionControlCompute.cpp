@@ -114,12 +114,25 @@ float RoverPositionControl::computeTorqueEffort()
 
 			_rates_setpoint.yaw = _mission_yaw_rate_setpoint;
 
-			if (_param_lf_use_rates_controller.get() > 0) {	// GND_LF_USE_RATE
-				torque_effort = control_yaw_rate();
-
-			} else {
-				// derived directly from _nav_bearing, no PIDs involved
+			switch (_param_lf_use_rates_controller.get()) {	// GND_LF_USE_RATE
+			case 0:
+				// 0 - no heading PID or Rate Control
+				// torque_effort derived directly from _nav_bearing. Ignore _mission_yaw_rate_setpoint
 				torque_effort = _heading_error * _param_line_following_p.get();	// GND_LF_P
+				torque_effort = math::constrain(torque_effort, -0.5f, 0.5f);
+				break;
+
+			case 1:
+				// 1 - just heading PID
+				// torque_effort derived directly from heading PID output, _mission_yaw_rate_setpoint
+				torque_effort = _mission_yaw_rate_setpoint * _param_line_following_p.get();	// GND_LF_P
+				torque_effort = math::constrain(torque_effort, -0.5f, 0.5f);
+				break;
+
+			case 2:
+				// 2 - heading PID and Rate Control
+				torque_effort = control_yaw_rate();
+				break;
 			}
 
 			/*

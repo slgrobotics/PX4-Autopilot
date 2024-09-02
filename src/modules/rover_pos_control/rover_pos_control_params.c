@@ -53,11 +53,13 @@
 /**
  * When in Line Following State, use Rate Controller for yaw output
  *
+ * 0 - no PID or Rate Control, 1 - just PID, 2 - PID and Rate Control
+ *
  * @min 0
- * @max 1
+ * @max 2
  * @group Rover Position Control
  */
-PARAM_DEFINE_INT32(GND_LF_USE_RATE, 1);
+PARAM_DEFINE_INT32(GND_LF_USE_RATE, 2);
 
 /**
  * Line Following proportional gain for heading error when GND_LF_USE_RATE=0
@@ -655,7 +657,7 @@ PARAM_DEFINE_INT32(GND_MAN_STRAIGHT, 0);
  * @increment 0.01
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(RD_RATE_CORW, 0.0f);
+PARAM_DEFINE_FLOAT(RD_RATE_CORW, 0.3f);
 
 /**
  * A "torque correction" - torque multiplier when we just need to go straight
@@ -667,7 +669,7 @@ PARAM_DEFINE_FLOAT(RD_RATE_CORW, 0.0f);
  * @increment 0.01
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(RD_RATE_FTRQ, 1.0f);
+PARAM_DEFINE_FLOAT(RD_RATE_FTRQ, 5.0f);
 
 /**
  * A "zero torque correction" - added to torque value at all times
