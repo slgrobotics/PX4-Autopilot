@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2022 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2024 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,58 +31,63 @@
  *
  ****************************************************************************/
 
-#ifndef OPEN_DRONE_ID_BASIC_ID_HPP
-#define OPEN_DRONE_ID_BASIC_ID_HPP
+#ifndef OPEN_DRONE_ID_ARM_STATUS_HPP
+#define OPEN_DRONE_ID_ARM_STATUS_HPP
 
-#include <uORB/topics/vehicle_status.h>
-#include <modules/mavlink/open_drone_id_translations.hpp>
+#include <uORB/topics/open_drone_id_arm_status.h>
 
-class MavlinkStreamOpenDroneIdBasicId : public MavlinkStream
+class MavlinkStreamOpenDroneIdArmStatus : public MavlinkStream
 {
 public:
-	static MavlinkStream *new_instance(Mavlink *mavlink) { return new MavlinkStreamOpenDroneIdBasicId(mavlink); }
+	static MavlinkStream *new_instance(Mavlink *mavlink)
+	{
+		return new MavlinkStreamOpenDroneIdArmStatus(mavlink);
+	}
 
-	static constexpr const char *get_name_static() { return "OPEN_DRONE_ID_BASIC_ID"; }
-	static constexpr uint16_t get_id_static() { return MAVLINK_MSG_ID_OPEN_DRONE_ID_BASIC_ID; }
+	static constexpr const char *get_name_static()
+	{
+		return "OPEN_DRONE_ID_ARM_STATUS";
+	}
+	static constexpr uint16_t get_id_static()
+	{
+		return MAVLINK_MSG_ID_OPEN_DRONE_ID_ARM_STATUS;
+	}
 
 	const char *get_name() const override { return get_name_static(); }
 	uint16_t get_id() override { return get_id_static(); }
 
 	unsigned get_size() override
 	{
-		return _vehicle_status_sub.advertised() ? MAVLINK_MSG_ID_OPEN_DRONE_ID_BASIC_ID_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES : 0;
+		return _open_drone_id_arm_status_sub.advertised()
+		       ? MAVLINK_MSG_ID_OPEN_DRONE_ID_ARM_STATUS_LEN +
+		       MAVLINK_NUM_NON_PAYLOAD_BYTES
+		       : 0;
 	}
 
 private:
-	explicit MavlinkStreamOpenDroneIdBasicId(Mavlink *mavlink) : MavlinkStream(mavlink) {}
+	explicit MavlinkStreamOpenDroneIdArmStatus(Mavlink *mavlink)
+		: MavlinkStream(mavlink) {}
 
-	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
-
-
+	uORB::Subscription _open_drone_id_arm_status_sub{ORB_ID(open_drone_id_arm_status)};
 
 	bool send() override
 	{
-		vehicle_status_s vehicle_status;
+		open_drone_id_arm_status_s drone_id_arm;
 
-		if (_vehicle_status_sub.update(&vehicle_status)) {
+		if (_open_drone_id_arm_status_sub.update(&drone_id_arm)) {
 
-			mavlink_open_drone_id_basic_id_t msg{};
+			mavlink_open_drone_id_arm_status_t msg{};
 
-			msg.target_system = 0; // 0 for broadcast
-			msg.target_component = 0; // 0 for broadcast
-			// msg.id_or_mac // Only used for drone ID data received from other UAs.
+			msg.status = drone_id_arm.status;
 
-			// id_type: MAV_ODID_ID_TYPE
-			msg.id_type = MAV_ODID_ID_TYPE_SERIAL_NUMBER;
+			for (uint8_t i = 0; i < sizeof(drone_id_arm.error); ++i) {
 
-			// ua_type: MAV_ODID_UA_TYPE
-			msg.ua_type = open_drone_id_translations::odidTypeForMavType(vehicle_status.system_type);
+				msg.error[i] = drone_id_arm.error[i];
 
-			// uas_id: UAS (Unmanned Aircraft System) ID following the format specified by id_type
-			// TODO: MAV_ODID_ID_TYPE_SERIAL_NUMBER needs to be ANSI/CTA-2063 format
-			board_get_px4_guid_formated((char *)(msg.uas_id), sizeof(msg.uas_id));
+			}
 
-			mavlink_msg_open_drone_id_basic_id_send_struct(_mavlink->get_channel(), &msg);
+			mavlink_msg_open_drone_id_arm_status_send_struct(_mavlink->get_channel(),
+					&msg);
 
 			return true;
 		}
@@ -91,4 +96,4 @@ private:
 	}
 };
 
-#endif // OPEN_DRONE_ID_BASIC_ID_HPP
+#endif // OPEN_DRONE_ID_ARM_STATUS_HPP
