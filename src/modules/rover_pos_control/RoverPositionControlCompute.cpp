@@ -210,7 +210,7 @@ void RoverPositionControl::computeWheelSpeeds()
 			(double)_torque_control, (double)_wheel_speeds(0), (double)_wheel_speeds(1));
 	*/
 
-	if (!_control_mode.flag_armed) {
+	if (!_armed) {
 		_wheel_speeds = {0.0f, 0.0f}; // stop
 	}
 
@@ -244,7 +244,7 @@ void RoverPositionControl::adjustThrustAndTorque()
 {
 	// computes _mission_thrust (by PID or for slowing down) and computes _mission_torque_effort from _mission_yaw_rate_setpoint (for more gentle turns).
 
-	if (!_control_mode.flag_armed) {
+	if (!_armed) {
 
 		resetRdGuidance();
 
@@ -294,17 +294,22 @@ void RoverPositionControl::adjustThrustAndTorque()
 	}
 
 	if (!PX4_ISFINITE(_mission_thrust_effort)) {
-		resetTorqueControls();
-		resetThrustControls();
+		resetControllers();
 	}
+}
+
+void RoverPositionControl::resetControllers()
+{
+	resetTorqueControls();
+	resetThrustControls();
 }
 
 void RoverPositionControl::resetTorqueControls()
 {
 	//PX4_WARN("resetTorqueControls");
 
-	_rate_control.resetIntegral();
 	pid_reset_integral(&_pid_heading);
+	_rate_control.resetIntegral();
 
 	_mission_torque_ema.Reset();
 }

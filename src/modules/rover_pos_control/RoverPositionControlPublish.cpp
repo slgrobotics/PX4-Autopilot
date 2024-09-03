@@ -127,7 +127,7 @@ void RoverPositionControl::publishAuxActuators(const hrt_abstime &timestamp_samp
 	// param set PCA9685_FUNC7 207    // 408 - right knob
 	// param set PCA9685_FUNC8 208
 
-	bool strobe_on = _vehicle_status.nav_state == vehicle_status_s::NAVIGATION_STATE_AUTO_MISSION;
+	bool strobe_on = _nav_state == vehicle_status_s::NAVIGATION_STATE_AUTO_MISSION;
 
 	//bool horn_on = _alarm_dev_level > SIGMA;
 	bool horn_on = !_control_mode.flag_control_manual_enabled &&

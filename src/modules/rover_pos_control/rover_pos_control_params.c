@@ -253,7 +253,7 @@ PARAM_DEFINE_FLOAT(GND_SPEED_SP_EMA, 5);
  * @decimal 1
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_ACCEL_DIST, 1.0f);
+PARAM_DEFINE_FLOAT(GND_ACCEL_DIST, 0.1f);
 
 /**
  * Distance to decelerate to a waypoint

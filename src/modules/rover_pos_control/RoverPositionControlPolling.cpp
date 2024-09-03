@@ -105,7 +105,7 @@ void RoverPositionControl::poll_everything()
 
 #ifdef DEBUG_MY_PRINT
 
-	unsigned long long gps_fix_warn_period = _control_mode.flag_armed ? 2_s : 20_s; // seconds
+	unsigned long long gps_fix_warn_period = _armed ? 2_s : 20_s; // seconds
 
 	// See GND_GPS_MINFIX
 	if (_sensor_gps_data.fix_type < _gps_minfix
@@ -234,7 +234,7 @@ void RoverPositionControl::poll_everything()
 
 		/* this doesn't seem to work with real RTK GPS. Velocities seem to match in SITL:
 		if (_sensor_gps_data.vel_ned_valid) {
-			if(_control_mode.flag_armed) {
+			if(_armed) {
 				PX4_INFO_RAW("V subst:   X: %.3f -> %.3f   Y: %.3f -> %.3f\n",
 					(double)_local_pos.vx, (double)_sensor_gps_data.vel_n_m_s,
 					(double)_local_pos.vy, (double)_sensor_gps_data.vel_e_m_s);
@@ -886,6 +886,9 @@ RoverPositionControl::vehicle_status_poll()
 	if (_vehicle_status_sub.updated()) {
 		_vehicle_status_sub.copy(&_vehicle_status);
 #ifdef DEBUG_MY_PRINT
+
+		_nav_state = _vehicle_status.nav_state;
+		_armed = _vehicle_status.arming_state == vehicle_status_s::ARMING_STATE_ARMED;
 
 		if (_tracing_lev > 4) {
 			//PX4_INFO("Vehicle Status change detected");

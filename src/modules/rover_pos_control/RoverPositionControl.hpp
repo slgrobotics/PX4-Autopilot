@@ -267,6 +267,9 @@ private:
 	PID_t _pid_heading;
 	float _max_yaw_rate{0.f};
 
+	int _nav_state{0};
+	bool _armed{false};
+
 	// Yaw rate controller:
 	RateControl _rate_control{};
 
@@ -317,6 +320,7 @@ private:
 	void computeWheelSpeeds();
 	void computeCrosstrackError();
 	void adjustThrustAndTorque();
+	void resetControllers();
 	void resetTorqueControls();
 	void resetThrustControls();
 	void setMaxLegSpeed();

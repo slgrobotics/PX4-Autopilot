@@ -263,7 +263,7 @@ void RoverPositionControl::debugPrintAll()
 	if (_tracing_lev > 1) {
 		PX4_INFO_RAW("---    misn_vel_sp: %.4f   misn_thrust_eff: %.4f   nav_state: %d\n",
 			     (double)_mission_velocity_setpoint, (double)_mission_thrust_effort,
-			     (int)_vehicle_status.nav_state);
+			     (int)_nav_state);
 
 		PX4_INFO_RAW("---    misn_turn_sp: %.4f  misn_torq_effrt: %.4f  cnt_run: %d  cnt_calc: %d\n",
 			     (double)_mission_yaw_rate_setpoint, (double)_mission_torque_effort, _cnt_run, _cnt_calc);

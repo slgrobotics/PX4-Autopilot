@@ -226,7 +226,7 @@ RoverPositionControl::control_position(const matrix::Vector2d &current_position)
 	// _vehicle_status.nav_state will be MAIN_STATE_AUTO_MISSION = 3 at the mission, and MAIN_STATE_AUTO_LOITER = 4 at the go-to
 
 	if (_pos_sp_triplet.current.type != position_setpoint_s::SETPOINT_TYPE_LOITER
-	    || _vehicle_status.nav_state != vehicle_status_s::NAVIGATION_STATE_AUTO_MISSION) {
+	    || _nav_state != vehicle_status_s::NAVIGATION_STATE_AUTO_MISSION) {
 
 		updateWaypointDistances();
 
@@ -315,11 +315,6 @@ RoverPositionControl::control_yaw_rate()
 	// code below is a combination of:
 	//                                  https://github.com/PX4/PX4-Autopilot/pull/20082
 	//                              and src/modules/mc_rate_control/MulticopterRateControl.cpp:185+
-
-	// reset integral if disarmed
-	if (!_control_mode.flag_armed) {
-		_rate_control.resetIntegral();
-	}
 
 #ifdef PUBLISH_THRUST_TORQUE
 	// update saturation status from control allocation feedback (only if CA is configured)
@@ -492,6 +487,10 @@ RoverPositionControl::Run()
 		control_position_manual();
 	}
 
+	if (!_armed) { // Reset on disarm
+		resetControllers();
+	}
+
 	//
 	// note: we come here at kINTERVAL (100/500 Hz?), as scheduled
 	//
@@ -546,7 +545,7 @@ void RoverPositionControl::control_position_manual()
 
 	manual_control_setpoint_poll();		// R/C inputs, fills _torque_control_manual, _thrust_control_manual
 
-	if (_control_mode.flag_armed) {
+	if (_armed) {
 #if defined(CONFIG_ARCH_BOARD_PX4_SITL)
 		_manual_using_pids = _param_manual_use_pid.get() >
 				     0; // you can set GND_MAN_USE_PID=1 when running sim on a PC to debug PID response

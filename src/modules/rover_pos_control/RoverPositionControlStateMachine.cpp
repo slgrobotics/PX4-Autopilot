@@ -89,7 +89,7 @@ void RoverPositionControl::workStateMachine()
 			 control_state_name(_pos_ctrl_state),
 			 _pos_sp_triplet.current.valid ? "Y" : "N",
 			 _pos_sp_triplet.previous.valid ? "Y" : "N",
-			 _vehicle_status.nav_state);
+			 _nav_state);
 
 		PX4_INFO("           mission_result - valid: %s  finished: %s ",
 			 _mission_result.valid ? "Y" : "N",
@@ -99,7 +99,7 @@ void RoverPositionControl::workStateMachine()
 			// we can have a LOITER waypoint arriving (1) on mission end and (2) when "Go to this point" is clicked on the map at any time.
 			// _vehicle_status.nav_state will be MAIN_STATE_AUTO_MISSION = 3 at the mission, and MAIN_STATE_AUTO_LOITER = 4 at go-to
 
-			if (_vehicle_status.nav_state == vehicle_status_s::NAVIGATION_STATE_AUTO_MISSION) {
+			if (_nav_state == vehicle_status_s::NAVIGATION_STATE_AUTO_MISSION) {
 				if (_mission_result.valid && !_mission_result.finished && !_pos_sp_triplet.previous.valid) {
 					PX4_WARN("A new setpoint arrived, and it is the first one in the mission");
 					setStateMachineState(POS_STATE_MISSION_START); // A new waypoint has arrived, and it is the first one in the mission
@@ -285,15 +285,14 @@ void RoverPositionControl::workStateMachine()
 
 					} else {
 
-						if (_param_accel_dist.get() > FLT_EPSILON) {
+						if (_accel_dist > FLT_EPSILON) {
 							setStateMachineState(WP_DEPARTING);		// turned towards next waypoint, can depart now
 
 						} else {
-							// special case: GND_ACCEL_DIST = 0 to eliminate Departure state overall
-							_accel_dist = 0.0f;
-							_decel_dist = _wp_current_dist + 0.2f;
+							PX4_WARN("Special case: GND_ACCEL_DIST = 0 to eliminate Departure state overall");
 							_cutter_setpoint = ACTUATOR_ON;
 							setStateMachineState(L1_GOTO_WAYPOINT);
+							cte_begin(); // just invalidate _crosstrack_error_avg to avoid confusion
 						}
 					}
 				}
@@ -364,7 +363,7 @@ void RoverPositionControl::workStateMachine()
 
 				if (updateBearings()) {
 
-					if (fabsf(_heading_error) > 1.0f && PX4_ISFINITE(_wp_previous_dist) && _wp_previous_dist > _accel_dist * 1.5f) {
+					if (fabsf(_heading_error) > 1.0f && PX4_ISFINITE(_wp_previous_dist) && _wp_previous_dist > 1.0f) {
 #ifdef DEBUG_MY_PRINT
 						PX4_INFO("==== Overshot: aceptnce_rad: %.2f  hdng_err: %.2f", (double)_acceptance_radius,
 							 (double)math::degrees(_heading_error));
@@ -412,6 +411,12 @@ void RoverPositionControl::workStateMachine()
 							_mission_yaw_rate_setpoint = _rd_guidance.desired_yaw_rate;
 
 						} else {
+#ifdef DEBUG_MY_PRINT
+							PX4_INFO("==== _nav_bearing NAN: aceptnce_rad: %.2f  hdng_err: %.2f", (double)_acceptance_radius,
+								 (double)math::degrees(_heading_error));
+
+							debugPrintAll();
+#endif // DEBUG_MY_PRINT
 							_heading_error = NAN;
 							resetRdGuidance();
 							setStateMachineState(WP_ARRIVING);
