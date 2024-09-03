@@ -231,9 +231,23 @@ void RoverPositionControl::workStateMachine()
 
 		break;
 
-	case WP_TURNING: // we need to turn in place towards the next waypoint
+	case WP_TURNING: // we need to turn in place towards the line or the next waypoint
 
 		if (updateBearings()) {
+
+			const float yaw = _current_heading;	// The yaw orientation of the vehicle in radians.
+			float actual_speed = _x_vel_ema;	// The forward velocity of the vehicle on the plane.
+
+			_nav_bearing = _stanley_pursuit.calcDesiredHeading(_curr_wp_ned, _prev_wp_ned, _curr_pos_ned,
+					actual_speed);
+
+			if (PX4_ISFINITE(_nav_bearing)) {
+
+				// make Pursuit heading error global:
+				_heading_error = matrix::wrap_pi(_nav_bearing - yaw);
+
+				_heading_error = math::constrain(_heading_error, -1.0f, 1.0f); // +- 60 degrees
+			}
 
 			if (math::abs_t(_heading_error) < math::radians(_param_turn_precision.get())) {	// GND_TURN_PRECISN, degrees
 
@@ -286,10 +300,21 @@ void RoverPositionControl::workStateMachine()
 					} else {
 
 						if (_accel_dist > FLT_EPSILON) {
+#ifdef DEBUG_MY_PRINT
+							PX4_INFO_RAW("---    trgt_berng: %.2f    nav_berng: %.2f   hdg_err: %.2f\n",
+								     (double) math::degrees(_target_bearing),
+								     (double) math::degrees(_nav_bearing), (double)math::degrees(_heading_error));
+#endif // DEBUG_MY_PRINT
+
 							setStateMachineState(WP_DEPARTING);		// turned towards next waypoint, can depart now
 
 						} else {
+#ifdef DEBUG_MY_PRINT
 							PX4_WARN("Special case: GND_ACCEL_DIST = 0 to eliminate Departure state overall");
+							PX4_INFO_RAW("---    trgt_berng: %.2f    nav_berng: %.2f   hdg_err: %.2f\n",
+								     (double) math::degrees(_target_bearing),
+								     (double) math::degrees(_nav_bearing), (double)math::degrees(_heading_error));
+#endif // DEBUG_MY_PRINT
 							_cutter_setpoint = ACTUATOR_ON;
 							setStateMachineState(L1_GOTO_WAYPOINT);
 							cte_begin(); // just invalidate _crosstrack_error_avg to avoid confusion
