@@ -144,7 +144,9 @@ void RoverPositionControl::workStateMachine()
 
 		if (updateBearings()) {
 
-			computeRdGuidance();
+			// Intentionally not using Pursuit here, just raw  _heading_error
+
+			computeRdGuidance();	// takes _heading_error, computes desired speed and yaw rate in _rd_guidance
 
 			_mission_velocity_setpoint = _rd_guidance.desired_speed;
 			_mission_yaw_rate_setpoint = _rd_guidance.desired_yaw_rate;
@@ -177,12 +179,6 @@ void RoverPositionControl::workStateMachine()
 #endif // DEBUG_MY_PRINT
 
 				setStateMachineState(L1_GOTO_WAYPOINT);
-
-			} else {
-				// See above when we analyzed how close to target wp we are, to switch to POS_STATE_STOPPING
-				// Here we just head straight to target wp:
-
-				_mission_yaw_rate_setpoint = computeYawRateSetpoint();
 			}
 
 #ifdef DEBUG_MY_PRINT
@@ -235,18 +231,8 @@ void RoverPositionControl::workStateMachine()
 
 		if (updateBearings()) {
 
-			const float yaw = _current_heading;	// The yaw orientation of the vehicle in radians.
-			float actual_speed = _x_vel_ema;	// The forward velocity of the vehicle on the plane.
-
-			_nav_bearing = _stanley_pursuit.calcDesiredHeading(_curr_wp_ned, _prev_wp_ned, _curr_pos_ned,
-					actual_speed);
-
-			if (PX4_ISFINITE(_nav_bearing)) {
-
-				// make Pursuit heading error global:
-				_heading_error = matrix::wrap_pi(_nav_bearing - yaw);
-
-				_heading_error = math::constrain(_heading_error, -1.0f, 1.0f); // +- 60 degrees
+			if (!computePursuitHeadingError(1.0f)) {  // +- 60 degrees
+				PX4_WARN("WP_TURNING - nav_bearing NAN");
 			}
 
 			if (math::abs_t(_heading_error) < math::radians(_param_turn_precision.get())) {	// GND_TURN_PRECISN, degrees
@@ -306,7 +292,7 @@ void RoverPositionControl::workStateMachine()
 								     (double) math::degrees(_nav_bearing), (double)math::degrees(_heading_error));
 #endif // DEBUG_MY_PRINT
 
-							setStateMachineState(WP_DEPARTING);		// turned towards next waypoint, can depart now
+							setStateMachineState(WP_DEPARTING);	// turned towards next waypoint, can depart now
 
 						} else {
 #ifdef DEBUG_MY_PRINT
@@ -323,9 +309,19 @@ void RoverPositionControl::workStateMachine()
 				}
 
 			} else {
-				_mission_yaw_rate_setpoint = computeYawRateSetpoint();
-				const float turn_speed = _param_turn_speed.get();	// GND_TURN_SPEED
-				_mission_velocity_setpoint = abs(turn_speed) < FLT_EPSILON ? NAN : turn_speed;
+				// just take the sign of Heading error to set a constant Mission Yaw Rate Setpoint:
+				float turning_setpoint = PX4_ISFINITE(_heading_error) ? _heading_error : 0.0f;
+
+				if (abs(turning_setpoint) < FLT_EPSILON) {
+
+					_mission_yaw_rate_setpoint = 0.0f; // unlikely to get here
+
+				} else {
+					// Just use constant yaw rate - GND_TURN_RATE, deg/s:
+					_mission_yaw_rate_setpoint = sign(turning_setpoint) * math::radians(_param_turn_rate_sp.get());
+				}
+
+				_mission_velocity_setpoint = _param_turn_speed.get();	// GND_TURN_SPEED
 
 #ifdef DEBUG_MY_PRINT
 				debugPrintArriveDepart();
@@ -345,15 +341,18 @@ void RoverPositionControl::workStateMachine()
 
 		if (updateBearings()) {
 
-			computeRdGuidance();
+			if (!computePursuitHeadingError(0.2f)) {  // +- 11 degrees
+				PX4_WARN("WP_DEPARTING - nav_bearing NAN");
+			}
+
+			computeRdGuidance();	// takes _heading_error, computes desired speed and yaw rate in _rd_guidance
 
 			_mission_velocity_setpoint = _rd_guidance.desired_speed;
 			_mission_yaw_rate_setpoint = _rd_guidance.desired_yaw_rate;
 
-			if (_wp_previous_dist < _accel_dist) {
-				_mission_yaw_rate_setpoint = computeYawRateSetpoint();
+			if (_wp_previous_dist < _accel_dist) {  // TODO: is_first_leg here?
 
-				// we can turn on tools (cutting deck) as we know the previous waypoint exists, i.e. we are on the business part of the mission:
+				// just turn on tools (cutting deck) - we are on the business part of the mission:
 				_cutter_setpoint = ACTUATOR_ON;
 
 #ifdef DEBUG_MY_PRINT
@@ -404,29 +403,11 @@ void RoverPositionControl::workStateMachine()
 
 						// We are far from destination and more or less are pointed in its direction.
 
-						// see src/modules/rover_differential/RoverDifferentialGuidance/RoverDifferentialGuidance.cpp
-
-						const float yaw = _current_heading;	// The yaw orientation of the vehicle in radians.
-						float actual_speed = _x_vel_ema;	// The forward velocity of the vehicle on the plane.
-
-						/*
-						_nav_bearing = _pure_pursuit.calcDesiredHeading(_curr_wp_ned, _prev_wp_ned, _curr_pos_ned,
-										math::max(actual_speed, 0.f));
-						*/
-
-						_nav_bearing = _stanley_pursuit.calcDesiredHeading(_curr_wp_ned, _prev_wp_ned, _curr_pos_ned,
-								actual_speed);
-
-						if (PX4_ISFINITE(_nav_bearing)) {
-
-							// make Pursuit heading error global:
-							_heading_error = matrix::wrap_pi(_nav_bearing - yaw);
-
-							_heading_error = math::constrain(_heading_error, -0.1f, 0.1f); // +- 6 degrees
+						if (computePursuitHeadingError(0.1f)) {  // +- 6 degrees
 
 							cte_compute();
 
-							computeRdGuidance();	// computes desired speed and yaw rate in _rd_guidance
+							computeRdGuidance();	// takes _heading_error, computes desired speed and yaw rate in _rd_guidance
 
 							// Computed setpoints:
 							// _rd_guidance.desired_speed;

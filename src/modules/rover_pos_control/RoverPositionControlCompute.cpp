@@ -49,13 +49,33 @@
 
 // computing actuator responses for heavy differential drive rover:
 
-float RoverPositionControl::computeYawRateSetpoint()
+bool RoverPositionControl::computePursuitHeadingError(float maxError)
 {
-	// In most states we just convert Heading error (radians) to Turning Setpoint. It could be scaled later:
-	float turning_setpoint = PX4_ISFINITE(_heading_error) ? _heading_error : 0.0f;
-	float max_turning_sp = 0.5f;
+	const float yaw = _current_heading;	// The yaw orientation of the vehicle in radians.
+	float actual_speed = _x_vel_ema;	// The forward velocity of the vehicle on the plane.
 
-	return math::constrain(turning_setpoint, -max_turning_sp, max_turning_sp);
+	/*
+	// see src/modules/rover_differential/RoverDifferentialGuidance/RoverDifferentialGuidance.cpp
+
+	_nav_bearing = _pure_pursuit.calcDesiredHeading(_curr_wp_ned, _prev_wp_ned, _curr_pos_ned,
+					math::max(actual_speed, 0.f));
+	*/
+
+	_nav_bearing = _stanley_pursuit.calcDesiredHeading(_curr_wp_ned, _prev_wp_ned, _curr_pos_ned,
+			actual_speed);
+
+	if (PX4_ISFINITE(_nav_bearing)) {
+
+		// make Pursuit heading error global:
+		_heading_error = matrix::wrap_pi(_nav_bearing - yaw);
+
+		_heading_error = math::constrain(_heading_error, -maxError, maxError);
+
+		return true;
+	}
+
+	// leaves  _heading_error intact:
+	return false;
 }
 
 void RoverPositionControl::computeRdGuidance()
@@ -148,9 +168,8 @@ float RoverPositionControl::computeTorqueEffort()
 
 	case WP_TURNING:
 
-		// Just use constant yaw rate - GND_TURN_RATE:
-		_rates_setpoint.yaw = sign(_mission_yaw_rate_setpoint)
-				      * math::radians(_param_turn_rate_sp.get()); // GND_TURN_RATE, deg/s
+		// Just use constant yaw rate:
+		_rates_setpoint.yaw = _mission_yaw_rate_setpoint; // set before to GND_TURN_RATE, deg/s
 
 		torque_effort = control_yaw_rate();
 

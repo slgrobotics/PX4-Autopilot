@@ -314,7 +314,7 @@ private:
 	void updateWaypointDistances();
 	void updateEkfGpsDeviation();
 	bool checkNewWaypointArrival();
-	float computeYawRateSetpoint();
+	bool computePursuitHeadingError(float maxError);
 	float computeTorqueEffort();
 	float computeThrustEffort();
 	void computeWheelSpeeds();
