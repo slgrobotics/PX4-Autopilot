@@ -245,7 +245,7 @@ PARAM_DEFINE_FLOAT(GND_SPEED_SP_EMA, 5);
 // ================  Acceleration (wp departure) and deceleration (wp arrival) tuning =========================
 
 /**
- * Distance to accelerate from a waypoint before using Pursuit control
+ * Distance to accelerate from a waypoint before using Stanley Pursuit control
  *
  * @unit m
  * @min 0.0
@@ -253,10 +253,10 @@ PARAM_DEFINE_FLOAT(GND_SPEED_SP_EMA, 5);
  * @decimal 1
  * @group Rover Position Control
  */
-PARAM_DEFINE_FLOAT(GND_ACCEL_DIST, 0.1f);
+PARAM_DEFINE_FLOAT(GND_ACCEL_DIST, 2.0f);
 
 /**
- * Distance to decelerate to a waypoint
+ * Distance to decelerate straight to a waypoint not using any Pursuit logic
  *
  * @unit m
  * @min 1.0

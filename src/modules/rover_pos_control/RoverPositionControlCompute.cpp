@@ -49,32 +49,42 @@
 
 // computing actuator responses for heavy differential drive rover:
 
-bool RoverPositionControl::computePursuitHeadingError(float maxError)
+bool RoverPositionControl::computePursuitHeadingError(int whichMethod, float maxError)
 {
 	const float yaw = _current_heading;	// The yaw orientation of the vehicle in radians.
 	float actual_speed = _x_vel_ema;	// The forward velocity of the vehicle on the plane.
 
-	/*
 	// see src/modules/rover_differential/RoverDifferentialGuidance/RoverDifferentialGuidance.cpp
 
-	_nav_bearing = _pure_pursuit.calcDesiredHeading(_curr_wp_ned, _prev_wp_ned, _curr_pos_ned,
-					math::max(actual_speed, 0.f));
-	*/
+	switch (whichMethod) {
+	case 0:
+		_nav_bearing = _pure_pursuit.calcDesiredHeading(_curr_wp_ned, _prev_wp_ned, _curr_pos_ned,
+				math::max(actual_speed, 0.f));
+		break;
 
-	_nav_bearing = _stanley_pursuit.calcDesiredHeading(_curr_wp_ned, _prev_wp_ned, _curr_pos_ned,
-			actual_speed);
+	default:
+		_nav_bearing = _stanley_pursuit.calcDesiredHeading(_curr_wp_ned, _prev_wp_ned, _curr_pos_ned,
+				actual_speed);
+		break;
+	}
 
 	if (PX4_ISFINITE(_nav_bearing)) {
 
 		// make Pursuit heading error global:
-		_heading_error = matrix::wrap_pi(_nav_bearing - yaw);
+		float nav_bearing_error = matrix::wrap_pi(_nav_bearing - yaw);
 
-		_heading_error = math::constrain(_heading_error, -maxError, maxError);
+		if (abs(nav_bearing_error) > maxError) {
+			PX4_WARN("Pursuit %d   nav_bearing_error %.2f > %.2f", whichMethod, (double)nav_bearing_error, (double)maxError);
+			return false;
+		}
+
+		_heading_error = nav_bearing_error;
 
 		return true;
 	}
 
 	// leaves  _heading_error intact:
+	PX4_WARN("Pursuit %d   nav_bearing NAN", whichMethod);
 	return false;
 }
 

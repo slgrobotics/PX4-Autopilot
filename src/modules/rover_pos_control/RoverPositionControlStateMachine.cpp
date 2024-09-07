@@ -60,10 +60,9 @@ void RoverPositionControl::workStateMachine()
 	// clear intermediate Pursuit variables:
 	_nav_bearing = NAN;
 	_target_bearing = NAN;
+	_heading_error = NAN;
 	_crosstrack_error = NAN;
 	_abbe_error = NAN;
-	_heading_error = NAN;
-	_nav_lateral_acceleration_demand = NAN;
 
 	// preset outputs. In certain cases (turning or moving must be stopped) NAN is returned:
 	resetRdGuidance();
@@ -231,8 +230,8 @@ void RoverPositionControl::workStateMachine()
 
 		if (updateBearings()) {
 
-			if (!computePursuitHeadingError(1.0f)) {  // +- 60 degrees
-				PX4_WARN("WP_TURNING - nav_bearing NAN");
+			if (!computePursuitHeadingError(0, 0.5f)) {  // Use PurePursuit, error +- 30 degrees
+				PX4_WARN("WP_TURNING - nav_bearing invalid");
 			}
 
 			if (math::abs_t(_heading_error) < math::radians(_param_turn_precision.get())) {	// GND_TURN_PRECISN, degrees
@@ -341,8 +340,8 @@ void RoverPositionControl::workStateMachine()
 
 		if (updateBearings()) {
 
-			if (!computePursuitHeadingError(0.2f)) {  // +- 11 degrees
-				PX4_WARN("WP_DEPARTING - nav_bearing NAN");
+			if (!computePursuitHeadingError(0, 0.2f)) {  // Use PurePursuit, error +- 11 degrees
+				PX4_WARN("WP_DEPARTING - nav_bearing invalid");
 			}
 
 			computeRdGuidance();	// takes _heading_error, computes desired speed and yaw rate in _rd_guidance
@@ -403,7 +402,7 @@ void RoverPositionControl::workStateMachine()
 
 						// We are far from destination and more or less are pointed in its direction.
 
-						if (computePursuitHeadingError(0.1f)) {  // +- 6 degrees
+						if (computePursuitHeadingError(1, 1.0f)) {  // Use StanleyPursuit, error +- 60 degrees
 
 							cte_compute();
 
@@ -418,7 +417,7 @@ void RoverPositionControl::workStateMachine()
 
 						} else {
 #ifdef DEBUG_MY_PRINT
-							PX4_INFO("==== _nav_bearing NAN: aceptnce_rad: %.2f  hdng_err: %.2f", (double)_acceptance_radius,
+							PX4_INFO("==== _nav_bearing invalid: aceptnce_rad: %.2f  hdng_err: %.2f", (double)_acceptance_radius,
 								 (double)math::degrees(_heading_error));
 
 							debugPrintAll();

@@ -51,7 +51,7 @@
 #include <lib/perf/perf_counter.h>
 #include <lib/pid/pid.h>
 #include <lib/rate_control/rate_control.hpp>
-//#include <lib/pure_pursuit/PurePursuit.hpp>
+#include <lib/pure_pursuit/PurePursuit.hpp>
 #include <lib/stanley_pursuit/StanleyPursuit.hpp>
 
 #include <px4_platform_common/px4_config.h>
@@ -273,7 +273,7 @@ private:
 	// Yaw rate controller:
 	RateControl _rate_control{};
 
-	//PurePursuit _pure_pursuit{this}; // Pure pursuit library
+	PurePursuit _pure_pursuit{this}; // Pure pursuit library
 	StanleyPursuit _stanley_pursuit{this}; // Stanley pursuit library
 
 	enum POS_CTRLSTATES : int {
@@ -314,7 +314,7 @@ private:
 	void updateWaypointDistances();
 	void updateEkfGpsDeviation();
 	bool checkNewWaypointArrival();
-	bool computePursuitHeadingError(float maxError);
+	bool computePursuitHeadingError(int whichMethod, float maxError); // 0=PurePursuit, 1=StanleyPursuit
 	float computeTorqueEffort();
 	float computeThrustEffort();
 	void computeWheelSpeeds();
@@ -521,7 +521,6 @@ private:
 	float _accel_dist{100.0f};		// meters
 	float _decel_dist{100.0f};		// meters
 	bool _isSharpTurn{true};		// when turn angle exceeds a threshold, we consider turn sharp
-	float _nav_lateral_acceleration_demand{0.0f};	// from _gnd_control, just stored here for tracing
 	float _wp_close_enough_rad{0.0f};	// when we consider waypoint reached
 	float _acceptance_radius{0.0f};		// if large enough, it will be used for mission advancement to next WP
 

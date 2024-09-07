@@ -446,7 +446,7 @@ void RoverPositionControl::debugPublishAll()
 	_dbg_array.data[i++] = _wp_next_dist;
 
 	// other important values:
-	_dbg_array.data[i++] = _nav_lateral_acceleration_demand;
+	_dbg_array.data[i++] = NAN; // TBD
 	_dbg_array.data[i++] = _mission_yaw_rate_setpoint;
 	_dbg_array.data[i++] = _wp_close_enough_rad;
 	_dbg_array.data[i++] = _acceptance_radius;
