@@ -54,17 +54,26 @@ bool RoverPositionControl::computePursuitHeadingError(int whichMethod, float max
 	const float yaw = _current_heading;	// The yaw orientation of the vehicle in radians.
 	float actual_speed = _x_vel_ema;	// The forward velocity of the vehicle on the plane.
 
+	float nav_bearing_pure =  _pure_pursuit.calcDesiredHeading(_curr_wp_ned, _prev_wp_ned, _curr_pos_ned,
+				  math::max(actual_speed, 0.f));
+
 	// see src/modules/rover_differential/RoverDifferentialGuidance/RoverDifferentialGuidance.cpp
 
 	switch (whichMethod) {
 	case 0:
-		_nav_bearing = _pure_pursuit.calcDesiredHeading(_curr_wp_ned, _prev_wp_ned, _curr_pos_ned,
-				math::max(actual_speed, 0.f));
+		_nav_bearing = nav_bearing_pure;
 		break;
 
 	default:
 		_nav_bearing = _stanley_pursuit.calcDesiredHeading(_curr_wp_ned, _prev_wp_ned, _curr_pos_ned,
 				actual_speed);
+
+		if (!PX4_ISFINITE(_nav_bearing) || matrix::wrap_pi(_nav_bearing - yaw) > maxError) {
+
+			// try Pure Pursuit if Stanley is not delivering
+			_nav_bearing = nav_bearing_pure;
+		}
+
 		break;
 	}
 

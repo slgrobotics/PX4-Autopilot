@@ -487,9 +487,7 @@ private:
 
 	// some values that we calculate locally to decide on throttling thrust near waypoints:
 	float _current_heading{0.0f};		// radians to absolute North, selected between EKF and GPS values above
-	float _current_heading_vel{NAN};	// radians to absolute North, derived from _local_pos.vx/vy, if _local_pos.v_xy_valid
-	float _heading_error{0.0f};		// radians
-	float _heading_error_vel{0.0f};		// radians - from _current_heading_vel above
+	float _heading_error{0.0f};		// radians. Positive - right turn, negative - left turn expected.
 	float _abbe_error{0.0f};		// meters, heading error at the target point
 
 	// 1.0 at gas throttle 0 (idle), GND_GTL_YAWF_MIN at 1(max gas):

@@ -188,14 +188,11 @@ void RoverPositionControl::poll_everything()
 			const Vector3f vel = R_to_body * _ground_speed;
 			_x_vel = vel(0);
 
-			_current_heading_vel = wrap_pi(atan2f(_local_pos.vy, _local_pos.vx));
-
 			const matrix::Vector2f gs2d(_ground_speed);
 			_ground_speed_2d = gs2d;
 
 		} else {
 			_x_vel = NAN;
-			_current_heading_vel = NAN;
 			_ground_speed = Vector3f{NAN, NAN, NAN};
 			_ground_speed_2d = Vector2f{NAN, NAN};
 			_ekf_ground_speed_abs = NAN;

@@ -180,9 +180,9 @@ void RoverPositionControl::debugPrintArriveDepart()
 					 (double)(_dt * 1000.0f));
 			*/
 
-			PX4_INFO_RAW("--- %s hdg_err: %.2f / %.2f abbe: %.2f m  turn_sp: %.4f  miss_torq_efrt: %.4f\n",
+			PX4_INFO_RAW("--- %s hdg_err: %.2f   abbe: %.2f m  turn_sp: %.4f  miss_torq_efrt: %.4f\n",
 				     control_state_name(_pos_ctrl_state),
-				     (double)math::degrees(_heading_error), (double)math::degrees(_heading_error_vel),
+				     (double)math::degrees(_heading_error),
 				     (double)_abbe_error, (double)_mission_yaw_rate_setpoint,
 				     (double)_mission_torque_effort);
 
@@ -219,9 +219,9 @@ void RoverPositionControl::debugPrintAll()
 		}
 
 		if (_tracing_lev < 4) {
-			PX4_INFO_RAW("---    trgt_berng: %.2f  curr_hdg: %.2f  hdg_error: %.2f / %.2f\n",
+			PX4_INFO_RAW("---    trgt_berng: %.2f  curr_hdg: %.2f  hdg_error: %.2f\n",
 				     (double) math::degrees(_target_bearing), (double) math::degrees(_current_heading),
-				     (double) math::degrees(_heading_error), (double) math::degrees(_heading_error_vel));
+				     (double) math::degrees(_heading_error));
 
 			if (_pos_ctrl_state == L1_GOTO_WAYPOINT) {
 				PX4_INFO_RAW("---    XTrack err: %.1f cm\n",
@@ -240,8 +240,8 @@ void RoverPositionControl::debugPrintAll()
 				     (double)(_crosstrack_error * 100.0f));
 		}
 
-		PX4_INFO_RAW("---    hdg_er: %.4f / %.4f  abbe: %.2f m   gas: %.2f tool: %.2f alrm: %.1f\n",
-			     (double)math::degrees(_heading_error), (double)math::degrees(_heading_error_vel), (double)_abbe_error,
+		PX4_INFO_RAW("---    hdg_er: %.4f   abbe: %.2f m   gas: %.2f tool: %.2f alrm: %.1f\n",
+			     (double)math::degrees(_heading_error), (double)_abbe_error,
 			     (double)_gas_engine_throttle, (double)_cutter_setpoint, (double)_alarm_dev_level);
 	}
 

@@ -634,22 +634,10 @@ bool RoverPositionControl::updateBearings()
 
 	_target_bearing = get_bearing_to_next_waypoint(_curr_pos(0), _curr_pos(1), _curr_wp(0), _curr_wp(1));
 
-	// don't touch double wrap!
-	_heading_error = _heading_error_vel = wrap_pi(_target_bearing - wrap_pi(_current_heading)); // where the robot faces
-
-	if (_x_vel > 0.1f && PX4_ISFINITE(_current_heading_vel)) {
-
-		_heading_error_vel = wrap_pi(_target_bearing - wrap_pi(_current_heading_vel));	// where the robot actually moves
-
-		/*
-		if (abs(math::degrees(_current_heading_vel - _current_heading)) > 5.0f) {
-			// vehicle crabbing, or EKF or IMU alignment issue:
-			PX4_INFO_RAW("WARN: large discrepancy: heading: vel: %.3f  curr: %.3f delta: %.4f  x_vel: %.2f\n",
-				     (double)math::degrees(_current_heading_vel), (double)math::degrees(_current_heading),
-				     (double)math::degrees(_current_heading_vel - _current_heading), (double)_x_vel);
-		}
-		*/
-	}
+	// for now, assume we want to turn to the target waypoint. Pursuit may correct that.
+	// don't touch double wrap! TODO - why?
+	//_heading_error = wrap_pi(_target_bearing - wrap_pi(_current_heading)); // where the robot wants to turn
+	_heading_error = wrap_pi(_target_bearing - _current_heading); // where the robot wants to turn
 
 	computeCrosstrackError();
 
