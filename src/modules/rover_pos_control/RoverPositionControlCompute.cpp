@@ -83,7 +83,7 @@ bool RoverPositionControl::computePursuitHeadingError(int whichMethod, float max
 		float nav_bearing_error = matrix::wrap_pi(_nav_bearing - yaw);
 
 		if (abs(nav_bearing_error) > maxError) {
-			PX4_WARN("Pursuit %d   nav_bearing_error %.2f > %.2f", whichMethod, (double)nav_bearing_error, (double)maxError);
+			//PX4_WARN("Pursuit %d   nav_bearing_error %.2f > %.2f", whichMethod, (double)nav_bearing_error, (double)maxError);
 			return false;
 		}
 
@@ -93,7 +93,7 @@ bool RoverPositionControl::computePursuitHeadingError(int whichMethod, float max
 	}
 
 	// leaves  _heading_error intact:
-	PX4_WARN("Pursuit %d   nav_bearing NAN", whichMethod);
+	//PX4_WARN("Pursuit %d   nav_bearing NAN", whichMethod);
 	return false;
 }
 

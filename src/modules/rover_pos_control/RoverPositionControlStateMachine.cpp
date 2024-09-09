@@ -165,10 +165,11 @@ void RoverPositionControl::workStateMachine()
 				   && PX4_ISFINITE(_dist_target)
 				   && PX4_ISFINITE(_wp_previous_dist)
 				   && _dist_target > _decel_dist + 0.2f
-				   && fabsf(_heading_error) < 0.1f) {
+				   && fabsf(_heading_error) < 0.1f
+				   && computePursuitHeadingError(1, 1.3f)) {  // Use StanleyPursuit, error +- 75 degrees
 
 #ifdef DEBUG_MY_PRINT
-				PX4_INFO_RAW("OK: Pursuit heading recovered, switching to L1_GOTO_WAYPOINT ===========================\n");
+				PX4_INFO_RAW("OK: Stanley Pursuit heading recovered, switching to L1_GOTO_WAYPOINT ===========================\n");
 				PX4_INFO_RAW("*** trgt_berng: %.2f  curr_hdg: %.2f  hdg_error: %.2f\n",
 					     (double) math::degrees(_target_bearing), (double) math::degrees(_current_heading),
 					     (double) math::degrees(_heading_error));
@@ -231,7 +232,7 @@ void RoverPositionControl::workStateMachine()
 		if (updateBearings()) {
 
 			if (!computePursuitHeadingError(0, 0.5f)) {  // Use PurePursuit, error +- 30 degrees
-				PX4_WARN("WP_TURNING - nav_bearing invalid");
+				//PX4_WARN("WP_TURNING - nav_bearing invalid");
 			}
 
 			if (math::abs_t(_heading_error) < math::radians(_param_turn_precision.get())) {	// GND_TURN_PRECISN, degrees
@@ -340,7 +341,7 @@ void RoverPositionControl::workStateMachine()
 
 		if (updateBearings()) {
 
-			if (!computePursuitHeadingError(0, 0.2f)) {  // Use PurePursuit, error +- 11 degrees
+			if (!computePursuitHeadingError(0, 0.5f)) {  // Use PurePursuit, error +- 30 degrees
 				PX4_WARN("WP_DEPARTING - nav_bearing invalid");
 			}
 
@@ -402,7 +403,7 @@ void RoverPositionControl::workStateMachine()
 
 						// We are far from destination and more or less are pointed in its direction.
 
-						if (computePursuitHeadingError(1, 1.0f)) {  // Use StanleyPursuit, error +- 60 degrees
+						if (computePursuitHeadingError(1, 1.4f)) {  // Use StanleyPursuit, error +- 80 degrees
 
 							cte_compute();
 

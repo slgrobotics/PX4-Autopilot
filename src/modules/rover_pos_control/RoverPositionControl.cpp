@@ -202,11 +202,22 @@ RoverPositionControl::update_orientation()
 	_ground_speed_abs = _ekf_ground_speed_abs;
 
 #if !defined(CONFIG_ARCH_BOARD_PX4_SITL)
-	// based on preference and availability, reassign speed and/or measurements to RTK GPS:
-	_ground_speed_abs = _speed_prefer_gps
-			    && PX4_ISFINITE(_gps_ground_speed_abs) ? _gps_ground_speed_abs : _ekf_ground_speed_abs;
-	_current_heading = _heading_prefer_gps
-			   && PX4_ISFINITE(_gps_current_heading) ? _gps_current_heading : _ekf_current_heading;
+
+	// based on preference and availability, reassign speed and/or measurements to RTK GPS.
+	// Note: GND_EKF_OVERRIDE defines other things - substitution of published EKF data with GPS when passing it to Pursuit etc.
+
+	if (_speed_prefer_gps	// GND_SP_MEAS_MODE
+	    && PX4_ISFINITE(_gps_ground_speed_abs)) {
+
+		_ground_speed_abs = _gps_ground_speed_abs;
+	}
+
+	if (_heading_prefer_gps	// GND_HD_MEAS_MODE
+	    && PX4_ISFINITE(_gps_current_heading)) {
+
+		_current_heading =  _gps_current_heading;
+	}
+
 #endif
 
 	// smooth the jitter for the PID's input:
