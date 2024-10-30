@@ -1,0 +1,26 @@
+module_name: Stanley Pursuit
+
+parameters:
+    - group: Stanley Pursuit
+      definitions:
+        ST_XTRACK_GAIN:
+          description:
+            short: Tuning parameter for the stanley pursuit controller
+            long: Higher value -> More aggressive controller (beware overshoot/oscillations)
+          type: float
+          min: 0.01
+          max: 100
+          increment: 0.01
+          decimal: 2
+          default: 1
+
+        ST_SOFTENING:
+          description:
+            short: Speed Softening factor for the stanley pursuit controller
+          type: float
+          unit: m
+          min: 0.01
+          max: 100
+          increment: 0.01
+          decimal: 2
+          default: 0.1
