@@ -683,5 +683,17 @@ PARAM_DEFINE_FLOAT(RD_RATE_FTRQ, 5.0f);
  */
 PARAM_DEFINE_FLOAT(RD_RATE_ZTRQ, 0.0f);
 
+/**
+ * Manual mode yaw rate scale
+ *
+ * @unit norm
+ * @min 0.01
+ * @max 1.0
+ * @decimal 2
+ * @increment 0.01
+ * @group Rover Position Control
+ */
+PARAM_DEFINE_FLOAT(RD_MAN_YAW_SCALE, 0.25f);
+
 // end heavy rover additions
 // -----------------------------------------------------------------------------------------------------------------------------
