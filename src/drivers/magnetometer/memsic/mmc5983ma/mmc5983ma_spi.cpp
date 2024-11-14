@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2020 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2024 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,54 +31,79 @@
  *
  ****************************************************************************/
 
-#ifndef COLLISION_HPP
-#define COLLISION_HPP
+#include "mmc5983ma.h"
+#include <drivers/device/spi.h>
 
-#include <uORB/topics/collision_report.h>
+/* SPI protocol address bits */
+#define DIR_READ			(1<<7)
+#define DIR_WRITE			(0<<7)
+#define ADDR_INCREMENT			(1<<6)
 
-class MavlinkStreamCollision : public MavlinkStream
+
+class MMC5983MA_SPI : public device::SPI
 {
 public:
-	static MavlinkStream *new_instance(Mavlink *mavlink) { return new MavlinkStreamCollision(mavlink); }
+	MMC5983MA_SPI(const I2CSPIDriverConfig &config);
+	virtual ~MMC5983MA_SPI() = default;
 
-	static constexpr const char *get_name_static() { return "COLLISION"; }
-	static constexpr uint16_t get_id_static() { return MAVLINK_MSG_ID_COLLISION; }
+	virtual int read(unsigned address, void *data, unsigned count) override;
+	virtual int write(unsigned address, void *data, unsigned count) override;
 
-	const char *get_name() const override { return get_name_static(); }
-	uint16_t get_id() override { return get_id_static(); }
-
-	unsigned get_size() override
-	{
-		return _collision_sub.advertised() ? MAVLINK_MSG_ID_COLLISION_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES : 0;
-	}
-
-private:
-	explicit MavlinkStreamCollision(Mavlink *mavlink) : MavlinkStream(mavlink) {}
-
-	uORB::Subscription _collision_sub{ORB_ID(collision_report)};
-
-	bool send() override
-	{
-		collision_report_s report;
-		bool sent = false;
-
-		while ((_mavlink->get_free_tx_buf() >= get_size()) && _collision_sub.update(&report)) {
-			mavlink_collision_t msg = {};
-
-			msg.src = report.src;
-			msg.id = report.id;
-			msg.action = report.action;
-			msg.threat_level = report.threat_level;
-			msg.time_to_minimum_delta = report.time_to_minimum_delta;
-			msg.altitude_minimum_delta = report.altitude_minimum_delta;
-			msg.horizontal_minimum_delta = report.horizontal_minimum_delta;
-
-			mavlink_msg_collision_send_struct(_mavlink->get_channel(), &msg);
-			sent = true;
-		}
-
-		return sent;
-	}
+protected:
+	virtual int probe();
 };
 
-#endif // COLLISION_HPP
+MMC5983MA_SPI::MMC5983MA_SPI(const I2CSPIDriverConfig &config) :
+	SPI(config)
+{
+}
+
+int MMC5983MA_SPI::probe()
+{
+	uint8_t data = 0;
+
+	if (read(MMC5983MA_ADDR_PRODUCT_ID, &data, 1)) {
+		DEVICE_DEBUG("read_reg fail");
+		return -EIO;
+	}
+
+	if (data != MMC5983MA_PRODUCT_ID) {
+		DEVICE_DEBUG("MMC5983MA bad ID: %02x", data);
+		return -EIO;
+	}
+
+	return OK;
+}
+
+int MMC5983MA_SPI::read(unsigned address, void *data, unsigned count)
+{
+	uint8_t buf[32];
+
+	if (sizeof(buf) < (count + 1)) {
+		return -EIO;
+	}
+
+	buf[0] = address | DIR_READ | ADDR_INCREMENT;
+	int ret = transfer(&buf[0], &buf[0], count + 1);
+	memcpy(data, &buf[1], count);
+	return ret;
+}
+
+int MMC5983MA_SPI::write(unsigned address, void *data, unsigned count)
+{
+	uint8_t buf[32];
+
+	if (sizeof(buf) < (count + 1)) {
+		return -EIO;
+	}
+
+	buf[0] = (uint8_t)(address | DIR_WRITE);
+	memcpy(&buf[1], data, count);
+
+	return transfer(&buf[0], nullptr, count + 1);
+}
+
+device::Device *MMC5983MA_SPI_interface(const I2CSPIDriverConfig &config)
+{
+	return new MMC5983MA_SPI(config);
+}
