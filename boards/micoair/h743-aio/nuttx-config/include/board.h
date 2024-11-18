@@ -32,8 +32,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  ************************************************************************************/
-#ifndef __NUTTX_CONFIG_MICOAIR743_INCLUDE_BOARD_H
-#define __NUTTX_CONFIG_MICOAIR743_INCLUDE_BOARD_H
+#ifndef __NUTTX_CONFIG_MICOAIR743AIO_INCLUDE_BOARD_H
+#define __NUTTX_CONFIG_MICOAIR743AIO_INCLUDE_BOARD_H
 
 /************************************************************************************
  * Included Files
@@ -376,14 +376,6 @@
 #define GPIO_UART8_TX    GPIO_UART8_TX_1    /* PE1  */
 
 
-/* CAN
- *
- * CAN1 is routed to transceiver.
- */
-
-#define GPIO_CAN1_RX     GPIO_CAN1_RX_2      /* PB8  */
-#define GPIO_CAN1_TX     GPIO_CAN1_TX_2      /* PB9  */
-
 /* SPI
  *
 
@@ -391,9 +383,6 @@
 
 #define ADJ_SLEW_RATE(p) (((p) & ~GPIO_SPEED_MASK) | (GPIO_SPEED_2MHz))
 
-//#define GPIO_SPI1_MISO   GPIO_SPI1_MISO_1               /* PA6  */
-//#define GPIO_SPI1_MOSI   GPIO_SPI1_MOSI_1               /* PA7  */
-//#define GPIO_SPI1_SCK    ADJ_SLEW_RATE(GPIO_SPI1_SCK_1) /* PA5 */
 
 #define GPIO_SPI2_MISO   GPIO_SPI2_MISO_2               /* PC2  */
 #define GPIO_SPI2_MOSI   GPIO_SPI2_MOSI_3               /* PC3 */
@@ -423,4 +412,4 @@
 # define PROBE(n,s)
 # define PROBE_MARK(n)
 
-#endif  /*__NUTTX_CONFIG_MICOAIR743_INCLUDE_BOARD_H  */
+#endif  /*__NUTTX_CONFIG_MICOAIR743AIO_INCLUDE_BOARD_H  */
