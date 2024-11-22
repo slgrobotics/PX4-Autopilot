@@ -31,9 +31,13 @@
 #
 ############################################################################
 
-add_library(output_predictor
-	output_predictor.cpp
-	output_predictor.h
+add_library(lat_lon_alt
+	lat_lon_alt.cpp
+	lat_lon_alt.hpp
 )
 
-add_dependencies(output_predictor prebuild_targets lat_lon_alt)
+add_dependencies(lat_lon_alt prebuild_targets)
+target_include_directories(lat_lon_alt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_options(lat_lon_alt PRIVATE ${MAX_CUSTOM_OPT_LEVEL})
+
+px4_add_unit_gtest(SRC test_lat_lon_alt.cpp LINKLIBS lat_lon_alt geo)
