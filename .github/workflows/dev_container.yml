@@ -25,6 +25,12 @@ jobs:
           submodules: false
           fetch-depth: 0
 
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -38,12 +44,14 @@ jobs:
         with:
           images: |
             ghcr.io/PX4/px4-dev
+            px4io/px4-dev
           tags: |
             type=schedule
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=ref,event=branch,suffix=-{{date 'YYYYMMDD'}}
+            type=ref,event=branch,suffix=-{{date 'YYYYMMDD'}},priority=600
+            type=ref,event=branch,suffix=,priority=500
             type=ref,event=pr
             type=sha
 
@@ -82,7 +90,6 @@ jobs:
 
       - name: Push container image
         uses: docker/build-push-action@v6
-        if: ${{ github.event_name == 'push' }}
         with:
           context: Tools/setup
           tags: ${{ steps.meta.outputs.tags }}
