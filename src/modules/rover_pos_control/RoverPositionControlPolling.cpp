@@ -169,10 +169,10 @@ void RoverPositionControl::poll_everything()
 		_ekf_data_good = _local_pos.xy_valid && _local_pos.v_xy_valid && _local_pos.heading_good_for_control;
 		_ekf_flags = {_local_pos.xy_valid, _local_pos.v_xy_valid, _local_pos.heading_good_for_control};
 
-		if (!_global_ned_proj_ref.isInitialized()
-		    || (_global_ned_proj_ref.getProjectionReferenceTimestamp() != _local_pos.ref_timestamp)) {
+		if (!_global_local_proj_ref.isInitialized()
+		    || (_global_local_proj_ref.getProjectionReferenceTimestamp() != _local_pos.ref_timestamp)) {
 
-			_global_ned_proj_ref.initReference(_local_pos.ref_lat, _local_pos.ref_lon,
+			_global_local_proj_ref.initReference(_local_pos.ref_lat, _local_pos.ref_lon,
 							   _local_pos.ref_timestamp);
 		}
 
@@ -514,8 +514,8 @@ void RoverPositionControl::updateWaypoints()
 	}
 
 	// NED waypoint coordinates
-	_curr_wp_ned = _global_ned_proj_ref.project(_curr_wp(0), _curr_wp(1));
-	_prev_wp_ned = _global_ned_proj_ref.project(_prev_wp(0), _prev_wp(1));
+	_curr_wp_ned = _global_local_proj_ref.project(_curr_wp(0), _curr_wp(1));
+	_prev_wp_ned = _global_local_proj_ref.project(_prev_wp(0), _prev_wp(1));
 }
 
 void RoverPositionControl::updateWaypointDistances()
