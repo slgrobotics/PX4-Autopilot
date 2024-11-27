@@ -49,7 +49,7 @@ px4_add_module(
 	DEPENDS
 		l1
 		RateControl
-		pid
 		pure_pursuit
 		stanley_pursuit
+		PID
 	)

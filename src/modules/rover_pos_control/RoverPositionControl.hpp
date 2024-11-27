@@ -49,7 +49,7 @@
 #include <lib/geo/geo.h>
 #include <lib/mathlib/mathlib.h>
 #include <lib/perf/perf_counter.h>
-#include <lib/pid/pid.h>
+#include <lib/pid/PID.h>
 #include <lib/rate_control/rate_control.hpp>
 #include <lib/pure_pursuit/PurePursuit.hpp>
 #include <lib/stanley_pursuit/StanleyPursuit.hpp>
@@ -255,7 +255,7 @@ private:
 	hrt_abstime _turn_goal_last_reached{0};
 	hrt_abstime _control_yaw_rate_last_called{0};
 
-	MapProjection _global_ned_proj_ref{};
+	MapProjection _global_local_proj_ref{};
 
 	// estimator reset counters
 	uint8_t _pos_reset_counter{0};		// captures the number of times the estimator has reset the horizontal position
