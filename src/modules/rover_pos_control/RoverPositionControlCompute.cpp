@@ -101,7 +101,8 @@ void RoverPositionControl::computeRdGuidance()
 {
 	// Guidance logic - first yaw rate:
 
-	float desired_yaw_rate = -pid_calculate(&_pid_heading, 0.f, _heading_error, 0.f, _dt);
+	_pid_heading.setSetpoint(0.f);
+	float desired_yaw_rate = -_pid_heading.update(_heading_error, _dt);
 
 	desired_yaw_rate = math::constrain(desired_yaw_rate, -_max_yaw_rate, _max_yaw_rate);	// RD_MAX_YAW_RATE
 
@@ -267,7 +268,8 @@ float RoverPositionControl::computeThrustEffort()
 	// At this moment _mission_velocity_setpoint is likely a smoothed cruise speed (global or per waypoint).
 	// PID_MODE_DERIVATIV_CALC calculates discrete derivative from previous error, val_dot in pid_calculate() will be ignored
 	// Let PID speed control compute thrust increment. Acceleration argument ignored in PID_MODE_DERIVATIV_CALC mode:
-	float thrust = pid_calculate(&_speed_ctrl, _mission_velocity_setpoint, _x_vel_ema, 0.0f, _dt);
+	_speed_ctrl.setSetpoint(_mission_velocity_setpoint);
+	float thrust = _speed_ctrl.update(_x_vel_ema, _dt);
 
 	//float speed_err = _x_vel_ema - _mission_velocity_setpoint;
 	//PX4_INFO("SPEED: trgt: %.4f xvel: %.4f xvel_ema: %.4f err: %.4f thrust: %.4f", (double)_mission_velocity_setpoint, (double)_x_vel, (double)_x_vel_ema, (double)speed_err, (double)thrust);
@@ -346,7 +348,7 @@ void RoverPositionControl::resetTorqueControls()
 {
 	//PX4_WARN("resetTorqueControls");
 
-	pid_reset_integral(&_pid_heading);
+	_pid_heading.resetIntegral();
 	_rate_control.resetIntegral();
 
 	_mission_torque_ema.Reset();
@@ -356,7 +358,7 @@ void RoverPositionControl::resetThrustControls()
 {
 	//PX4_WARN("resetThrustControls");
 
-	pid_reset_integral(&_speed_ctrl);
+	_speed_ctrl.resetIntegral();
 
 	_velocity_setpoint_ema.Reset();
 	_mission_thrust_ema.Reset();

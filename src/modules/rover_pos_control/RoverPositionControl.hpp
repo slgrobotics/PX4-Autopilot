@@ -49,7 +49,7 @@
 #include <lib/geo/geo.h>
 #include <lib/mathlib/mathlib.h>
 #include <lib/perf/perf_counter.h>
-#include <lib/pid/PID.h>
+#include <lib/pid/PID.hpp>
 #include <lib/rate_control/rate_control.hpp>
 #include <lib/pure_pursuit/PurePursuit.hpp>
 #include <lib/stanley_pursuit/StanleyPursuit.hpp>
@@ -261,10 +261,10 @@ private:
 	uint8_t _pos_reset_counter{0};		// captures the number of times the estimator has reset the horizontal position
 
 	// PID controller for the speed:
-	PID_t _speed_ctrl{};
+	PID _speed_ctrl{};
 
 	// The PID controller for the heading (calculates yaw rate):
-	PID_t _pid_heading;
+	PID _pid_heading{};
 	float _max_yaw_rate{0.f};
 
 	int _nav_state{0};

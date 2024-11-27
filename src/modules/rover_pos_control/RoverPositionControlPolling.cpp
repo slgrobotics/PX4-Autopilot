@@ -173,7 +173,7 @@ void RoverPositionControl::poll_everything()
 		    || (_global_local_proj_ref.getProjectionReferenceTimestamp() != _local_pos.ref_timestamp)) {
 
 			_global_local_proj_ref.initReference(_local_pos.ref_lat, _local_pos.ref_lon,
-							   _local_pos.ref_timestamp);
+							     _local_pos.ref_timestamp);
 		}
 
 		_curr_pos_ned = Vector2f(_local_pos.x, _local_pos.y);
@@ -279,15 +279,16 @@ void RoverPositionControl::updateParams()
 
 	_ekf_heading_correction = math::radians(_param_heading_err_decl.get());	// GND_HEADING_DECL
 
-	pid_init(&_pid_heading, PID_MODE_DERIVATIV_CALC, MIN_PID_INTERVAL);
-
 	_max_yaw_rate = math::radians(_param_rd_max_yaw_rate.get());	// RD_MAX_YAW_RATE
-	pid_set_parameters(&_pid_heading,
-			   _param_rd_p_gain_yaw.get(),  // Proportional gain - RD_YAW_P
-			   _param_rd_i_gain_yaw.get(),  // Integral gain - RD_YAW_I
-			   _param_rd_d_gain_yaw.get(),  // Derivative gain - RD_YAW_D
-			   _max_yaw_rate,  // Integral limit
-			   _max_yaw_rate);  // Output limit
+	// OLD PID:
+	//pid_init(&_pid_heading, PID_MODE_DERIVATIV_CALC, MIN_PID_INTERVAL);
+	// NEW PID:
+	_pid_heading.setGains(_param_rd_p_gain_yaw.get(),   // Proportional gain - RD_YAW_P
+			      _param_rd_i_gain_yaw.get(),   // Integral gain - RD_YAW_I
+			      _param_rd_d_gain_yaw.get());  // Derivative gain - RD_YAW_D
+	_pid_heading.setIntegralLimit(_max_yaw_rate);
+	_pid_heading.setOutputLimit(_max_yaw_rate);
+	_pid_heading.resetIntegral();
 
 	// Turn rate control parameters (z-axis only):
 	_rate_control.setPidGains(matrix::Vector3f(0.0f, 0.0f, _param_rate_p.get()),	// GND_RATE_P
@@ -303,15 +304,15 @@ void RoverPositionControl::updateParams()
 	// PID_MODE_DERIVATIV_CALC calculates discrete derivative from previous error, val_dot in pid_calculate() will be ignored
 
 	// to stabilize speed at desired level, given by RD_MISS_SPD_DEF (m/s):
-	pid_init(&_speed_ctrl, PID_MODE_DERIVATIV_CALC, MIN_PID_INTERVAL);
-	pid_set_parameters(&_speed_ctrl,
-			   _param_speed_p.get(),	// GND_SPEED_P
-			   _param_speed_i.get(),
-			   _param_speed_d.get(),
-			   _param_speed_imax.get(),
-			   _param_speed_max.get());
-
-	pid_reset_integral(&_speed_ctrl);
+	// OLD PID:
+	//pid_init(&_speed_ctrl, PID_MODE_DERIVATIV_CALC, MIN_PID_INTERVAL);
+	// NEW PID:
+	_speed_ctrl.setGains(_param_speed_p.get(),  // GND_SPEED_P
+			     _param_speed_i.get(),
+			     _param_speed_d.get());
+	_speed_ctrl.setIntegralLimit(_param_speed_imax.get());
+	_speed_ctrl.setOutputLimit(_param_speed_max.get());
+	_speed_ctrl.resetIntegral();
 
 	// Set up measurements smoothing:
 	int ema_period = _param_measurements_ema_period.get();	// GND_EMA_M_PERIOD
