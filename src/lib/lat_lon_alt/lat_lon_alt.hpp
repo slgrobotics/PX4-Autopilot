@@ -54,6 +54,10 @@ public:
 		_altitude = altitude_m;
 	}
 
+
+	static LatLonAlt fromEcef(const matrix::Vector3d &p_ecef);
+	matrix::Vector3d toEcef() const;
+
 	void setZero() { _latitude_rad = 0.0; _longitude_rad = 0.0; _altitude = 0.f; }
 
 	double latitude_deg() const { return math::degrees(latitude_rad()); }
@@ -94,18 +98,20 @@ public:
 	 */
 	matrix::Vector3f computeAngularRateNavFrame(const matrix::Vector3f &v_ned) const;
 
+	struct Wgs84 {
+		static constexpr double equatorial_radius = 6378137.0;
+		static constexpr double eccentricity = 0.0818191908425;
+		static constexpr double eccentricity2 = eccentricity * eccentricity;
+		static constexpr double meridian_radius_of_curvature_numerator = equatorial_radius * (1.0 - eccentricity2);
+		static constexpr double gravity_equator = 9.7803253359;
+	};
+
 private:
 	// Convert between curvilinear and cartesian errors
 	static matrix::Vector2d deltaLatLonToDeltaXY(const double latitude, const float altitude);
 
 	static void computeRadiiOfCurvature(const double latitude, double &meridian_radius_of_curvature,
 					    double &transverse_radius_of_curvature);
-
-	struct Wgs84 {
-		static constexpr double equatorial_radius = 6378137.0;
-		static constexpr double eccentricity = 0.0818191908425;
-		static constexpr double meridian_radius_of_curvature_numerator = equatorial_radius * (1.0 - eccentricity *eccentricity);
-	};
 
 	double _latitude_rad{0.0};
 	double _longitude_rad{0.0};
