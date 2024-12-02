@@ -92,6 +92,20 @@ PARAM_DEFINE_FLOAT(RD_YAW_D, 0.0f);
 //===============================================================================================================
 
 /**
+ * Default ground speed setpoint for missions
+ *
+ * This is the maximum speed that can be used by the controller.
+ *
+ * @unit m/s
+ * @min 0.0
+ * @max 10.0
+ * @decimal 2
+ * @increment 0.01
+ * @group Rover Position Control
+ */
+PARAM_DEFINE_FLOAT(RD_MISS_SPD_DEF, 1.5f);
+
+/**
  * Thrust limit max
  *
  * This is the maximum thrust % that can be used by the controller.
