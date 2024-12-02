@@ -61,6 +61,10 @@ param set-default RD_YAW_P 8
 param set-default RD_YAW_I 0.01
 param set-default RD_MAX_YAW_RATE 30
 param set-default RD_MISS_SPD_DEF 2.0
+#=======
+#param set-default RD_TRANS_DRV_TRN 0.349066
+#param set-default RD_TRANS_TRN_DRV 0.174533
+#=======
 
 # Lawnmower parameters to scale Differential Drive Kinematics output:
 #param set-default GND_THRUST_SC 1.0
