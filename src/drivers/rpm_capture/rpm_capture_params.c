@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2018 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2024 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,47 +32,24 @@
  ****************************************************************************/
 
 /**
- * @file FlightTaskTransition.hpp
+ * RPM Capture Enable
  *
- * Flight task for automatic VTOL transitions between hover and forward flight and vice versa.
+ * Enables the RPM capture module on FMU channel 5.
+ *
+ * @boolean
+ * @group System
+ * @reboot_required true
  */
+PARAM_DEFINE_INT32(RPM_CAP_ENABLE, 0);
 
-#pragma once
-
-#include "FlightTask.hpp"
-#include <lib/mathlib/math/filter/AlphaFilter.hpp>
-#include <uORB/SubscriptionInterval.hpp>
-#include <uORB/topics/parameter_update.h>
-#include <uORB/topics/vehicle_status.h>
-#include <uORB/topics/position_setpoint_triplet.h>
-#include <drivers/drv_hrt.h>
-
-using namespace time_literals;
-
-
-class FlightTaskTransition : public FlightTask
-{
-public:
-	FlightTaskTransition();
-
-	virtual ~FlightTaskTransition() = default;
-	bool activate(const trajectory_setpoint_s &last_setpoint) override;
-	bool updateInitialize() override;
-	bool update() override;
-
-private:
-	static constexpr float VERTICAL_VELOCITY_TIME_CONSTANT = 2.0f;
-	static constexpr float DECELERATION_INTEGRATOR_LIMIT = .3f;
-
-	uORB::SubscriptionData<vehicle_status_s> _sub_vehicle_status{ORB_ID(vehicle_status)};
-	uORB::SubscriptionData<position_setpoint_triplet_s> _sub_position_sp_triplet{ORB_ID(position_setpoint_triplet)};
-
-	float _param_fw_psp_off{0.f};
-	float _param_vt_b_dec_i{0.f};
-	float _param_vt_b_dec_mss{0.f};
-
-	AlphaFilter<float> _vel_z_filter{VERTICAL_VELOCITY_TIME_CONSTANT};
-	float _decel_error_bt_int{0.f}; ///< Backtransition deceleration error integrator value
-
-	float computeBackTranstionPitchSetpoint();
-};
+/**
+ * Voltage pulses per revolution
+ *
+ * Number of voltage pulses per one rotor revolution on the capturing pin.
+ *
+ * @group System
+ * @min 1
+ * @max 50
+ * @reboot_required true
+ */
+PARAM_DEFINE_INT32(RPM_PULS_PER_REV, 1);
