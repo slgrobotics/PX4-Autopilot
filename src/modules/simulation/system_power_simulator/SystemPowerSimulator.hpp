@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2020 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2024 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,28 +33,22 @@
 
 #pragma once
 
-#include <lib/battery/battery.h>
 #include <lib/perf/perf_counter.h>
 #include <px4_platform_common/defines.h>
 #include <px4_platform_common/module.h>
-#include <px4_platform_common/module_params.h>
 #include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
 #include <uORB/Publication.hpp>
 #include <uORB/Subscription.hpp>
 #include <uORB/SubscriptionInterval.hpp>
-#include <uORB/topics/battery_status.h>
-#include <uORB/topics/parameter_update.h>
-#include <uORB/topics/vehicle_status.h>
-#include <uORB/topics/vehicle_command.h>
-#include <uORB/topics/vehicle_command_ack.h>
+#include <uORB/topics/system_power.h>
 
 using namespace time_literals;
 
-class BatterySimulator : public ModuleBase<BatterySimulator>, public ModuleParams, public px4::ScheduledWorkItem
+class SystemPowerSimulator : public ModuleBase<SystemPowerSimulator>, public px4::ScheduledWorkItem
 {
 public:
-	BatterySimulator();
-	~BatterySimulator() override;
+	SystemPowerSimulator();
+	~SystemPowerSimulator() override;
 
 	/** @see ModuleBase */
 	static int task_spawn(int argc, char *argv[]);
@@ -69,29 +63,11 @@ public:
 
 private:
 	void Run() override;
-	void updateCommands();
 
-	static constexpr uint32_t BATTERY_SIMLATOR_SAMPLE_FREQUENCY_HZ = 100; // Hz
-	static constexpr uint32_t BATTERY_SIMLATOR_SAMPLE_INTERVAL_US = 1_s / BATTERY_SIMLATOR_SAMPLE_FREQUENCY_HZ;
+	static constexpr uint32_t SYSTEM_POWER_SIMLATOR_SAMPLE_FREQUENCY_HZ = 100; // Hz
+	static constexpr uint32_t SYSTEM_POWER_SIMLATOR_SAMPLE_INTERVAL_US = 1_s / SYSTEM_POWER_SIMLATOR_SAMPLE_FREQUENCY_HZ;
 
-	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
-	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
-
-	uORB::Subscription _vehicle_command_sub{ORB_ID(vehicle_command)};
-	uORB::Publication<vehicle_command_ack_s> _command_ack_pub{ORB_ID(vehicle_command_ack)};
-
-	Battery _battery;
-
-	uint64_t _last_integration_us{0};
-	float _battery_percentage{1.f};
-	bool _armed{false};
-
-	bool _force_empty_battery{false};
+	uORB::Publication<system_power_s> _system_power_pub{ORB_ID(system_power)};
 
 	perf_counter_t	_loop_perf{perf_alloc(PC_ELAPSED, MODULE_NAME": cycle")};
-
-	DEFINE_PARAMETERS(
-		(ParamFloat<px4::params::SIM_BAT_DRAIN>) _param_sim_bat_drain, ///< battery drain interval
-		(ParamFloat<px4::params::SIM_BAT_MIN_PCT>) _param_bat_min_pct //< minimum battery percentage
-	)
 };
