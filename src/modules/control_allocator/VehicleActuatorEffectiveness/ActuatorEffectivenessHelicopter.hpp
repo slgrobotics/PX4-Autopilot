@@ -33,7 +33,7 @@
 
 #pragma once
 
-#include "ActuatorEffectiveness.hpp"
+#include "control_allocation/actuator_effectiveness/ActuatorEffectiveness.hpp"
 
 #include <px4_platform_common/module_params.h>
 
@@ -134,5 +134,7 @@ private:
 
 	const ActuatorType _tail_actuator_type;
 
-	RpmControl _rpm_control{this};
+#if CONTROL_ALLOCATOR_RPM_CONTROL
+	RpmControl _rpm_control {this};
+#endif // CONTROL_ALLOCATOR_RPM_CONTROL
 };
