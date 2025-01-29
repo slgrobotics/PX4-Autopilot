@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2021 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2019 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,71 +31,48 @@
  *
  ****************************************************************************/
 
+/**
+ * @file ControlAllocationPseudoInverse.hpp
+ *
+ * Simple Control Allocation Algorithm
+ *
+ * It computes the pseudo-inverse of the effectiveness matrix
+ * Actuator saturation is handled by simple clipping, do not
+ * expect good performance in case of actuator saturation.
+ *
+ * @author Julien Lecoeur <julien.lecoeur@gmail.com>
+ */
+
 #pragma once
 
-#include "ActuatorEffectiveness.hpp"
-#include "ActuatorEffectivenessRotors.hpp"
+#include "ControlAllocation.hpp"
 
-#include <px4_platform_common/module_params.h>
-
-class ActuatorEffectivenessTilts : public ModuleParams, public ActuatorEffectiveness
+class ControlAllocationPseudoInverse: public ControlAllocation
 {
 public:
+	ControlAllocationPseudoInverse() = default;
+	virtual ~ControlAllocationPseudoInverse() = default;
 
-	static constexpr int MAX_COUNT = 4;
+	void allocate() override;
+	void setEffectivenessMatrix(const matrix::Matrix<float, NUM_AXES, NUM_ACTUATORS> &effectiveness,
+				    const ActuatorVector &actuator_trim, const ActuatorVector &linearization_point, int num_actuators,
+				    bool update_normalization_scale) override;
+	void setMetricAllocation(bool metric_allocation) { _metric_allocation = metric_allocation; }
 
-	enum class Control : int32_t {
-		// This matches with the parameter
-		None = 0,
-		Yaw = 1,
-		Pitch = 2,
-		YawAndPitch = 3,
-	};
-	enum class TiltDirection : int32_t {
-		// This matches with the parameter
-		TowardsFront = 0,
-		TowardsRight = 90,
-	};
+protected:
+	matrix::Matrix<float, NUM_ACTUATORS, NUM_AXES> _mix;
 
-	struct Params {
-		Control control;
-		float min_angle;
-		float max_angle;
-		TiltDirection tilt_direction;
-	};
+	bool _mix_update_needed{false};
+	bool _metric_allocation{false};
 
-	ActuatorEffectivenessTilts(ModuleParams *parent);
-	virtual ~ActuatorEffectivenessTilts() = default;
-
-	bool addActuators(Configuration &configuration);
-
-	const char *name() const override { return "Tilts"; }
-
-	int count() const { return _count; }
-
-	const Params &config(int idx) const { return _params[idx]; }
-
-	void updateTorqueSign(const ActuatorEffectivenessRotors::Geometry &geometry, bool disable_pitch = false);
-
-	bool hasYawControl() const;
-
-	float getYawTorqueOfTilt(int tilt_index) const { return _torque[tilt_index](2); }
+	/**
+	 * Recalculate pseudo inverse if required.
+	 *
+	 */
+	void updatePseudoInverse();
 
 private:
-	void updateParams() override;
-
-	struct ParamHandles {
-		param_t control;
-		param_t min_angle;
-		param_t max_angle;
-		param_t tilt_direction;
-	};
-
-	ParamHandles _param_handles[MAX_COUNT];
-	param_t _count_handle;
-
-	Params _params[MAX_COUNT] {};
-	int _count{0};
-
-	matrix::Vector3f _torque[MAX_COUNT] {};
+	void normalizeControlAllocationMatrix();
+	void updateControlAllocationMatrixScale();
+	bool _normalization_needs_update{false};
 };

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2021 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2020 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,28 +32,31 @@
  ****************************************************************************/
 
 /**
- * @file ActuatorEffectivenessTailsitterVTOL.hpp
+ * @file ActuatorEffectivenessStandardVTOL.hpp
  *
- * Actuator effectiveness for tailsitter VTOL
+ * Actuator effectiveness for standard VTOL
+ *
+ * @author Julien Lecoeur <julien.lecoeur@gmail.com>
  */
 
 #pragma once
 
-#include "ActuatorEffectiveness.hpp"
+#include "control_allocation/actuator_effectiveness/ActuatorEffectiveness.hpp"
 #include "ActuatorEffectivenessRotors.hpp"
 #include "ActuatorEffectivenessControlSurfaces.hpp"
 
 #include <uORB/topics/normalized_unsigned_setpoint.h>
 
-#include <uORB/Subscription.hpp>
 
-class ActuatorEffectivenessTailsitterVTOL : public ModuleParams, public ActuatorEffectiveness
+class ActuatorEffectivenessStandardVTOL : public ModuleParams, public ActuatorEffectiveness
 {
 public:
-	ActuatorEffectivenessTailsitterVTOL(ModuleParams *parent);
-	virtual ~ActuatorEffectivenessTailsitterVTOL() = default;
+	ActuatorEffectivenessStandardVTOL(ModuleParams *parent);
+	virtual ~ActuatorEffectivenessStandardVTOL() = default;
 
 	bool getEffectivenessMatrix(Configuration &configuration, EffectivenessUpdateReason external_update) override;
+
+	const char *name() const override { return "Standard VTOL"; }
 
 	int numMatrices() const override { return 2; }
 
@@ -76,15 +79,13 @@ public:
 			    ActuatorVector &actuator_sp, const matrix::Vector<float, NUM_ACTUATORS> &actuator_min,
 			    const matrix::Vector<float, NUM_ACTUATORS> &actuator_max) override;
 
-
 	void setFlightPhase(const FlightPhase &flight_phase) override;
 
-	const char *name() const override { return "VTOL Tailsitter"; }
-
-protected:
-	ActuatorEffectivenessRotors _mc_rotors;
+private:
+	ActuatorEffectivenessRotors _rotors;
 	ActuatorEffectivenessControlSurfaces _control_surfaces;
 
+	uint32_t _upwards_motors_mask{};
 	uint32_t _forwards_motors_mask{};
 
 	int _first_control_surface_idx{0}; ///< applies to matrix 1
