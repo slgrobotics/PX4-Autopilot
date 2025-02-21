@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2020 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2025 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,63 +31,53 @@
  *
  ****************************************************************************/
 
-/**
- * @file ObstacleAvoidance_dummy.hpp
- * This is a dummy class to reduce flash space for when obstacle avoidance is not required
- *
- * @author Julian Kent
- */
-
 #pragma once
 
-#include <px4_platform_common/defines.h>
-#include <commander/px4_custom_mode.h>
+#include "FunctionProviderBase.hpp"
 
+#include <uORB/topics/internal_combustion_engine_control.h>
 
-#include <matrix/matrix/math.hpp>
-
-
-class ObstacleAvoidance
+/**
+ * Functions: ICE...
+ */
+class FunctionICEControl : public FunctionProviderBase
 {
 public:
-	ObstacleAvoidance(void *) {} // takes void* argument to be compatible with ModuleParams constructor
-
-
-	void injectAvoidanceSetpoints(matrix::Vector3f &pos_sp, matrix::Vector3f &vel_sp, float &yaw_sp,
-				      float &yaw_speed_sp)
+	FunctionICEControl()
 	{
-		notify_dummy();
-	};
-
-	void updateAvoidanceDesiredWaypoints(const matrix::Vector3f &curr_wp, const float curr_yaw,
-					     const float curr_yawspeed,
-					     const matrix::Vector3f &next_wp, const float next_yaw, const float next_yawspeed, const bool ext_yaw_active,
-					     const int wp_type)
-	{
-		notify_dummy();
-	};
-
-	void updateAvoidanceDesiredSetpoints(const matrix::Vector3f &pos_sp, const matrix::Vector3f &vel_sp,
-					     const int type)
-	{
-		notify_dummy();
+		resetAllToDisarmedValue();
 	}
 
+	static FunctionProviderBase *allocate(const Context &context) { return new FunctionICEControl(); }
 
-	void checkAvoidanceProgress(const matrix::Vector3f &pos, const matrix::Vector3f &prev_wp,
-				    float target_acceptance_radius, const matrix::Vector2f &closest_pt)
+	void update() override
 	{
-		notify_dummy();
-	};
+		internal_combustion_engine_control_s internal_combustion_engine_control;
 
-protected:
-
-	bool _logged_error = false;
-	void notify_dummy()
-	{
-		if (!_logged_error) {
-			PX4_ERR("Dummy avoidance library called!");
-			_logged_error = true;
+		// map [0, 1] to [-1, 1] which is the interface for non-motor PWM channels
+		if (_internal_combustion_engine_control_sub.update(&internal_combustion_engine_control)) {
+			_data[0] = internal_combustion_engine_control.ignition_on * 2.f - 1.f;
+			_data[1] = internal_combustion_engine_control.throttle_control * 2.f - 1.f;
+			_data[2] = internal_combustion_engine_control.choke_control * 2.f - 1.f;
+			_data[3] = internal_combustion_engine_control.starter_engine_control * 2.f - 1.f;
 		}
 	}
+
+	float value(OutputFunction func) override { return _data[(int)func - (int)OutputFunction::IC_Engine_Ignition]; }
+
+private:
+	static constexpr int num_data_points = 4;
+
+	void resetAllToDisarmedValue()
+	{
+		for (int i = 0; i < num_data_points; ++i) {
+			_data[i] = NAN;
+		}
+	}
+
+	static_assert(num_data_points == (int)OutputFunction::IC_Engine_Starter - (int)OutputFunction::IC_Engine_Ignition + 1,
+		      "number of functions mismatch");
+
+	uORB::Subscription _internal_combustion_engine_control_sub{ORB_ID(internal_combustion_engine_control)};
+	float _data[num_data_points] {};
 };
