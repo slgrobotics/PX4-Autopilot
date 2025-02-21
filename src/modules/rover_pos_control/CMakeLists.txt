@@ -57,4 +57,4 @@ px4_add_module(
 #		module.yaml
 	)
 
-	set_property(GLOBAL APPEND PROPERTY PX4_MODULE_CONFIG_FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../lib/rover_control/module.yaml)
+#	set_property(GLOBAL APPEND PROPERTY PX4_MODULE_CONFIG_FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../lib/rover_control/module.yaml)

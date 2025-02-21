@@ -96,8 +96,8 @@ param set EKF2_REQ_GPS_H 5.0
 # Rover parameters
 param set-default RD_WHEEL_TRACK 0.9
 param set-default RD_MAN_YAW_SCALE 0.25
-param set-default RD_YAW_RATE_I 0.08
-param set-default RD_YAW_RATE_P 0.6
+param set-default RO_YAW_RATE_I 0.08
+param set-default RO_YAW_RATE_P 0.6
 param set-default RO_YAW_RATE_LIM 30
 param set-default RO_YAW_P 8
 param set-default RO_YAW_I 0.01
