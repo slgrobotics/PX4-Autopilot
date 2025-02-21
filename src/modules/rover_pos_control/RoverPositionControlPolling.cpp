@@ -279,13 +279,13 @@ void RoverPositionControl::updateParams()
 
 	_ekf_heading_correction = math::radians(_param_heading_err_decl.get());	// GND_HEADING_DECL
 
-	_max_yaw_rate = math::radians(_param_rd_max_yaw_rate.get());	// RD_MAX_YAW_RATE
+	_max_yaw_rate = math::radians(_param_ro_max_yaw_rate.get());	// RO_YAW_RATE_LIM
 	// OLD PID:
 	//pid_init(&_pid_heading, PID_MODE_DERIVATIV_CALC, MIN_PID_INTERVAL);
 	// NEW PID:
-	_pid_heading.setGains(_param_rd_p_gain_yaw.get(),   // Proportional gain - RD_YAW_P
-			      _param_rd_i_gain_yaw.get(),   // Integral gain - RD_YAW_I
-			      _param_rd_d_gain_yaw.get());  // Derivative gain - RD_YAW_D
+	_pid_heading.setGains(_param_ro_p_gain_yaw.get(),   // Proportional gain - RO_YAW_P
+			      _param_ro_i_gain_yaw.get(),   // Integral gain - RO_YAW_I
+			      _param_ro_d_gain_yaw.get());  // Derivative gain - RO_YAW_D
 	_pid_heading.setIntegralLimit(_max_yaw_rate);
 	_pid_heading.setOutputLimit(_max_yaw_rate);
 	_pid_heading.resetIntegral();

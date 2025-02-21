@@ -104,7 +104,7 @@ void RoverPositionControl::computeRdGuidance()
 	_pid_heading.setSetpoint(0.f);
 	float desired_yaw_rate = -_pid_heading.update(_heading_error, _dt);
 
-	desired_yaw_rate = math::constrain(desired_yaw_rate, -_max_yaw_rate, _max_yaw_rate);	// RD_MAX_YAW_RATE
+	desired_yaw_rate = math::constrain(desired_yaw_rate, -_max_yaw_rate, _max_yaw_rate);	// RO_YAW_RATE_LIM
 
 	// now speed:
 	float desired_speed = 0.0f;
@@ -118,9 +118,9 @@ void RoverPositionControl::computeRdGuidance()
 	// (time to reach the desired acceleration from opposite max acceleration)
 	// Equation to solve: vel_final^2 = vel_initial^2 - 2*accel*(x - vel_initial*2*accel/jerk)
 
-	if (_param_rd_max_jerk.get() > FLT_EPSILON && _param_rd_max_accel.get() > FLT_EPSILON) {
-		desired_speed = math::trajectory::computeMaxSpeedFromDistance(_param_rd_max_jerk.get(),
-				_param_rd_max_accel.get(), braking_distance, final_speed);
+	if (_param_ro_jerk_lim.get() > FLT_EPSILON && _param_ro_accel_lim.get() > FLT_EPSILON) {
+		desired_speed = math::trajectory::computeMaxSpeedFromDistance(_param_ro_jerk_lim.get(),
+				_param_ro_accel_lim.get(), braking_distance, final_speed);
 
 		desired_speed = math::constrain(desired_speed, 0.0f, _max_leg_speed);
 	}

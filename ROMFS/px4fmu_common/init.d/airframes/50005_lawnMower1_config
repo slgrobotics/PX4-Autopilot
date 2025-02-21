@@ -98,12 +98,12 @@ param set-default RD_WHEEL_TRACK 0.9
 param set-default RD_MAN_YAW_SCALE 0.25
 param set-default RD_YAW_RATE_I 0.08
 param set-default RD_YAW_RATE_P 0.6
-param set-default RD_MAX_ACCEL 1.0
-param set-default RD_MAX_JERK 1.0
-param set-default RD_YAW_P 8
-param set-default RD_YAW_I 0.01
-param set-default RD_MAX_YAW_RATE 30
-param set-default RD_MAX_SPEED 2.9
+param set-default RO_ACCEL_LIM 1.0
+param set-default RO_JERK_LIM 1.0
+param set-default RO_YAW_P 8
+param set-default RO_YAW_I 0.01
+param set-default RO_YAW_RATE_LIM 30
+param set-default RO_SPEED_LIM 2.9
 param set-default RD_MISS_SPD_DEF 2.0
 
 echo "IP: configuring GND_* parameters for " $PX4_ROBOT_NAME
@@ -115,7 +115,7 @@ then
 	param set RD_WHEEL_TRACK 0.58
 
 	// Dragger max speed is 0.5 m/s as measired on R/C
-	param set RD_MAX_SPEED 0.55
+	param set RO_SPEED_LIM 0.55
 	param set RD_MISS_SPD_DEF 0.45
 
 	# Dragger, having non-RTK GPS, needs Mag and vertical reference - Baro sim.
@@ -146,7 +146,7 @@ else
 	# Set Differential Drive Kinematics Library parameters:
 	param set RD_WHEEL_TRACK 0.9
 
-	param set RD_MAX_SPEED 2.9
+	param set RO_SPEED_LIM 2.9
 	param set RD_MISS_SPD_DEF 2.0
 	param set RD_RATE_ZTRQ 0.08
 

@@ -54,12 +54,12 @@ param set-default RD_WHEEL_TRACK 0.9
 param set-default RD_MAN_YAW_SCALE 0.25
 param set-default RD_YAW_RATE_I 0.08
 param set-default RD_YAW_RATE_P 5
-param set-default RD_MAX_ACCEL 1
-param set-default RD_MAX_JERK 0.3
-param set-default RD_MAX_SPEED 2.9
-param set-default RD_YAW_P 8
-param set-default RD_YAW_I 0.01
-param set-default RD_MAX_YAW_RATE 30
+param set-default RO_ACCEL_LIM 1
+param set-default RO_JERK_LIM 0.3
+param set-default RO_SPEED_LIM 2.9
+param set-default RO_YAW_P 8
+param set-default RO_YAW_I 0.01
+param set-default RO_YAW_RATE_LIM 30
 param set-default RD_MISS_SPD_DEF 2.0
 #=======
 #param set-default RD_TRANS_DRV_TRN 0.349066

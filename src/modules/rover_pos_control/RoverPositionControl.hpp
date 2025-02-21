@@ -583,17 +583,17 @@ private:
 	// -----------------------------------------------------------------------------------------------------------------------------
 
 	DEFINE_PARAMETERS(
-		(ParamFloat<px4::params::RD_YAW_P>) _param_rd_p_gain_yaw,
-		(ParamFloat<px4::params::RD_YAW_I>) _param_rd_i_gain_yaw,
-		(ParamFloat<px4::params::RD_YAW_D>) _param_rd_d_gain_yaw,
-		(ParamFloat<px4::params::RD_SPEED_P>) _param_rd_p_gain_speed,
-		(ParamFloat<px4::params::RD_SPEED_I>) _param_rd_i_gain_speed,
-		(ParamFloat<px4::params::RD_MAX_SPEED>) _param_rd_max_speed,
+		(ParamFloat<px4::params::RO_YAW_P>) _param_ro_p_gain_yaw,
+		(ParamFloat<px4::params::RO_YAW_I>) _param_ro_i_gain_yaw,
+		(ParamFloat<px4::params::RO_YAW_D>) _param_ro_d_gain_yaw,
+		(ParamFloat<px4::params::RO_SPEED_P>) _param_ro_speed_p,
+		(ParamFloat<px4::params::RO_SPEED_I>) _param_ro_speed_i,
+		(ParamFloat<px4::params::RO_SPEED_LIM>) _param_ro_speed_lim,
 		(ParamFloat<px4::params::NAV_ACC_RAD>) _param_nav_acc_rad,
-		(ParamFloat<px4::params::RD_MAX_JERK>) _param_rd_max_jerk,
-		(ParamFloat<px4::params::RD_MAX_ACCEL>) _param_rd_max_accel,
+		(ParamFloat<px4::params::RO_JERK_LIM>) _param_ro_jerk_lim,
+		(ParamFloat<px4::params::RO_ACCEL_LIM>) _param_ro_accel_lim,
 		(ParamFloat<px4::params::RD_MISS_SPD_DEF>) _param_rd_miss_spd_def,
-		(ParamFloat<px4::params::RD_MAX_YAW_RATE>) _param_rd_max_yaw_rate,
+		(ParamFloat<px4::params::RO_YAW_RATE_LIM>) _param_ro_max_yaw_rate,
 		(ParamFloat<px4::params::RD_TRANS_TRN_DRV>) _param_rd_trans_trn_drv,
 		(ParamFloat<px4::params::RD_TRANS_DRV_TRN>) _param_rd_trans_drv_trn,
 

@@ -76,6 +76,20 @@ PARAM_DEFINE_INT32(GND_LF_USE_RATE, 2);
 PARAM_DEFINE_FLOAT(GND_LF_P, 1.0f);
 
 /**
+ * Integral gain for heading error controller
+ *
+ * This is the integral gain for the Heading closed loop controller
+ *
+ * @unit norm
+ * @min 0.0
+ * @max 1.0
+ * @decimal 3
+ * @increment 0.001
+ * @group Rover Attitude Control
+ */
+PARAM_DEFINE_FLOAT(RO_YAW_I, 0.0f);
+
+/**
  * Derivative gain for heading error controller
  *
  * This is the derivative gain for the Heading closed loop controller
@@ -85,9 +99,9 @@ PARAM_DEFINE_FLOAT(GND_LF_P, 1.0f);
  * @max 1.0
  * @decimal 3
  * @increment 0.001
- * @group Rover Position Control
+ * @group Rover Attitude Control
  */
-PARAM_DEFINE_FLOAT(RD_YAW_D, 0.0f);
+PARAM_DEFINE_FLOAT(RO_YAW_D, 0.0f);
 
 //===============================================================================================================
 
@@ -714,29 +728,30 @@ PARAM_DEFINE_FLOAT(RD_MAN_YAW_SCALE, 0.25f);
 
 // added for compatibility with new rover changes:
 
-PARAM_DEFINE_FLOAT(RO_YAW_RATE_LIM, 1.0f);
-PARAM_DEFINE_FLOAT(RD_MAX_YAW_RATE, 1.0f);
-PARAM_DEFINE_FLOAT(RO_YAW_RATE_TH, 1.0f);
-PARAM_DEFINE_FLOAT(RO_YAW_P, 1.0f);
-PARAM_DEFINE_FLOAT(RD_YAW_P, 1.0f);
-PARAM_DEFINE_FLOAT(RD_YAW_I, 1.0f);
-PARAM_DEFINE_FLOAT(RO_MAX_THR_SPEED, 1.0f);
-PARAM_DEFINE_FLOAT(RO_YAW_RATE_P, 1.0f);
-PARAM_DEFINE_FLOAT(RO_YAW_RATE_I, 1.0f);
-PARAM_DEFINE_FLOAT(RO_SPEED_LIM, 1.0f);
-PARAM_DEFINE_FLOAT(RD_MAX_SPEED, 1.0f);
-PARAM_DEFINE_FLOAT(RO_SPEED_TH, 1.0f);
-PARAM_DEFINE_FLOAT(RO_SPEED_P, 1.0f);
-PARAM_DEFINE_FLOAT(RO_SPEED_I, 1.0f);
-PARAM_DEFINE_FLOAT(RD_SPEED_P, 1.0f);
-PARAM_DEFINE_FLOAT(RD_SPEED_I, 1.0f);
-PARAM_DEFINE_FLOAT(RO_YAW_STICK_DZ, 1.0f);
-PARAM_DEFINE_FLOAT(RO_YAW_ACCEL_LIM, 1.0f);
-PARAM_DEFINE_FLOAT(RO_YAW_DECEL_LIM, 1.0f);
-PARAM_DEFINE_FLOAT(RO_ACCEL_LIM, 1.0f);
-PARAM_DEFINE_FLOAT(RD_MAX_ACCEL, 1.0f);
-PARAM_DEFINE_FLOAT(RO_DECEL_LIM, 1.0f);
-PARAM_DEFINE_FLOAT(RO_JERK_LIM, 1.0f);
-PARAM_DEFINE_FLOAT(RD_MAX_JERK, 1.0f);
+//PARAM_DEFINE_FLOAT(RO_YAW_RATE_LIM, 1.0f);
+//PARAM_DEFINE_FLOAT(RD_MAX_YAW_RATE, 1.0f);
+//PARAM_DEFINE_FLOAT(RO_YAW_RATE_TH, 1.0f);
+
+//PARAM_DEFINE_FLOAT(RO_YAW_P, 1.0f);
+//PARAM_DEFINE_FLOAT(RD_YAW_P, 1.0f);
+//PARAM_DEFINE_FLOAT(RO_YAW_I, 1.0f);
+//PARAM_DEFINE_FLOAT(RO_MAX_THR_SPEED, 1.0f);
+//PARAM_DEFINE_FLOAT(RO_YAW_RATE_P, 1.0f);
+//PARAM_DEFINE_FLOAT(RO_YAW_RATE_I, 1.0f);
+//PARAM_DEFINE_FLOAT(RO_SPEED_LIM, 1.0f);
+//PARAM_DEFINE_FLOAT(RD_MAX_SPEED, 1.0f);
+//PARAM_DEFINE_FLOAT(RO_SPEED_TH, 1.0f);
+//PARAM_DEFINE_FLOAT(RO_SPEED_P, 1.0f);
+//PARAM_DEFINE_FLOAT(RO_SPEED_I, 1.0f);
+//PARAM_DEFINE_FLOAT(RD_SPEED_P, 1.0f);
+//PARAM_DEFINE_FLOAT(RD_SPEED_I, 1.0f);
+//PARAM_DEFINE_FLOAT(RO_YAW_STICK_DZ, 1.0f);
+//PARAM_DEFINE_FLOAT(RO_YAW_ACCEL_LIM, 1.0f);
+//PARAM_DEFINE_FLOAT(RO_YAW_DECEL_LIM, 1.0f);
+//PARAM_DEFINE_FLOAT(RO_ACCEL_LIM, 1.0f);
+//PARAM_DEFINE_FLOAT(RD_MAX_ACCEL, 1.0f);
+//PARAM_DEFINE_FLOAT(RO_DECEL_LIM, 1.0f);
+//PARAM_DEFINE_FLOAT(RO_JERK_LIM, 1.0f);
+//PARAM_DEFINE_FLOAT(RD_MAX_JERK, 1.0f);
 
 // -----------------------------------------------------------------------------------------------------------------------------

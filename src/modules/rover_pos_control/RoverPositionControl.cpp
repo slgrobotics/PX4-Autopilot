@@ -576,9 +576,9 @@ void RoverPositionControl::control_position_manual()
 			_mission_yaw_rate_setpoint = _torque_control_manual /
 						     _param_rd_man_yaw_scale.get(); // RD_MAN_YAW_SCALE +- 1.0 controlled by right stick horizontal movement
 
-			// stick inputs become +-RD_MAX_SPEED:
+			// stick inputs become +-RO_SPEED_LIM:
 			_mission_velocity_setpoint = _thrust_control_manual *
-						     _param_rd_max_speed.get(); // RD_MAX_SPEED +- max (a.k.a. trim) speed controlled by right stick vertical movement
+						     _param_ro_speed_lim.get(); // RO_SPEED_LIM +- max (a.k.a. trim) speed controlled by right stick vertical movement
 
 			adjustThrustAndTorque(); // will call PIDs via computeTorqueEffort() and computeThrust(), result in _mission_torque_effort, _mission_thrust_effort;
 			setActControls();

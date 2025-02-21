@@ -51,5 +51,10 @@ px4_add_module(
 		RateControl
 		pure_pursuit
 		stanley_pursuit
+		rover_control
 		PID
+#	MODULE_CONFIG
+#		module.yaml
 	)
+
+	set_property(GLOBAL APPEND PROPERTY PX4_MODULE_CONFIG_FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../lib/rover_control/module.yaml)
