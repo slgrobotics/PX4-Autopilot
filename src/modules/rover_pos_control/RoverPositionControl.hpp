@@ -583,20 +583,24 @@ private:
 	// -----------------------------------------------------------------------------------------------------------------------------
 
 	DEFINE_PARAMETERS(
+		// Generic rover control parameters (lib/rover_control/module.yaml):
 		(ParamFloat<px4::params::RO_YAW_P>) _param_ro_p_gain_yaw,
 		(ParamFloat<px4::params::RO_YAW_I>) _param_ro_i_gain_yaw,
 		(ParamFloat<px4::params::RO_YAW_D>) _param_ro_d_gain_yaw,
 		(ParamFloat<px4::params::RO_SPEED_P>) _param_ro_speed_p,
 		(ParamFloat<px4::params::RO_SPEED_I>) _param_ro_speed_i,
 		(ParamFloat<px4::params::RO_SPEED_LIM>) _param_ro_speed_lim,
-		(ParamFloat<px4::params::NAV_ACC_RAD>) _param_nav_acc_rad,
 		(ParamFloat<px4::params::RO_JERK_LIM>) _param_ro_jerk_lim,
 		(ParamFloat<px4::params::RO_ACCEL_LIM>) _param_ro_accel_lim,
-		(ParamFloat<px4::params::RD_MISS_SPD_DEF>) _param_rd_miss_spd_def,
 		(ParamFloat<px4::params::RO_YAW_RATE_LIM>) _param_ro_max_yaw_rate,
-		(ParamFloat<px4::params::RD_TRANS_TRN_DRV>) _param_rd_trans_trn_drv,
-		(ParamFloat<px4::params::RD_TRANS_DRV_TRN>) _param_rd_trans_drv_trn,
 
+		// Default mission speed on the legs between waypoints:
+		(ParamFloat<px4::params::RD_MISS_SPD_DEF>) _param_rd_miss_spd_def,
+
+		// Navigation acceptance distance for reaching a waypoint:
+		(ParamFloat<px4::params::NAV_ACC_RAD>) _param_nav_acc_rad,
+
+		// Narrow corridor around followed line:
 		(ParamFloat<px4::params::RD_RATE_CORW>) _param_rd_rate_corw,
 		(ParamFloat<px4::params::RD_RATE_ZTRQ>) _param_rd_rate_ztrq,
 		(ParamFloat<px4::params::RD_RATE_FTRQ>) _param_rd_rate_ftrq,
