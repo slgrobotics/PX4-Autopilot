@@ -151,20 +151,30 @@ void RoverPositionControl::publishControllerStatus()
 {
 	// publish controller status, mostly for tracing and tuning:
 
-	position_controller_status_s pos_ctrl_status{};
+	position_controller_status_s pos_ctrl_status{};  // PositionControllerStatus.msg
 
-	pos_ctrl_status.nav_roll = 0.0f;
-	pos_ctrl_status.nav_pitch = 0.0f;
+	pos_ctrl_status.nav_roll = 0.0f;	// Roll setpoint [rad]
+	pos_ctrl_status.nav_pitch = 0.0f;	// Pitch setpoint [rad]
 
-	pos_ctrl_status.nav_bearing = _nav_bearing;
-	pos_ctrl_status.target_bearing = _target_bearing;
-	pos_ctrl_status.xtrack_error = _crosstrack_error;
+	pos_ctrl_status.nav_bearing = _nav_bearing;		// Bearing angle[rad]
+	pos_ctrl_status.target_bearing = _target_bearing;	// Bearing angle from aircraft to current target [rad]
+	pos_ctrl_status.xtrack_error = _crosstrack_error;	// Signed track error [m]
 
-	pos_ctrl_status.wp_dist = _wp_current_dist;
+	pos_ctrl_status.wp_dist = _wp_current_dist;	// Distance to active (next) waypoint [m]
 
-	pos_ctrl_status.acceptance_radius =
-		_acceptance_radius;	// if large enough, will be used for mission advancement to next WP
-	pos_ctrl_status.yaw_acceptance = NAN;
+	pos_ctrl_status.acceptance_radius =	// Current horizontal acceptance radius [m]
+		_acceptance_radius;		// if large enough, will be used for mission advancement to next WP
+
+	// _pos_sp_triplet.current is always valid here
+	pos_ctrl_status.type =
+		_pos_sp_triplet.current.type;	// Current (applied) position setpoint type (see PositionSetpoint.msg)
+
+	// SETPOINT_TYPE_POSITION=0	 position setpoint
+	// SETPOINT_TYPE_VELOCITY=1	 velocity setpoint
+	// SETPOINT_TYPE_LOITER=2	 loiter setpoint
+	// SETPOINT_TYPE_TAKEOFF=3	 takeoff setpoint
+	// SETPOINT_TYPE_LAND=4		 land setpoint, altitude must be ignored, descend until landing
+	// SETPOINT_TYPE_IDLE=5		 do nothing, switch off motors or keep at idle speed (MC)
 
 	pos_ctrl_status.timestamp = _timestamp;
 
