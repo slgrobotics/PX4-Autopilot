@@ -31,22 +31,23 @@
 #
 ############################################################################
 
-add_subdirectory(AckermannRateControl)
-add_subdirectory(AckermannAttControl)
-add_subdirectory(AckermannPosVelControl)
+include(ExternalProject)
+find_package(OpenCV REQUIRED)
 
-px4_add_module(
-	MODULE modules__rover_ackermann
-	MAIN rover_ackermann
-	SRCS
-		RoverAckermann.cpp
-		RoverAckermann.hpp
-	DEPENDS
-		AckermannRateControl
-		AckermannAttControl
-		AckermannPosVelControl
-		px4_work_queue
-		rover_control
-	MODULE_CONFIG
-		module.yaml
-)
+if(NOT TARGET OpticalFlow)
+    ExternalProject_Add(OpticalFlow
+        GIT_REPOSITORY https://github.com/PX4/PX4-OpticalFlow.git
+        GIT_TAG master
+        PREFIX ${CMAKE_BINARY_DIR}/OpticalFlow
+        INSTALL_DIR ${CMAKE_BINARY_DIR}/OpticalFlow/install
+        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+        BUILD_BYPRODUCTS ${CMAKE_BINARY_DIR}/OpticalFlow/install/lib/libOpticalFlow.so
+        UPDATE_DISCONNECTED ON
+        BUILD_ALWAYS OFF
+        STEP_TARGETS build
+    )
+
+    ExternalProject_Get_Property(OpticalFlow install_dir)
+    set(OpticalFlow_INCLUDE_DIRS ${install_dir}/include CACHE INTERNAL "")
+    set(OpticalFlow_LIBS ${install_dir}/lib/libOpticalFlow.so CACHE INTERNAL "")
+endif()
