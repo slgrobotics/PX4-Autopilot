@@ -63,6 +63,11 @@ param set-default RO_JERK_LIM 0.3
 #param set-default RD_TRANS_TRN_DRV 0.174533
 #=======
 
+# Pure Pursuit parameters
+param set-default PP_LOOKAHD_GAIN 1
+param set-default PP_LOOKAHD_MAX 10
+param set-default PP_LOOKAHD_MIN 1
+
 # Lawnmower parameters to scale Differential Drive Kinematics output:
 #param set-default GND_THRUST_SC 1.0
 #param set-default GND_TORQUE_SC 1.0

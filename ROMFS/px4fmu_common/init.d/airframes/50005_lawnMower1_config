@@ -108,6 +108,11 @@ param set-default RD_MISS_SPD_DEF 2.0
 param set-default RO_ACCEL_LIM 1.0
 param set-default RO_JERK_LIM 1.0
 
+# Pure Pursuit parameters
+param set-default PP_LOOKAHD_GAIN 1
+param set-default PP_LOOKAHD_MAX 10
+param set-default PP_LOOKAHD_MIN 1
+
 echo "IP: configuring GND_* parameters for " $PX4_ROBOT_NAME
 
 # AHRS must have baro input, unless this is set to 0:

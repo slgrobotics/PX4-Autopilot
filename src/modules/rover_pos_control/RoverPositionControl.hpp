@@ -51,6 +51,7 @@
 #include <lib/perf/perf_counter.h>
 #include <lib/pid/PID.hpp>
 #include <lib/rate_control/rate_control.hpp>
+#include <lib/rover_control/RoverControl.hpp>
 #include <lib/pure_pursuit/PurePursuit.hpp>
 #include <lib/stanley_pursuit/StanleyPursuit.hpp>
 
@@ -223,6 +224,7 @@ private:
 
 	uORB::Publication<vehicle_attitude_setpoint_s>	_attitude_sp_pub{ORB_ID(vehicle_attitude_setpoint)};
 	uORB::Publication<position_controller_status_s>	_pos_ctrl_status_pub{ORB_ID(position_controller_status)};  /**< navigation capabilities publication */
+	uORB::Publication<pure_pursuit_status_s>	_pure_pursuit_status_pub{ORB_ID(pure_pursuit_status)};
 	uORB::PublicationMulti<actuator_motors_s> 	_actuator_motors_pub{ORB_ID(actuator_motors)};
 	uORB::Publication<actuator_servos_s>		_actuator_servos_pub{ORB_ID(actuator_servos)};
 	uORB::PublicationMulti<rate_ctrl_status_s>	_controller_status_pub{ORB_ID(rate_ctrl_status)};
@@ -273,7 +275,7 @@ private:
 	// Yaw rate controller:
 	RateControl _rate_control{};
 
-	PurePursuit _pure_pursuit{this}; // Pure pursuit library
+	//PurePursuit _pure_pursuit{this}; // Pure pursuit library
 	StanleyPursuit _stanley_pursuit{this}; // Stanley pursuit library
 
 	enum POS_CTRLSTATES : int {
@@ -604,6 +606,11 @@ private:
 		(ParamFloat<px4::params::RD_RATE_CORW>) _param_rd_rate_corw,
 		(ParamFloat<px4::params::RD_RATE_ZTRQ>) _param_rd_rate_ztrq,
 		(ParamFloat<px4::params::RD_RATE_FTRQ>) _param_rd_rate_ftrq,
+
+		// PurePursuit parameters:
+		(ParamFloat<px4::params::PP_LOOKAHD_GAIN>)  _param_pp_lookahd_gain,
+		(ParamFloat<px4::params::PP_LOOKAHD_MAX>)   _param_pp_lookahd_max,
+		(ParamFloat<px4::params::PP_LOOKAHD_MIN>)   _param_pp_lookahd_min,
 
 		// R/C yaw scaler to control right stick horizontal movement effect, avoiding too sensitive feel:
 		(ParamFloat<px4::params::RD_MAN_YAW_SCALE>) _param_rd_man_yaw_scale,
