@@ -60,11 +60,12 @@ bool RoverPositionControl::computePursuitHeadingError(int whichMethod, float max
 	pure_pursuit_status_s pure_pursuit_status{};
 	pure_pursuit_status.timestamp = _timestamp;
 	float nav_bearing_pure = PurePursuit::calcTargetBearing(pure_pursuit_status,
-				  _param_pp_lookahd_gain.get(), _param_pp_lookahd_max.get(), _param_pp_lookahd_min.get(),
-				  _curr_wp_ned, _prev_wp_ned, _curr_pos_ned, fabsf(_x_vel_ema));
+				 _param_pp_lookahd_gain.get(), _param_pp_lookahd_max.get(), _param_pp_lookahd_min.get(),
+				 _curr_wp_ned, _prev_wp_ned, _curr_pos_ned, fabsf(_x_vel_ema));
 	_pure_pursuit_status_pub.publish(pure_pursuit_status);
 	//nav_bearing_pure = _speed_body_x_setpoint > FLT_EPSILON ? nav_bearing_pure : matrix::wrap_pi(nav_bearing_pure + M_PI_F);
-	nav_bearing_pure = _rd_guidance.desired_speed > FLT_EPSILON ? nav_bearing_pure : matrix::wrap_pi(nav_bearing_pure + M_PI_F);
+	nav_bearing_pure = _rd_guidance.desired_speed > FLT_EPSILON ? nav_bearing_pure : matrix::wrap_pi(
+				   nav_bearing_pure + M_PI_F);
 
 	// see src/modules/rover_differential/RoverDifferentialGuidance/RoverDifferentialGuidance.cpp
 
