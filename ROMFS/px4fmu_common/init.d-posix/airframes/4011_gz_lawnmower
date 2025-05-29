@@ -1,91 +1,64 @@
 #!/bin/sh
-# @name Gazebo lawnmower
+# @name Gazebo - Zero Turn Lawnmower
 # @type Rover
 # @class Rover
 
-export MYSCRIPTNAME="`pwd`/.../5005_gz_lawnmower"
-echo "----------------------------"
-echo "IP: starting " $MYSCRIPTNAME
-
-#. ${R}etc/init.d/rc.rover_defaults
 . ${R}etc/init.d/rc.rover_differential_defaults
 
 PX4_SIMULATOR=${PX4_SIMULATOR:=gz}
-PX4_GZ_WORLD=${PX4_GZ_WORLD:=default}
+PX4_GZ_WORLD=${PX4_GZ_WORLD:=lawn}
 PX4_SIM_MODEL=${PX4_SIM_MODEL:=lawnmower}
 
 param set-default SIM_GZ_EN 1 # Gazebo bridge
 
+param set-default NAV_ACC_RAD 0.5
+
 # We can arm and drive in manual mode when it slides and GPS check fails:
 param set-default COM_ARM_WO_GPS 1
 
-#param set-default SENS_IMU_MODE 0	# temporary till rcS issue 22767 (Stale sensor error messages)
-
-# -------------------
-
-# Enable debug data logging:
-# Data logging to "SD card" (~/px4wrk/log or build/px4_sitl_default/rootfs/log):
-# "0" = armed to disarmed
-param set SDLOG_MODE 0
-# Bit 5 - Debug. 123 = 0b01111011  163 = 0b10100011
-param set SDLOG_PROFILE 123
-
-param set-default MIS_TAKEOFF_ALT 0.01
-#param set-default NAV_ACC_RAD 0.5
-param set NAV_ACC_RAD 0.3000
-param set-default NAV_LOITER_RAD 2
-
-# Simulated non-RTK GPS works at fix level 3:
-param set GND_GPS_MINFIX 3
-param set GND_TRACING_LEV 4
-param set GND_HD_MEAS_MODE 0
-param set GND_SP_MEAS_MODE 0
-
-# Define airframe for startup scripts and Control Allocation (a.k.a. Mixers) behavior:
-param set CA_AIRFRAME 6
-
-# Rover parameters
+# Differential Parameters
 param set-default RD_WHEEL_TRACK 0.9
-param set-default RD_MAN_YAW_SCALE 0.25
-param set-default RO_YAW_RATE_I 0.08
-param set-default RO_YAW_RATE_P 5
-param set-default RO_YAW_RATE_LIM 30
-param set-default RO_YAW_P 8
-param set-default RO_YAW_I 0.01
-param set-default RO_SPEED_P 1.0
-param set-default RO_SPEED_I 0
-param set-default RO_SPEED_LIM 2.9
-param set-default RD_MISS_SPD_DEF 2.0
-param set-default RO_ACCEL_LIM 1
-param set-default RO_JERK_LIM 0.3
-#=======
-#param set-default RD_TRANS_DRV_TRN 0.349066
-#param set-default RD_TRANS_TRN_DRV 0.174533
-#=======
+param set-default RD_MAX_THR_YAW_R 1.5
+param set-default RD_TRANS_DRV_TRN 0.349066
+param set-default RD_TRANS_TRN_DRV 0.174533
 
-# Pure Pursuit parameters
+# Rover Control Parameters
+param set-default RO_ACCEL_LIM 5
+param set-default RO_DECEL_LIM 10
+param set-default RO_JERK_LIM 30
+param set-default RO_MAX_THR_SPEED 2.1
+
+# Rover Rate Control Parameters
+param set-default RO_YAW_RATE_I 0.01
+param set-default RO_YAW_RATE_P 0.1
+param set-default RO_YAW_RATE_LIM 180
+param set-default RO_YAW_ACCEL_LIM 120
+param set-default RO_YAW_DECEL_LIM 1000
+
+# Rover Attitude Control Parameters
+#param set-default RO_YAW_I 0.01
+param set-default RO_YAW_P 0.35
+
+# Rover Position Control Parameters
+param set-default RO_SPEED_LIM 2
+param set-default RO_SPEED_I 0.01
+param set-default RO_SPEED_P 0.1
+
+# Pure pursuit parameters
 param set-default PP_LOOKAHD_GAIN 1
-param set-default PP_LOOKAHD_MAX 10
-param set-default PP_LOOKAHD_MIN 1
-
-# Lawnmower parameters to scale Differential Drive Kinematics output:
-#param set-default GND_THRUST_SC 1.0
-#param set-default GND_TORQUE_SC 1.0
-
-# Parameters that "just work" in gz sim:
-#param set-default GND_LF_P 2
-#param set-default GND_RATE_FF 1
+param set-default PP_LOOKAHD_MAX 30
+param set-default PP_LOOKAHD_MIN 2
 
 # Actuator mapping - set SITL motors/servos output parameters:
 
 # "Motors" - motor channels 0 (Right) and 1 (Left) - via Wheels GZ bridge:
-param set-default SIM_GZ_WH_FUNC1 201 # right wheel
+param set-default SIM_GZ_WH_FUNC1 101 # right wheel
 #param set-default SIM_GZ_WH_MIN1 0
 #param set-default SIM_GZ_WH_MAX1 200
 #param set-default SIM_GZ_WH_DIS1 100
 #param set-default SIM_GZ_WH_FAIL1 100
 
-param set-default SIM_GZ_WH_FUNC2 202 # left wheel
+param set-default SIM_GZ_WH_FUNC2 102 # left wheel
 #param set-default SIM_GZ_WH_MIN2 0
 #param set-default SIM_GZ_WH_MAX2 200
 #param set-default SIM_GZ_WH_DIS2 100
@@ -136,8 +109,3 @@ param set-default CA_SV_CS_COUNT 2
 
 # Spare PCA9685 servo channel 8 - "Servo 8" (208):
 #param set-default SIM_GZ_SV_FUNC8 208
-#differential_drive_control stop
-rover_pos_control start
-
-echo "OK: finished " $MYSCRIPTNAME
-echo "----------------------------"
