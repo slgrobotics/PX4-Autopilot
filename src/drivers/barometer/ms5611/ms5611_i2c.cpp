@@ -37,6 +37,8 @@
  * I2C interface for MS5611
  */
 
+// - modified by Sergei Grichine Sept 2020
+
 #include <drivers/device/i2c.h>
 
 #if defined(CONFIG_I2C)
@@ -143,6 +145,9 @@ MS5611_I2C::ioctl(unsigned operation, unsigned &arg)
 int
 MS5611_I2C::probe()
 {
+#ifdef REALDEV
+	_retries = 10;
+
 	if ((PX4_OK == _probe_address(MS5611_ADDRESS_1)) ||
 	    (PX4_OK == _probe_address(MS5611_ADDRESS_2))) {
 
@@ -152,11 +157,15 @@ MS5611_I2C::probe()
 	_retries = 1;
 
 	return -EIO;
+#else // REALDEV
+	return PX4_OK;
+#endif // REALDEV
 }
 
 int
 MS5611_I2C::_probe_address(uint8_t address)
 {
+#ifdef REALDEV
 	/* select the address we are going to try */
 	set_device_address(address);
 
@@ -171,11 +180,15 @@ MS5611_I2C::_probe_address(uint8_t address)
 	}
 
 	return PX4_OK;
+#else // REALDEV
+	return PX4_OK;
+#endif // REALDEV
 }
 
 int
 MS5611_I2C::_reset()
 {
+#ifdef REALDEV
 	unsigned	old_retrycount = _retries;
 	uint8_t		cmd = ADDR_RESET_CMD;
 	int		result;
@@ -186,18 +199,26 @@ MS5611_I2C::_reset()
 	_retries = old_retrycount;
 
 	return result;
+#else // REALDEV
+	return PX4_OK;
+#endif // REALDEV
 }
 
 int
 MS5611_I2C::_measure(unsigned addr)
 {
+#ifdef REALDEV
 	uint8_t cmd = addr;
 	return transfer(&cmd, 1, nullptr, 0);
+#else // REALDEV
+	return PX4_OK;
+#endif // REALDEV
 }
 
 int
 MS5611_I2C::_read_prom()
 {
+#ifdef REALDEV
 	uint8_t		prom_buf[2];
 	union {
 		uint8_t		b[2];
@@ -239,6 +260,9 @@ MS5611_I2C::_read_prom()
 
 	/* calculate CRC and return success/failure accordingly */
 	return (ms5611::crc4(&_prom.c[0]) && !bits_stuck) ? PX4_OK : -EIO;
+#else // REALDEV
+	return PX4_OK;
+#endif // REALDEV
 }
 
 #endif // CONFIG_I2C

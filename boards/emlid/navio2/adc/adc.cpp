@@ -41,9 +41,25 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#define ADC_SYSFS_PATH "/sys/kernel/rcio/adc"
+#include "mcp3008Spi.hpp"
+
+#define ADC_SPIDEV_BUS 0
+#define ADC_SPIDEV_DEV 0
+
+#define ADC_LOW_SPI_BUS_SPEED	1000*1000
+#define ADC_HIGH_SPI_BUS_SPEED	20*1000*1000
+
+#define ADC_SPI_BITS_PER_WORD   8
+
+#define ADC_MAX_ADC_CHAN 8
 #define ADC_MAX_CHAN 6
+
 int _channels_fd[ADC_MAX_CHAN];
+
+// mcp3008Spi(int bus_number, int device_id, spi_mode_e spi_mode, int bus_frequency)
+// SPIDEV_MODE0 = SPI_MODE_0 (defined in SPI.hpp, linux/spi/spidev.h), speed = 1MHz
+
+mcp3008Spi *a2d = nullptr;
 
 int px4_arch_adc_init(uint32_t base_address)
 {
@@ -51,13 +67,34 @@ int px4_arch_adc_init(uint32_t base_address)
 		_channels_fd[i] = -1;
 	}
 
-	return 0;
+	a2d = new mcp3008Spi(ADC_SPIDEV_BUS, ADC_SPIDEV_DEV, SPIDEV_MODE0, ADC_LOW_SPI_BUS_SPEED);
+
+	int ret = a2d->init();
+
+	if (ret != OK) {
+		PX4_ERR("SPI init failed");
+		return ret;
+	}
+
+	ret = a2d->probe();
+
+	if (ret != OK) {
+		PX4_ERR("SPI probe failed");
+		return ret;
+	}
+
+	return ret;
 }
 
 void px4_arch_adc_uninit(uint32_t base_address)
 {
+	a2d->uninit();
+
+	delete a2d;
+	a2d = nullptr;
+
 	for (int i = 0; i < ADC_MAX_CHAN; i++) {
-		::close(_channels_fd[i]);
+		//::close(_channels_fd[i]);
 		_channels_fd[i] = -1;
 	}
 }
@@ -65,39 +102,39 @@ void px4_arch_adc_uninit(uint32_t base_address)
 uint32_t px4_arch_adc_sample(uint32_t base_address, unsigned channel)
 {
 	if (channel > ADC_MAX_CHAN) {
-		PX4_ERR("channel %d out of range: %d", channel, ADC_MAX_CHAN);
+		PX4_ERR("px4_arch_adc_sample(): channel %d out of range: %d", channel, ADC_MAX_CHAN);
 		return UINT32_MAX; // error
 	}
 
-	// open channel if necessary
-	if (_channels_fd[channel] == -1) {
-		// ADC_SYSFS_PATH
-		char channel_path[strlen(ADC_SYSFS_PATH) + 5] {};
+	// see https://github.com/halherta/RaspberryPi-mcp3008Spi
 
-		if (sprintf(channel_path, "%s/ch%d", ADC_SYSFS_PATH, channel) == -1) {
-			PX4_ERR("adc channel: %d\n", channel);
-			return UINT32_MAX; // error
-		}
+	int a2dVal = 0;
+	int a2dChannel = channel;
 
-		_channels_fd[channel] = ::open(channel_path, O_RDONLY);
-	}
+	unsigned char data[3];
+	data[0] = 1;  //  first byte transmitted -> start bit
+	data[1] = 0b10000000 | (((a2dChannel & 7) << 4)); // second byte transmitted -> (SGL/DIF = 1, D2=D1=D0=0)
+	data[2] = 0; // third byte transmitted....don't care
 
-	char buffer[10] {};
-
-	if (::pread(_channels_fd[channel], buffer, sizeof(buffer), 0) < 0) {
-		PX4_ERR("read channel %d failed", channel);
+	if (a2d->spiWriteRead(data, sizeof(data)) != PX4_OK) {
+		PX4_ERR("channel %d failed SPI transfer", channel);
 		return UINT32_MAX; // error
 	}
 
-	return atoi(buffer);
+	a2dVal = 0;
+	a2dVal = (data[1] << 8) & 0b1100000000; //merge data[1] & data[2] to get result
+	a2dVal |= (data[2] & 0xff);
+
+
+	return a2dVal;
 }
 
 float px4_arch_adc_reference_v()
 {
-	return BOARD_ADC_POS_REF_V;
+	return BOARD_ADC_POS_REF_V;     // 3.3 for MCP3008 on the custom RPi Hat
 }
 
 uint32_t px4_arch_adc_dn_fullcount()
 {
-	return 1 << 12; // 12 bit ADC
+	return 1 << 10; // 10 bit ADC for MCP3008
 }

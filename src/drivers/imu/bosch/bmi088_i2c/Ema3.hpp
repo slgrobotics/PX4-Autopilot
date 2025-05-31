@@ -1,7 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (C) 2015 Mark Charlebois. All rights reserved.
- *   Copyright (C) 2016 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2017-2021 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,73 +31,51 @@
  *
  ****************************************************************************/
 
-// - modified by Sergei Grichine Sept 2020
+/**
+ *  @author Sergei Grichine <slg@quakemap.com>
+ */
 
 #pragma once
 
-#include <drivers/device/i2c.h>
-#include <px4_platform_common/i2c_spi_buses.h>
-#include <px4_platform_common/px4_config.h>
-#include <px4_platform_common/atomic.h>
-#include <px4_platform_common/defines.h>
-#include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
-#include <drivers/drv_hrt.h>
-#include <lib/perf/perf_counter.h>
-#include <uORB/PublicationMulti.hpp>
-#include <uORB/topics/input_rc.h>
+#include <float.h>
 
-namespace navio_sysfs_rc_in
+template<typename Type>
+class Ema3
 {
 
-class NavioSysRCInput : public device::I2C, public px4::ScheduledWorkItem
-{
 public:
-	NavioSysRCInput();
-	~NavioSysRCInput() override;
+	inline Ema3() {};
+	inline ~Ema3() {};
 
-	/* @return 0 on success, -errno on failure */
-	int start();
+	inline void init(int period)
+	{
+		emaPeriod = period;
+		multiplier = 2.0 / (1.0 + emaPeriod);
+		valuePrev = {NAN, NAN, NAN};
+	};
 
-	/* @return 0 on success, -errno on failure */
-	void stop();
+	const inline matrix::Vector3<Type> Compute(matrix::Vector3<Type> val)
+	{
+		matrix::Vector3<Type> valEma{};
 
-	int print_status();
+		for (int i = 0; i < 3; i++) {
+			valEma(i) = emaPeriod <= 1
+				    || !PX4_ISFINITE(valuePrev(i)) ? val(i) : ((val(i) - valuePrev(i)) * multiplier + valuePrev(i));
+			valuePrev(i) = valEma(i);
+		}
 
-	bool isRunning() { return _isRunning; }
+		return valEma;
+	};
+
+	inline matrix::Vector3<Type> ValuePrev() { return valuePrev; };
+
+	inline void Reset()	{ valuePrev = {NAN, NAN, NAN}; };
 
 private:
-	void Run() override;
-
-	int navio_rc_init();
-
-	px4::atomic_bool _should_exit{false};
-
-	bool _isRunning{false};
-
-	uORB::PublicationMulti<input_rc_s> _input_rc_pub{ORB_ID(input_rc)};
-
-	static constexpr int CHANNELS{8};
-
-	input_rc_s data{};
-
-	// arming switch on left stick "rudder" (right sweep - arm, left sweep - disarm)
-	// we need to keep state here, as left stick is spring-loaded
-	bool _ch4_switch_state{false};
-
-	uint64_t _timestamp_last_signal{0};
-
-	bool _connected{false};
-
-	bool _lastRcLost{true};
-
-	float _rssi{0};
-	float _cnt_good{1.0f};
-	float _cnt_bad{1.0f};
-
-	perf_counter_t _publish_interval_perf{perf_alloc(PC_INTERVAL, MODULE_NAME": publish interval")};
-
-	perf_counter_t		_comms_errors;
-
+	// variables :
+	matrix::Vector3<Type> valuePrev{NAN, NAN, NAN};
+	int emaPeriod{0};
+	Type multiplier;
 };
 
-}; // namespace navio_sysfs_rc_in
+using Ema3f = Ema3<float>;

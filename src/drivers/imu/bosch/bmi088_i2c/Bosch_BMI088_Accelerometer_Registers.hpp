@@ -54,7 +54,8 @@ static constexpr uint32_t I2C_100_SPEED = 100 * 1000; // 100kHz I2C interface
 
 static constexpr uint8_t DIR_READ = 0x80;
 
-static constexpr uint8_t ID = 0x1E;
+static constexpr uint8_t ID_088 = 0x1E;
+static constexpr uint8_t ID_090L = 0x1A;
 
 static constexpr uint8_t ACC_I2C_ADDR_PRIMARY = 0x18;
 static constexpr uint8_t ACC_I2C_ADDR_SECONDARY = 0x19;
@@ -95,16 +96,19 @@ enum class Register : uint8_t {
 
 // ACC_CONF
 enum ACC_CONF_BIT : uint8_t {
-	// [7:4] acc_bwp
-	acc_bwp_Normal = Bit7 | Bit5,        // Filter setting normal
-	// [7:4] acc_bwp
-	acc_bwp_osr_4 = Bit7,        // OSR4
-	// [3:0] acc_odr
-	acc_odr_1600   = Bit3 | Bit2,        // ODR 1600 Hz
-	// [3:0] acc_odr
-	acc_odr_12_5   = Bit2 | Bit0,        // ODR 12.5 Hz
-	// [3:0] acc_odr
-	acc_odr_100   = Bit3,        	     // ODR 100 Hz
+	// bits [7:4] acc_bwp - Bit 7 must be set, except for conf reset.
+	acc_bwp_Normal = Bit7 | (0x02 << 4),   // Filter setting normal
+	acc_bwp_osr_2  = Bit7 | (0x01 << 4),   // OSR4, 2-fold oversampling
+	acc_bwp_osr_4  = Bit7,                 // OSR4, 4-fold oversampling
+	// bits [3:0] acc_odr
+	acc_odr_1600   = 0x0C,          // ODR 1600 Hz output data rate
+	acc_odr_800    = 0x0B,          // ODR 800 Hz
+	acc_odr_400    = 0x0A,          // ODR 400 Hz
+	acc_odr_200    = 0x09,          // ODR 200 Hz
+	acc_odr_100    = 0x08,        	// ODR 100 Hz
+	acc_odr_50     = 0x07,          // ODR  50 Hz
+	acc_odr_25     = 0x06,          // ODR  25 Hz
+	acc_odr_12_5   = 0x05,          // ODR 12.5 Hz
 };
 
 // ACC_RANGE

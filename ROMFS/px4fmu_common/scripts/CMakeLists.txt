@@ -31,7 +31,10 @@
 #
 ############################################################################
 
-px4_add_library(arch_adc
-	adc.cpp
-	mcp3008Spi.cpp
+px4_add_romfs_files(
+	clean.sh
+	create_px4wrk.sh
+	deploy_scripts.sh
+	run.sh
+	update_wrk.sh
 )

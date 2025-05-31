@@ -94,7 +94,7 @@
 extern device::Device *RM3100_SPI_interface(int bus, uint32_t devid, int bus_frequency, spi_mode_e spi_mode);
 extern device::Device *RM3100_I2C_interface(int bus, int bus_frequency);
 
-#define RM3100_ADDRESS		0x20
+#define RM3100_ADDRESS		0x23
 
 class RM3100 : public I2CSPIDriver<RM3100>
 {

@@ -54,7 +54,7 @@ static constexpr uint32_t I2C_100_SPEED = 100 * 1000; // 100kHz I2C interface
 
 static constexpr uint8_t DIR_READ = 0x80;
 
-static constexpr uint8_t ID = 0x0F;
+static constexpr uint8_t ID = 0x0F; // same for BMI088 and BMI090
 
 static constexpr uint8_t GYRO_I2C_ADDR_PRIMARY = 0x68;
 static constexpr uint8_t GYRO_I2C_ADDR_SECONDARY = 0x69;
@@ -88,18 +88,23 @@ enum FIFO_STATUS_BIT : uint8_t {
 
 // GYRO_RANGE
 enum GYRO_RANGE_BIT : uint8_t {
-	gyro_range_2000_dps = 0x00, // ±2000
+	gyro_range_2000_dps = 0x00, // ±2000 degrees per second
 	gyro_range_1000_dps = 0x01, // ±1000
 	gyro_range_500_dps  = 0x02, // ±500
-	gyro_range_250_dps  = 0x04, // ±250
-	gyro_range_125_dps  = 0x05, // ±125
+	gyro_range_250_dps  = 0x03, // ±250
+	gyro_range_125_dps  = 0x04, // ±125
 };
 
 // GYRO_BANDWIDTH
 enum GYRO_BANDWIDTH_BIT : uint8_t {
-	gyro_bw_100_Hz = Bit2 | Bit1 | Bit0,
-	gyro_bw_200_Hz = Bit4,
-	gyro_bw_2000_Hz = 0x00,
+	gyro_bw_100_Hz_32_Hz = 0x07, // output data rate 100, low pass filter 32
+	gyro_bw_200_Hz_64_Hz = 0x06,
+	gyro_bw_100_Hz_12_Hz = 0x05,
+	gyro_bw_200_Hz_23_Hz = 0x04,
+	gyro_bw_400_Hz_47_Hz = 0x03,
+	gyro_bw_1000_Hz_116_Hz = 0x02,
+	gyro_bw_2000_Hz_230_Hz = 0x01,
+	gyro_bw_2000_Hz_532_hz = 0x00,
 };
 
 // GYRO_INT_CTRL
