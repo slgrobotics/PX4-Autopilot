@@ -217,7 +217,6 @@ void InternalCombustionEngineControl::Run()
 
 	case State::Fault: {
 
-			// do nothing
 			if (user_request == UserOnOffRequest::Off) {
 				_state = State::Stopped;
 				_starting_retry_cycle = 0;
@@ -292,7 +291,7 @@ void InternalCombustionEngineControl::controlEngineStop()
 	_ignition_on = false;
 	_choke_control = _param_ice_stop_choke.get() ? 1.f : 0.f;
 	_starter_engine_control = 0.f;
-	_throttle_control = 0.f;
+	_throttle_control = NAN; // this will set it to the DISARMED value
 }
 
 void InternalCombustionEngineControl::controlEngineFault()
@@ -392,8 +391,11 @@ The state machine:
 
 - Checks if [Rpm.msg](../msg_docs/Rpm.md) is updated to know if the engine is running
 - Allows for user inputs from:
-  - AUX{N}
+  - Manual control AUX
   - Arming state in [VehicleStatus.msg](../msg_docs/VehicleStatus.md)
+- In the state "Stopped" the throttle is set to NAN, which by definition will set the
+  throttle output to the disarmed value configured for the specific output.
+
 
 The module publishes [InternalCombustionEngineControl.msg](../msg_docs/InternalCombustionEngineControl.md).
 
