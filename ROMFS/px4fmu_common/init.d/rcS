@@ -15,26 +15,49 @@ set +e
 #
 #------------------------------------------------------------------------------
 
+export MYSCRIPTNAMERCS="`pwd`/$0"
+echo "----------------------------------------------------------------------"
+echo "IP: starting " $MYSCRIPTNAMERCS
+echo "FYI: work dir: `pwd`"
+
+# PX4 commands need the 'px4-' prefix in bash.
+# (px4-alias.sh is expected to be in the PATH)
+# shellcheck disable=SC1091
+. px4-alias.sh
+
+#set -x
+
 #
 # Set default paramter values.
 # Do not add intra word spaces
 # it wastes flash
 #
-set R /
+
+#set R /
+#set R /home/pi/px4wrk/
+set R `pwd`/
+
 set FCONFIG /fs/microsd/etc/config.txt
 set FEXTRAS /fs/microsd/etc/extras.txt
 set FRC /fs/microsd/etc/rc.txt
 set IOFW "/etc/extras/px4_io-v2_default.bin"
 set LOGGER_ARGS ""
 set LOGGER_BUF 8
-set PARAM_FILE ""
-set PARAM_BACKUP_FILE ""
+set PARAM_FILE "${R}/eeprom/parameters_50005"
+set PARAM_BACKUP_FILE "${R}/eeprom/parameters_50005.bak"
 set RC_INPUT_ARGS ""
 set STORAGE_AVAILABLE no
 set SDCARD_EXT_PATH /fs/microsd/ext_autostart
 set SDCARD_FORMAT no
 set STARTUP_TUNE 1
-set VEHICLE_TYPE none
+#set VEHICLE_TYPE none
+set VEHICLE_TYPE rover
+
+# Airframe parameter versioning
+# Value set to 1 by default but can optionally be overridden in the airframe configuration startup script.
+# Airframe maintainers can ensure a reset to the airframe defaults during an update by increasing by one.
+# e.g. add line "set PARAM_DEFAULTS_VER 2" in your airframe file to build the first update that enfoces a reset.
+set PARAM_DEFAULTS_VER 1
 
 # Airframe parameter versioning
 # Value set to 1 by default but can optionally be overridden in the airframe configuration startup script.
@@ -123,8 +146,11 @@ fi
 #
 if [ -f $FRC ]
 then
+	echo "FYI: Disable autostart - FRC init script found: $FRC"
 	. $FRC
 else
+
+	echo "IP: autostart"
 
 	# Load param file location from kconfig
 	. ${R}etc/init.d/rc.filepaths
@@ -145,6 +171,7 @@ else
 		param load /fs/mtd_caldata
 	fi
 
+	echo "FYI: PARAM_FILE: $PARAM_FILE"
 	param select $PARAM_FILE
 	if ! param import
 	then
@@ -180,6 +207,7 @@ else
 
 	if [ $STORAGE_AVAILABLE = yes ]
 	then
+		echo "FYI: PARAM_BACKUP_FILE: $PARAM_BACKUP_FILE"
 		param select-backup $PARAM_BACKUP_FILE
 	fi
 
@@ -188,9 +216,13 @@ else
 		netman update -i eth0
 	fi
 
+	#
 	# To trigger a parameter reset during boot SYS_AUTCONFIG was set to 1 before
+	# If the airframe has been previously reset SYS_AUTCONFIG will have been set to 1 and other params will be reset on the next boot.
+	#
 	if param greater SYS_AUTOCONFIG 0
 	then
+		echo "FYI: SYS_AUTOCONFIG 1 - resetting most parameters"
 		# Reset parameters except airframe, parameter version, RC calibration, sensor calibration, flight modes, total flight time, flight UUID
 		param reset_all SYS_AUTOSTART SYS_PARAM_VER RC* CAL_* COM_FLTMODE* LND_FLIGHT* TC_* COM_FLIGHT*
 	fi
@@ -218,13 +250,24 @@ else
 	unset BOARD_RC_DEFAULTS
 
 	# Load airframe configuration based on SYS_AUTOSTART parameter
+	#
+	# Set parameters and env variables for selected SYS_AUTOSTART.
+	#
+	set AUTOSTART_PATH etc/init.d/rc.autostart
+
+	param set SYS_AUTOSTART ${PX4_MODEL_ID}
+
+	echo "FYI: SYS_AUTOSTART $(param show -q SYS_AUTOSTART)"
 	if ! param compare SYS_AUTOSTART 0
 	then
+		echo "FYI: SYS_AUTOSTART $(param show -q SYS_AUTOSTART) - looking to execute AUTOSTART_PATH: ${R}$AUTOSTART_PATH"
+		
 		# rc.autostart directly run the right airframe script which sets the VEHICLE_TYPE
 		# Look for airframe in ROMFS
 		. ${R}etc/init.d/rc.autostart
 
 		if [ ${VEHICLE_TYPE} == none ]
+		#if param greater SYS_AUTOSTART 1000000
 		then
 			# Use external startup file
 			if [ $STORAGE_AVAILABLE = yes ]
@@ -373,7 +416,8 @@ else
 	#
 	if px4io supported
 	then
-	# Check if PX4IO present and update firmware if needed.
+		# Check if PX4IO present and update firmware if needed.
+		echo "IP: Checking if PX4IO present and update firmware if needed..."
 		if [ -f $IOFW ]
 		then
 			if ! px4io checkcrc ${IOFW}
@@ -492,8 +536,12 @@ else
 	#
 	. ${R}etc/init.d/rc.serial
 
-	# Must be started after the serial config is read
-	rc_input start $RC_INPUT_ARGS
+	echo "RC_INPUT_ARGS="${RC_INPUT_ARGS}
+	if [ ! -z "${RC_INPUT_ARGS}" ]
+	then
+		# Must be started after the serial config is read
+		rc_input start $RC_INPUT_ARGS
+	fi
 
 	# Manages USB interface
 	if param greater -s SYS_USB_AUTO -1
@@ -604,6 +652,7 @@ else
 	#
 	# Set additional parameters and env variables for selected AUTOSTART.
 	#
+	echo "FYI: SYS_AUTOSTART $(param show -q SYS_AUTOSTART)"
 	if ! param compare SYS_AUTOSTART 0
 	then
 		. ${R}etc/init.d/rc.autostart.post
@@ -667,3 +716,6 @@ unset VEHICLE_TYPE
 # Boot is complete, inform MAVLink app(s) that the system is now fully up and running.
 #
 mavlink boot_complete
+
+echo "OK: finished " $MYSCRIPTNAMERCS
+echo "----------------------------------------------------------------------"

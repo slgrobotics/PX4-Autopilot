@@ -41,6 +41,8 @@ px4_add_romfs_files(
 	rc.sensors
 	rc.vehicle_setup
 
+	rc.board_mavlink
+
 	# TODO
 	rc.balloon_apps
 	rc.balloon_defaults

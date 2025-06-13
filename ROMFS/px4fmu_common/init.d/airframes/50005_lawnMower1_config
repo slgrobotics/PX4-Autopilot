@@ -1,0 +1,486 @@
+#!/bin/sh
+#
+# @name Aion Robotics R1 UGV
+#
+# @url http://docs.aionrobotics.com/en/latest/r1-ugv.html
+#
+# @type Rover
+# @class Rover
+#
+# @board px4_fmu-v2 exclude
+#
+# @output MAIN0 Speed of left wheels
+# @output MAIN1 Speed of right wheels
+#
+# @maintainer Timothy Scott
+#
+# @board px4_fmu-v2 exclude
+# @board intel_aerofc-v1 exclude
+# @board bitcraze_crazyflie exclude
+#
+
+export MYSCRIPTNAME="`pwd`/.../50005_lawnMower1_config"
+echo "====================================="
+echo "IP: starting " $MYSCRIPTNAME
+echo "FYI: work dir: `pwd`     running at nice=`nice`"
+echo "FYI: AUTOCNF=" $AUTOCNF
+
+# Must have robot name (i.e. DRAGGER) in that file:
+set PX4_ROBOT_NAME $(cat /home/pi/PX4_ROBOT_NAME.txt)
+echo "FYI: PX4_ROBOT_NAME=" $PX4_ROBOT_NAME
+
+echo "IP: calling ${R}etc/init.d/rc.rover_defaults"
+. ${R}etc/init.d/rc.rover_defaults
+echo "OK: returned from ${R}etc/init.d/rc.rover_defaults"
+
+echo "FYI: param SYS_AUTOSTART: " `param show -q SYS_AUTOSTART`
+
+# Note: the "set-default" does not save values in "parameters" file, and does not mark them "changed".
+#       thus they become session parameters, not persisting between runs. Avoid using set-default overall.
+
+echo "IP: AUTOCNF = yes  - setting all platform default parameters"
+
+# Lead acid 12.6V battery looks like a 3S LiIon/LiPO, but wit 5V/cell Charged voltage:
+param set BAT1_A_PER_V 15.3910
+param set BAT1_N_CELLS 3
+param set BAT1_V_CHARGED 5.0
+param set BAT1_V_DIV 4.6730
+param set BAT1_V_EMPTY 3.3000
+
+# Disable Airspeed check circuit breaker because Rovers don't have airspeed sensor:
+param set CBRK_SUPPLY_CHK 894281
+#param set CBRK_VELPOSERR 201607
+#param set CBRK_IO_SAFETY 0
+
+# Commander parameters - defaults for safe operation:
+param set COM_CPU_MAX -1.0
+param set COM_RC_IN_MODE 0
+param set COM_POSCTL_NAVL 1
+param set COM_POS_FS_EPH 20
+param set COM_POS_LOW_EPH -1.0
+
+# Default 7, i.e. use geo lookup and save on disarm
+# Option: preset mag declination, no geo lookup, do not use declination in 3D mode (see .post file at the end):
+param set EKF2_DECL_TYPE 0
+param set EKF2_MAG_DECL 4
+
+# Option 0: No IMU or Magnetometer
+#param set EKF2_MULTI_IMU 0
+#param set EKF2_MULTI_MAG 0
+
+# Option 1: we have one IMU without mag on mpu9250, and separate mag on RM3100 (best used):
+# Option 2: we have one IMU with mag on mpu9250 with -M:
+#param set EKF2_MULTI_IMU 1
+#param set EKF2_MULTI_MAG 1
+
+# Option 3: we have one IMU with mag (mpu9250 -M) and second mag (RM3100) and 6-axis BMI088 IMU:
+#           this configuration quickly loses orientation, do not use without testing.
+#           *_MODE=0 allows publishing all Mag and IMU data, not only Primary's
+#           We will have 4 instances of EKF2 here ("ekf2 status")
+param set SENS_IMU_MODE 0
+param set SENS_MAG_MODE 0
+param set EKF2_MULTI_IMU 2
+param set EKF2_MULTI_MAG 2
+
+# wait for 5 seconds to declare GPS healthy:
+param set EKF2_REQ_GPS_H 5.0
+
+# Rovers don't have airspeed sensors:
+#param set SYS_HAS_NUM_ASPD 0
+
+# Lawnmower parameters to scale Differential Drive Kinematics output:
+#param set-default GND_THRUST_SC 1.0
+#param set-default GND_TORQUE_SC 1.0
+
+# Rover parameters
+param set-default RD_WHEEL_TRACK 0.9
+param set-default RD_MAN_YAW_SCALE 0.25
+param set-default RO_YAW_RATE_I 0.08
+param set-default RO_YAW_RATE_P 0.6
+param set-default RO_YAW_RATE_LIM 30
+param set-default RO_YAW_P 8
+param set-default RO_YAW_I 0.01
+param set-default RO_SPEED_P 1.0
+param set-default RO_SPEED_I 0
+param set-default RO_SPEED_LIM 2.9
+param set-default RD_MISS_SPD_DEF 2.0
+param set-default RO_ACCEL_LIM 1.0
+param set-default RO_JERK_LIM 1.0
+
+# Pure Pursuit parameters
+param set-default PP_LOOKAHD_GAIN 1
+param set-default PP_LOOKAHD_MAX 10
+param set-default PP_LOOKAHD_MIN 1
+
+echo "IP: configuring GND_* parameters for " $PX4_ROBOT_NAME
+
+# AHRS must have baro input, unless this is set to 0:
+if [ $PX4_ROBOT_NAME = DRAGGER ]
+then
+	# Set Differential Drive Kinematics Library parameters:
+	param set RD_WHEEL_TRACK 0.58
+
+	// Dragger max speed is 0.5 m/s as measired on R/C
+	param set RO_SPEED_LIM 0.55
+	param set RD_MISS_SPD_DEF 0.45
+
+	# Dragger, having non-RTK GPS, needs Mag and vertical reference - Baro sim.
+	param set SYS_HAS_BARO 1
+	# Magnetic heading (2D):
+	param set EKF2_MAG_TYPE 1
+
+	param set EKF2_BARO_CTRL 1
+	# have EKF2 estimator use BARO (0) or GPS (1) for altitude.
+	param set EKF2_HGT_REF 0
+	# To disable GPS Altitute fusing set this to 5 (default 7). For dual RTK GPS heading set it to 15:
+	param set EKF2_GPS_CTRL 5
+	param set GND_GPS_MINFIX 3
+
+	# For a non-RTK GPS:
+	param set GND_HD_MEAS_MODE 0
+	param set GND_SP_MEAS_MODE 0
+
+	param set EKF2_MULTI_IMU 1
+	param set EKF2_MULTI_MAG 1
+	param set EKF2_MULTI_MAG 1
+
+	param set GND_RATE_P 0.2
+	param set GND_RATE_I 0.0
+	param set GND_RATE_D 0.0
+
+else
+	# Set Differential Drive Kinematics Library parameters:
+	param set RD_WHEEL_TRACK 0.9
+
+	param set RO_SPEED_LIM 2.9
+	param set RD_MISS_SPD_DEF 2.0
+	param set RD_RATE_ZTRQ 0.08
+
+	param set SYS_HAS_BARO 0
+	param set EKF2_BARO_CTRL 0
+	# have EKF2 estimator use BARO (0) or GPS (1) for altitude.
+	param set EKF2_HGT_REF 1
+	# To disable GPS Velocity fusing set this to 3 (default 7). For dual RTK GPS heading set it to 15:
+	#param set EKF2_GPS_CTRL 7
+	param set EKF2_GPS_CTRL 15
+
+	# only consider heading from magnetometer (1) or use all three axisi (2):
+	#	0: Automatic (heading on ground, 3D in-flight)
+	#	1: Magnetic heading (2D)
+	#	2: 3-axis (3D)
+	#	5: none (i.e. use GPS instead, disable/ignore magnetometer)
+	#	6: use mag for initialization only
+	param set EKF2_MAG_TYPE 5
+
+	# For dual RTK GPS set position, heading and velocity noise low:
+	param set EKF2_GPS_P_NOISE 0.05
+	param set EKF2_GPS_V_NOISE 0.1
+	#param set EKF2_HEAD_NOISE 0.01 - this goes to mag fusing, not GPS
+
+	# Adjust other GPS related parameters for better EKF2 operation:
+	#param set EKF2_GPS_DELAY 110
+	#param set EKF2_GPS_POS_X 0
+	#param set EKF2_GPS_POS_Y 0
+	param set EKF2_GPS_POS_Z 0.5
+	#param set EKF2_TAU_POS 0.25
+fi
+
+# Disable all but GPS constellations (Glonass, Galileo...) for faster rate (not very stable RTK fix):
+#param set GPS_1_GNSS 1
+#param set GPS_2_GNSS 1
+# Use GPS, SBAS and Glonass (good 9Hz):
+param set GPS_1_GNSS 19
+param set GPS_2_GNSS 19
+# Use GPS, SBAS, BeiDou and Glonass (slow):
+#param set GPS_1_GNSS 27
+#param set GPS_2_GNSS 27
+# Use all:
+#param set GPS_1_GNSS 0
+#param set GPS_2_GNSS 0
+
+# For dual RTK GPS heading - 180 when Moving Base antenna is in front of the Rover GPS antenna:
+param set GPS_YAW_OFFSET 180
+# Secondary GPS (Moving Base) is connected to telemetry radio for RTCM feed, the radio baud rate is 57600.
+# This also affects UART2 on the Rover GPS, but this is OK.
+param set GPS_UBX_MODE 1
+param set GPS_UBX_BAUD2 57600
+# Disable GPS blending, always use Main GPS:
+param set SENS_GPS_MASK 0
+param set SENS_GPS_PRIME 0
+
+# Automotive model:
+param set GPS_UBX_DYNMODEL 4
+# We can drive in manual mode when GPS check fails:
+param set COM_ARM_WO_GPS 1
+
+# IMU bias bits, to inhibit publishing biases: 0-Gyro, 1-Accel, 2-Gravity vector fusion. Default 3 (Gyro and Accel bias publishing inhibited).
+#param set EKF2_IMU_CTRL 3
+param set EKF2_IMU_CTRL 7
+# Disable External Vision, Rangers:
+param set EKF2_EV_CTRL 0
+param set EKF2_RNG_CTRL 0
+# Relax drift requirements on checkup and Accel/Gyro Bias limits:
+param set EKF2_REQ_HDRIFT 1.0
+param set EKF2_REQ_VDRIFT 1.0
+param set EKF2_ABL_LIM 1.0
+param set EKF2_ABL_GYRLIM 1.0
+# Disable obscure EKF2 features, like compensating for centripetal acceleration during turns
+#    and IMU delta velocity bias estimation:
+param set EKF2_GSF_TAS 0
+param set EKF2_MAG_CHECK 0
+param set EKF2_GPS_CHECK 0
+
+# Disable auto-calibration of Gyro and Accel and related functions:
+param set SENS_IMU_AUTOCAL 0
+param set SENS_MAG_AUTOCAL 0
+param set IMU_GYRO_CAL_EN 0
+param set MBE_ENABLE 0
+param set MC_AT_EN 0
+
+# Default 15Hz is too limiting for magnetometer updates:
+#param set SENS_MAG_RATE 100
+
+# This is mpu9250 compass orientation, x - left, y - backwards:
+param set SENS_BOARD_ROT 0
+param set SENS_BOARD_Z_OFF 0
+
+# Disable mag inconsistency preflight check on arming:
+param set COM_ARM_MAG_ANG 90
+param set COM_ARM_MAG_STR 2
+
+# Set some device parameters:
+param set IMU_GYRO_RATEMAX 800
+param set IMU_INTEG_RATE 250
+param set LND_FLIGHT_T_HI 63
+param set LND_FLIGHT_T_LO 1916514503
+
+# Mission and Navigation:
+param set NAV_ACC_RAD 0.3000
+# param set NAV_FW_ALT_RAD 200.0000  < already set to 1000 in rc.rover_defaults
+
+# Control Allocation (a.k.a. Mixers) for wheels:
+param set CA_AIRFRAME 6
+# mark motors as bi-directional here for each channel (bitmask):
+param set CA_R_REV 3
+
+# set PWM output parameters:
+
+#param set PCA9685_REV 0
+
+# "Motors" - PCA9685 servo channels 1 (Right) and 2 (Left)
+# Option with CA: mixing INDEX_YAW and INDEX_THROTTLE (vehicle_torque_setpoint and vehicle_thrust_setpoint) to "Motor 1" and "Motor 2":
+
+param set PCA9685_FUNC1 202	# avoiding Control Allocator (Servo 2), option: 102 with CA
+param set PCA9685_MIN1 1000
+param set PCA9685_MAX1 2000
+param set PCA9685_DIS1 1500
+param set PCA9685_FAIL1 1500
+
+param set PCA9685_FUNC2 201	# avoiding Control Allocator (Servo 3), option: 102 with CA
+param set PCA9685_MIN2 1000
+param set PCA9685_MAX2 2000
+param set PCA9685_DIS2 1500
+param set PCA9685_FAIL2 1500
+
+# Cutter deck blades clutch, PCA9685 servo channel 3,  "RC FLAPS" (406) - leftmost switch, or "Servo 3" (203):
+param set PCA9685_FUNC3 406
+#param set PCA9685_FUNC3 203
+param set PCA9685_MIN3 1000
+param set PCA9685_DIS3 1000
+param set PCA9685_FAIL3 1000
+
+# Gas engine throttle, PCA9685 servo channel 4, "RC AUX1" (407) - left knob, or "Servo 4" (204):
+#    - on minimum when disarmed or failed:
+#param set PCA9685_FUNC4 407
+param set PCA9685_FUNC4 204
+param set PCA9685_MIN4 1000
+param set PCA9685_DIS4 1000
+param set PCA9685_FAIL4 1000
+
+# Controlling PCA9685 servos 5,6,7,8 directly via "Servo 5..8" setting, by publishing actuator_servos.control[]:
+
+# Strobes, PCA9685 servo channel 5, "Servo 5" (205) - flashing indicates Mission mode:
+param set PCA9685_FUNC5 205
+param set PCA9685_MIN5 1000
+param set PCA9685_DIS5 1000
+param set PCA9685_FAIL5 1000
+
+# Horn, PCA9685 servo channel 6, "Servo 6" (206) - for alarms like GPS failure:
+param set PCA9685_FUNC6 206
+param set PCA9685_MIN6 1000
+param set PCA9685_DIS6 1000
+param set PCA9685_FAIL6 1000
+
+# Spare PCA9685 servo channel 7 on "RC AUX2" (408) - right knob, or "Servo 7" (207):
+param set PCA9685_FUNC7 408
+#param set PCA9685_FUNC7 207
+param set PCA9685_DIS7 1500
+
+# Spare PCA9685 servo channel 8 - "Servo 8" (208):
+param set PCA9685_FUNC8 208
+param set PCA9685_DIS8 1500
+
+# set R/C -> MAIN mappings:
+
+# RC "mode 2" channels: ailerons: 1  pitch: 2  throttle: 3  rudder: 4
+# We re-assign them to allow right stick control movement, left - functions like arming and flight mode:
+param set RC_MAP_ROLL 1
+param set RC_MAP_THROTTLE 2
+param set RC_MAP_YAW 4
+param set RC_MAP_PITCH 3
+
+# set RC -> AUX mapping, names like "..FLAPS" to physical R/C channels:
+#    5 and 6 are top middle pots. 7 (cutter) and 8 (kill) are top left switches. Top right switches not available.
+param set RC_MAP_AUX1 5
+param set RC_MAP_AUX2 6
+param set RC_MAP_FLAPS 7
+
+# left stick to the right ("rudder") - Arm, to the left - Disarm:
+param set RC_MAP_ARM_SW 4
+# we cannot have both arm switch and left stick gesture.
+# to avoid "WARN  [commander] Arm stick gesture disabled if arm switch in use" warning:
+param set MAN_ARM_GESTURE 0
+
+# left stick all way up ("throttle") - Mission (3), down - Manual (0) modes:
+param set RC_MAP_FLTMODE 3
+param set COM_FLTMODE1 0
+param set COM_FLTMODE6 3
+
+# Kill switch - PWM off, after 0 seconds - disarm (also kills when transmitter off)
+# that's the second upper switch from the left:
+param set RC_MAP_KILL_SW 8
+param set COM_KILL_DISARM 0
+
+# This is to mimic successful calibration - it is normally set by QGroundControl:
+param set RC_CHAN_CNT 6
+
+param set RTL_CONE_ANG 0
+param set RTL_MIN_DIST 1
+param set RTL_DESCEND_ALT 3.0000
+param set RTL_RETURN_ALT 3.0000
+
+# Data logging to "SD card" (~/px4wrk/log):
+# "0" = armed to disarmed
+param set SDLOG_MODE 0
+
+# Bitmask SDLOG_PROFILE:
+# 0: Default set (general log analysis)
+# 1: Estimator replay (EKF2)
+# 2: Thermal calibration
+# 3: System identification
+# 4: High rate
+# 5: Debug
+# 6: Sensor comparison
+# 7: Computer Vision and Avoidance
+# 8: Raw FIFO high-rate IMU (Gyro)
+# 9: Raw FIFO high-rate IMU (Accel)
+# 10: Mavlink tunnel message logging
+
+# 123 = 0b01111011
+# 131 = 0b10000011
+# 163 = 0b10100011
+
+#param set SDLOG_PROFILE 255
+param set SDLOG_PROFILE 123
+
+# for debugging, allow unsafe arming rules:
+#param set COM_ARM_EKF_POS 1.0
+#param set COM_RC_IN_MODE 1
+#param set CBRK_IO_SAFETY 22027
+
+# system_power not implemented
+param set CBRK_SUPPLY_CHK 894281
+
+#
+# see src1/Firmware/build/emlid_navio2_default/platforms/posix/apps.cpp
+#
+
+# if needed, set GPS protocol to UBX (1, default) NMEA (6) or auto-detect (0):
+#param set GPS_1_PROTOCOL 6
+
+if [ $PX4_ROBOT_NAME = DRAGGER ]
+then
+	# start BN-880 (UBLOX M8N) GPS. It was configured for 5Hz using u-center on Windows:
+	gps start -d /dev/ttyUSB0 -b 115200 -p ubx
+
+	# start BN-880 GPS compass on I2C bus, address 0x1e:
+	hmc5883 -X -R 0 start
+else
+	# start u-blox ZED-F9P - dual GPS for heading (originally at /dev/ttyACM1 ACM0):
+	# follow https://github.com/slgrobotics/robots_bringup/tree/main/Docs/Dragger to assign links:
+	gps start -d /dev/ttyGPS_MAIN -b 460800 -e /dev/ttyGPS_SEC -g 460800
+
+	# start PNI RM3100 compass on I2C address 0x23=35:
+	rm3100 -X start
+fi
+
+# start SeedStudio/Bosch BMI088 6-Axis IMU on external I2C bus:
+#bmi088_i2c -A -R 0 -X -a 0x19 start
+#bmi088_i2c -G -R 0 -X -a 0x69 start
+
+# start IMU on SPI (/dev/spidev0.1):
+#mpu9250 -s -R 0 -M -f 20000 start
+# same without magnitometer:
+mpu9250 -s -R 0 -f 20000 start
+
+# start barometer emulation (AHRS must have baro input):
+ms5611 -X start
+
+# start MCP3008 based ADC on SPI (/dev/spidev0.0):
+board_adc start
+
+# start standard RGB LED on "external" I2C bus, default address 85:
+rgbled -X start
+
+# see Projects/tests/rc_receiver.py
+# start modified version of RC reader
+# (receiver connected to Teensy 3.2, RPi getting data over I2C, addr 72=0x48):
+navio_sysfs_rc_in start
+
+# ----------------------------------------
+# commented out "start" commands below because they are already running, started by rcS, rc.rover_apps:
+
+#rc_update start
+#sensors start
+#commander start
+#navigator start
+
+#
+# Start the attitude and position estimator.
+# already started by rc.rover_apps
+#
+#ekf2 start
+
+# these two are obsoleted by ekf2 (see rc.rover_apps):
+#attitude_estimator_q start
+#local_position_estimator start
+
+#
+# Start position and attitude controllers.
+# already started by rc.rover_apps
+#
+#rover_pos_control start
+#rover_steering_control start
+
+#
+# Start Land Detector.
+# already started by rc.rover_apps
+#
+#land_detector start rover
+#
+# ----------------------------------------
+
+#
+# Alternative estimators: Instead of EKF2, start the attitude and position estimator.
+#
+#ekf2 stop
+#attitude_estimator_q start
+#local_position_estimator start
+
+# linux_pwm_out is deprecated, do not use.
+set OUTPUT_MODE skip
+echo "IP: starting pca9685_pwm_out start -a 0x40 -b 1"
+pca9685_pwm_out start -a 0x40 -b 1
+
+echo "OK: finished " $MYSCRIPTNAME
+echo "====================================="

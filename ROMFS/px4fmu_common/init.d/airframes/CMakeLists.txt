@@ -163,6 +163,8 @@ if(CONFIG_MODULES_ROVER_POS_CONTROL)
 		# [59000, 59999] Rover position control (deprecated)
 		59000_generic_ground_vehicle
 		59001_nxpcup_car_dfrobot_gpx
+		50005_lawnMower1_config
+		50005_lawnMower1_config.post
 	)
 endif()
 
