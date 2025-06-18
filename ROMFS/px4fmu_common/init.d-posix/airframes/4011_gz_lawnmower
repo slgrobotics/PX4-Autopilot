@@ -22,7 +22,7 @@ param set-default RD_TRANS_DRV_TRN 0.349066
 param set-default RD_TRANS_TRN_DRV 0.174533
 
 # Rover Control Parameters
-param set-default RO_ACCEL_LIM 0.8
+param set-default RO_ACCEL_LIM 0.1
 param set-default RO_DECEL_LIM 0.8
 param set-default RO_JERK_LIM 10
 param set-default RO_MAX_THR_SPEED 2.1
