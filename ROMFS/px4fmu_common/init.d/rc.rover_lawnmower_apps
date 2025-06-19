@@ -1,0 +1,8 @@
+#!/bin/sh
+# Standard apps for a lawnmower rover.
+
+# Start rover lawnmower module.
+rover_lawnmower start
+
+# Start Land Detector.
+land_detector start rover

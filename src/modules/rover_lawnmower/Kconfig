@@ -1,0 +1,5 @@
+menuconfig MODULES_ROVER_LAWNMOWER
+	bool "rover_lawnmower"
+	default n
+	---help---
+		Enable support for lawnmower rover

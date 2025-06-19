@@ -1,0 +1,17 @@
+module_name: Rover Lawnmower
+
+parameters:
+  - group: Rover Lawnmower
+    definitions:
+      LM_PLCHLDR:
+          description:
+            short: Placeholder
+            long: Placeholder Placeholder.
+          type: float
+          unit: m
+          min: 0
+          max: 100
+          increment: 0.001
+          decimal: 3
+          default: 0
+

@@ -87,6 +87,13 @@ if(CONFIG_MODULES_ROVER_DIFFERENTIAL)
 	)
 endif()
 
+if(CONFIG_MODULES_ROVER_LAWNMOWER)
+	px4_add_romfs_files(
+		rc.rover_lawnmower_apps
+		rc.rover_lawnmower_defaults
+	)
+endif()
+
 if(CONFIG_MODULES_ROVER_ACKERMANN)
 	px4_add_romfs_files(
 		rc.rover_ackermann_apps
