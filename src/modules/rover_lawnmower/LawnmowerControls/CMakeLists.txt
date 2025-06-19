@@ -31,26 +31,10 @@
 #
 ############################################################################
 
-add_subdirectory(LawnmowerControls)
-
-px4_add_module(
-	MODULE modules__rover_lawnmower
-	MAIN rover_lawnmower
-	SRCS
-		RoverLawnmower.cpp
-		RoverLawnmower.hpp
-	DEPENDS
-		DifferentialActControl
-		DifferentialRateControl
-		DifferentialAttControl
-		DifferentialVelControl
-		DifferentialPosControl
-		DifferentialAutoMode
-		DifferentialManualMode
-		DifferentialOffboardMode
-		px4_work_queue
-		rover_control
-		pure_pursuit
-	MODULE_CONFIG
-		module.yaml
+px4_add_library(LawnmowerControls
+	LawnmowerControl.cpp
+	Trace.cpp
+	StateMachine.cpp
 )
+
+target_include_directories(LawnmowerControls PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
