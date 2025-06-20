@@ -9,6 +9,8 @@ PX4_SIMULATOR=${PX4_SIMULATOR:=gz}
 PX4_GZ_WORLD=${PX4_GZ_WORLD:=lawn}
 PX4_SIM_MODEL=${PX4_SIM_MODEL:=lawnmower}
 
+param set LM_TRACING_LEV 5 # Lawn mower tracing level
+
 param set-default SIM_GZ_EN 1 # Gazebo bridge
 
 param set-default NAV_ACC_RAD 0.5

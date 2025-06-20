@@ -46,6 +46,9 @@
 
 using namespace time_literals;
 
+namespace rover_lawnmower
+{
+
 class LawnmowerControl : public ModuleParams
 {
 public:
@@ -66,8 +69,15 @@ protected:
 
 private:
 
+	void trace();
+
 	// Variables
 	hrt_abstime _timestamp{0};
 
+	// Parameters
+	DEFINE_PARAMETERS(
+		(ParamInt<px4::params::LM_TRACING_LEV>) _param_lm_tracing_lev
+	)
 };
 
+}

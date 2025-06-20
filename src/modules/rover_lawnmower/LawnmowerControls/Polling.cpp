@@ -33,3 +33,8 @@
 
 #include "LawnmowerControl.hpp"
 
+namespace rover_lawnmower
+{
+
+} // namespace rover_lawnmower
+

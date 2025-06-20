@@ -33,3 +33,19 @@
 
 #include "LawnmowerControl.hpp"
 
+namespace rover_lawnmower
+{
+
+void LawnmowerControl::trace()
+{
+	int tracing_level = _param_lm_tracing_lev.get();
+
+	if (tracing_level < 1) {
+		return; // No tracing
+	}
+
+	PX4_INFO_RAW("tracing_level: %d\n", tracing_level);
+}
+
+} // namespace rover_lawnmower
+

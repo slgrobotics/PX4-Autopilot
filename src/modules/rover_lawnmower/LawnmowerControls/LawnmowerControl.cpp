@@ -34,6 +34,9 @@
 #include "LawnmowerControl.hpp"
 
 
+namespace rover_lawnmower
+{
+
 LawnmowerControl::LawnmowerControl(ModuleParams *parent) : ModuleParams(parent)
 {
 	updateParams();
@@ -52,4 +55,8 @@ void LawnmowerControl::updateLawnmowerControl()
 
 	// TODO: call Polling here
 	PX4_INFO_RAW("---  dt: %f\n", (double)dt);
+
+	trace();
+}
+
 }

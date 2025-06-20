@@ -58,7 +58,35 @@
 #include "../rover_differential/DifferentialDriveModes/DifferentialManualMode/DifferentialManualMode.hpp"
 #include "../rover_differential/DifferentialDriveModes/DifferentialOffboardMode/DifferentialOffboardMode.hpp"
 
+//#include "../internal_combustion_engine_control/InternalCombustionEngineControl.hpp"
+
 #include "LawnmowerControls/LawnmowerControl.hpp"
+
+namespace rover_lawnmower
+{
+
+/*
+class EnhancedActControl : public DifferentialActControl
+{
+public:
+    EnhancedActControl(ModuleParams *parent) : DifferentialActControl(parent) {}
+
+    // Optionally override base class methods
+    void stopVehicle() override
+    {
+        // Custom logic before/after base class
+	DifferentialActControl::stopVehicle();
+        // Additional logic
+	StopGasEngine(); // Example of a custom method
+    }
+
+    void StopGasEngine()
+    {
+	// Logic to stop the gas engine
+	PX4_INFO("Stopping gas engine...");
+    }
+};
+*/
 
 class RoverLawnmower : public ModuleBase<RoverLawnmower>, public ModuleParams,
 	public px4::ScheduledWorkItem
@@ -121,6 +149,7 @@ private:
 
 	// Class instances
 	DifferentialActControl   _differential_act_control{this};
+	//EnhancedActControl       _differential_act_control{this};
 	DifferentialRateControl  _differential_rate_control{this};
 	DifferentialAttControl   _differential_att_control{this};
 	DifferentialVelControl   _differential_vel_control{this};
@@ -134,4 +163,7 @@ private:
 	// Variables
 	bool _sanity_checks_passed{true}; // True if checks for all active controllers pass
 	bool _was_armed{false}; // True if the vehicle was armed before the last reset
+
 };
+
+} // namespace rover_lawnmower

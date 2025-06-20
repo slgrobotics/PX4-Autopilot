@@ -35,6 +35,9 @@
 
 using namespace time_literals;
 
+namespace rover_lawnmower
+{
+
 RoverLawnmower::RoverLawnmower() :
 	ModuleParams(nullptr),
 	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::rate_ctrl)
@@ -233,4 +236,6 @@ Rover Lawnmower module.
 extern "C" __EXPORT int rover_lawnmower_main(int argc, char *argv[])
 {
 	return RoverLawnmower::main(argc, argv);
+}
+
 }
