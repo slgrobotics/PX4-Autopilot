@@ -33,23 +33,3 @@
 
 #include "LawnmowerControl.hpp"
 
-
-LawnmowerControl::LawnmowerControl(ModuleParams *parent) : ModuleParams(parent)
-{
-	updateParams();
-}
-
-void LawnmowerControl::updateParams()
-{
-	ModuleParams::updateParams();
-}
-
-void LawnmowerControl::updateLawnmowerControl()
-{
-	const hrt_abstime timestamp_prev = _timestamp;
-	_timestamp = hrt_absolute_time();
-	const float dt = math::constrain(_timestamp - timestamp_prev, 1_ms, 5000_ms) * 1e-6f;
-
-	// TODO: call Polling here
-	PX4_INFO_RAW("---  dt: %f\n", (double)dt);
-}

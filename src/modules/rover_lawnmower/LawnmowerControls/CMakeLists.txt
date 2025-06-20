@@ -35,6 +35,8 @@ px4_add_library(LawnmowerControls
 	LawnmowerControl.cpp
 	Trace.cpp
 	StateMachine.cpp
+	Polling.cpp
+	Publish.cpp
 )
 
 target_include_directories(LawnmowerControls PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

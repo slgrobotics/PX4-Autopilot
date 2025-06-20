@@ -108,6 +108,8 @@ void RoverLawnmower::Run()
 		_was_armed = false;
 	}
 
+	// run custom lawnmower control actions:
+	_lawnmower_control.updateLawnmowerControl();
 }
 
 void RoverLawnmower::manualControl()

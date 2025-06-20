@@ -129,6 +129,8 @@ private:
 	DifferentialManualMode 	 _manual_mode{this};
 	DifferentialOffboardMode _offboard_mode{this};
 
+	LawnmowerControl _lawnmower_control{this};
+
 	// Variables
 	bool _sanity_checks_passed{true}; // True if checks for all active controllers pass
 	bool _was_armed{false}; // True if the vehicle was armed before the last reset

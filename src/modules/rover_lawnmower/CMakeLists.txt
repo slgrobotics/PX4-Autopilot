@@ -48,6 +48,7 @@ px4_add_module(
 		DifferentialAutoMode
 		DifferentialManualMode
 		DifferentialOffboardMode
+		LawnmowerControls
 		px4_work_queue
 		rover_control
 		pure_pursuit

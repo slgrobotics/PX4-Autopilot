@@ -33,4 +33,41 @@
 
 #pragma	once
 
+// PX4 includes
+#include <px4_platform_common/module_params.h>
+
+// Library includes
+#include <math.h>
+
+// uORB includes
+#include <uORB/Subscription.hpp>
+#include <uORB/topics/parameter_update.h>
+#include <uORB/topics/vehicle_control_mode.h>
+
+using namespace time_literals;
+
+class LawnmowerControl : public ModuleParams
+{
+public:
+	/**
+	 * @brief Constructor for LawnmowerControl.
+	 * @param parent The parent ModuleParams object.
+	 */
+	LawnmowerControl(ModuleParams *parent);
+	~LawnmowerControl() = default;
+
+	/**
+	 * @brief Perform all operations related to lawnmower control.
+	 */
+	void updateLawnmowerControl();
+
+protected:
+	void updateParams() override;
+
+private:
+
+	// Variables
+	hrt_abstime _timestamp{0};
+
+};
 
