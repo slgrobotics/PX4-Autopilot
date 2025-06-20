@@ -39,7 +39,17 @@ namespace rover_lawnmower
 
 LawnmowerControl::LawnmowerControl(ModuleParams *parent) : ModuleParams(parent)
 {
-	updateParams();
+	//_rover_velocity_setpoint_pub.advertise();
+
+#ifdef DEBUG_MY_DATA
+	// advertise debug array:
+	_dbg_array.id = 1;
+	strncpy(_dbg_array.name, "rover_dbg", 10);
+	_pub_dbg_array = orb_advertise(ORB_ID(debug_array), &_dbg_array);
+
+#endif // DEBUG_MY_DATA
+
+updateParams();
 }
 
 void LawnmowerControl::updateParams()
@@ -47,16 +57,42 @@ void LawnmowerControl::updateParams()
 	ModuleParams::updateParams();
 }
 
+void LawnmowerControl::updateSubscriptions()
+{
+	if (_vehicle_attitude_sub.updated()) {
+		vehicle_attitude_s vehicle_attitude{};
+		_vehicle_attitude_sub.copy(&vehicle_attitude);
+		matrix::Quatf vehicle_attitude_quaternion = matrix::Quatf(vehicle_attitude.q);
+		_vehicle_yaw = matrix::Eulerf(vehicle_attitude_quaternion).psi();
+	}
+
+	if (_vehicle_local_position_sub.updated()) {
+		vehicle_local_position_s vehicle_local_position{};
+		_vehicle_local_position_sub.copy(&vehicle_local_position);
+		_curr_pos_ned = Vector2f(vehicle_local_position.x, vehicle_local_position.y);
+	}
+
+}
+
 void LawnmowerControl::updateLawnmowerControl()
 {
+	updateSubscriptions();
+
 	const hrt_abstime timestamp_prev = _timestamp;
 	_timestamp = hrt_absolute_time();
-	const float dt = math::constrain(_timestamp - timestamp_prev, 1_ms, 5000_ms) * 1e-6f;
+	_dt = math::constrain(_timestamp - timestamp_prev, 1_ms, 5000_ms) * 1e-6f;
 
 	// TODO: call Polling here
-	PX4_INFO_RAW("---  dt: %f\n", (double)dt);
+	//PX4_INFO_RAW("---  dt: %f\n", (double)dt);
 
-	trace();
+#ifdef DEBUG_MY_PRINT
+	debugPrint();
+#endif // DEBUG_MY_PRINT
+
+#ifdef DEBUG_MY_DATA
+	debugPublishData();
+#endif // DEBUG_MY_DATA
+
 }
 
 }

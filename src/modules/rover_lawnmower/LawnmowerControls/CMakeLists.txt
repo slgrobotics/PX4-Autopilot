@@ -39,4 +39,6 @@ px4_add_library(LawnmowerControls
 	Publish.cpp
 )
 
+#target_compile_definitions(LawnmowerControls PUBLIC DEBUG_MY_PRINT DEBUG_MY_DATA)
+
 target_include_directories(LawnmowerControls PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

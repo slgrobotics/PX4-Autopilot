@@ -33,18 +33,29 @@
 
 #pragma	once
 
+#define DEBUG_MY_PRINT
+#define DEBUG_MY_DATA
+
 // PX4 includes
 #include <px4_platform_common/module_params.h>
 
 // Library includes
+//#include <matrix/matrix/math.hpp>
 #include <math.h>
 
 // uORB includes
+//#include <uORB/topics/parameter_update.h>
+#include <uORB/Publication.hpp>
 #include <uORB/Subscription.hpp>
-#include <uORB/topics/parameter_update.h>
-#include <uORB/topics/vehicle_control_mode.h>
+#include <uORB/topics/vehicle_attitude.h>
+#include <uORB/topics/vehicle_local_position.h>
+
+#ifdef DEBUG_MY_DATA
+#include <uORB/topics/debug_array.h>
+#endif // DEBUG_MY_DATA
 
 using namespace time_literals;
+using namespace matrix;
 
 namespace rover_lawnmower
 {
@@ -69,10 +80,44 @@ protected:
 
 private:
 
-	void trace();
+#ifdef DEBUG_MY_PRINT
+	void debugPrint();
+	void debugPrintAll();
+	void debugPrintManual();
+
+	hrt_abstime _debug_print_last_called{0};
+
+	int _tracing_lev{0}; // Tracing level, set by parameter
+#endif // DEBUG_MY_PRINT
+
+#ifdef DEBUG_MY_DATA
+	void debugPublishData();
+
+	struct debug_array_s _dbg_array;
+	orb_advert_t _pub_dbg_array;
+
+	hrt_abstime _debug_data_last_called{0};
+#endif // DEBUG_MY_DATA
+
+	/**
+	 * @brief Update uORB subscriptions
+	 */
+	void updateSubscriptions();
+
+	// uORB subscriptions
+	uORB::Subscription _vehicle_attitude_sub{ORB_ID(vehicle_attitude)};
+	uORB::Subscription _vehicle_local_position_sub{ORB_ID(vehicle_local_position)};
+
+	// uORB publications
+	//uORB::Publication<rover_velocity_setpoint_s> _rover_velocity_setpoint_pub{ORB_ID(rover_velocity_setpoint)};
 
 	// Variables
-	hrt_abstime _timestamp{0};
+	hrt_abstime _timestamp{0}; // Current timestamp
+	float _dt{0.f};	// Time since last update in seconds since last call to updateLawnmowerControl()
+
+	Vector2f _curr_pos_ned{};
+	Vector2f _start_ned{};
+	float _vehicle_yaw{0.f};
 
 	// Parameters
 	DEFINE_PARAMETERS(

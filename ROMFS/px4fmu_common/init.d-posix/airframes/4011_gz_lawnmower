@@ -11,6 +11,12 @@ PX4_SIM_MODEL=${PX4_SIM_MODEL:=lawnmower}
 
 param set LM_TRACING_LEV 5 # Lawn mower tracing level
 
+# Data logging to "SD card" (~/px4wrk/log):
+# "0" = armed to disarmed
+param set SDLOG_MODE 0
+#param set SDLOG_PROFILE 255
+param set SDLOG_PROFILE 123
+
 param set-default SIM_GZ_EN 1 # Gazebo bridge
 
 param set-default NAV_ACC_RAD 0.5
