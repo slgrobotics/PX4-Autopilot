@@ -42,6 +42,7 @@
 // Library includes
 //#include <matrix/matrix/math.hpp>
 #include <math.h>
+#include <lib/geo/geo.h>
 
 // uORB includes
 //#include <uORB/topics/parameter_update.h>
@@ -49,7 +50,9 @@
 #include <uORB/Subscription.hpp>
 #include <uORB/topics/vehicle_control_mode.h>
 #include <uORB/topics/vehicle_attitude.h>
+#include <uORB/topics/vehicle_global_position.h>
 #include <uORB/topics/vehicle_local_position.h>
+#include <uORB/topics/position_setpoint_triplet.h>
 #include <uORB/topics/pure_pursuit_status.h>
 
 #ifdef DEBUG_MY_DATA
@@ -84,6 +87,8 @@ private:
 
 	void advertisePublishers();
 	void vehicleControl();
+	void updateWaypoints();
+	void updateWaypointDistances();
 
 #ifdef DEBUG_MY_PRINT
 	void debugPrint();
@@ -112,7 +117,9 @@ private:
 
 	// uORB subscriptions
 	uORB::Subscription _vehicle_attitude_sub{ORB_ID(vehicle_attitude)};
+	uORB::Subscription _global_position_sub{ORB_ID(vehicle_global_position)};
 	uORB::Subscription _vehicle_local_position_sub{ORB_ID(vehicle_local_position)};
+	uORB::Subscription _position_setpoint_triplet_sub{ORB_ID(position_setpoint_triplet)};
 	uORB::Subscription _pure_pursuit_status_sub{ORB_ID(pure_pursuit_status)};
 
 	// uORB publications
@@ -122,12 +129,30 @@ private:
 	hrt_abstime _timestamp{0}; // Current timestamp
 	float _dt{0.f};	// Time since last update in seconds since last call to updateLawnmowerControl()
 
-	vehicle_control_mode_s _vehicle_control_mode{};
-	pure_pursuit_status_s _pure_pursuit_status{};
+	vehicle_control_mode_s 		_vehicle_control_mode{};
+	vehicle_global_position_s	_global_pos{};			/**< global vehicle position */
+	vehicle_local_position_s	_vehicle_local_position{};
+	position_setpoint_triplet_s	_pos_sp_triplet{};		/**< triplet of mission items */
+	pure_pursuit_status_s 		_pure_pursuit_status{};
 
-	Vector2f _curr_pos_ned{};
-	Vector2f _start_ned{};
-	float _vehicle_yaw{0.f};
+	MapProjection _global_local_proj_ref{};
+
+
+	Vector2d _curr_pos{NAN, NAN};
+	Vector2f _curr_pos_ned{NAN, NAN};	// local projection - updated when polling
+
+	float _vehicle_yaw{NAN};
+
+	// Waypoints - from position_setpoint_triplet_s
+	Vector2d _curr_wp{NAN, NAN};
+	Vector2f _curr_wp_ned{NAN, NAN};
+	Vector2d _prev_wp{NAN, NAN};
+	Vector2f _prev_wp_ned{NAN, NAN};
+	Vector2d _next_wp{NAN, NAN};
+
+	float _wp_current_dist{NAN};  		// meters, initialize to very large
+	float _wp_previous_dist{NAN};		// meters
+	float _wp_next_dist{NAN};		// meters
 
 	// Parameters
 	DEFINE_PARAMETERS(

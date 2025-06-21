@@ -66,8 +66,8 @@ void LawnmowerControl::debugPrint()
 			if (_vehicle_control_mode.flag_armed) {
 				debugPrintManual();
 
-			} else {
-				PX4_WARN("Manual control enabled, but vehicle is not armed");
+			//} else {
+			//	PX4_WARN("Manual control enabled, but vehicle is not armed");
 			}
 
 		} else if (_vehicle_control_mode.flag_control_auto_enabled) {
@@ -109,7 +109,11 @@ void LawnmowerControl::debugPrintAuto()
 		(double)math::degrees(_vehicle_yaw),
 		(double)(_pure_pursuit_status.crosstrack_error * 100.0f));
 
-	/*
+	PX4_INFO_RAW("---    wp_curr_dist: %.2f   wp_prev_dist: %.2f   wp_next_dist: %.2f\n",
+			(double)_wp_current_dist, (double)_wp_previous_dist, (double)_wp_next_dist);
+
+
+			/*
 	if (_tracing_lev > 0) {
 		PX4_INFO_RAW("=== %s ===================    dt: %.3f ms EKF off: %.1f cm\n", control_state_name(_pos_ctrl_state),
 			     (double)(_dt * 1000.0f), (double)(_ekfGpsDeviation * 100.0f));
