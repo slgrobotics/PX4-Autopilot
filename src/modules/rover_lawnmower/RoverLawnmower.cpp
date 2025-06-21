@@ -112,7 +112,7 @@ void RoverLawnmower::Run()
 	}
 
 	// run custom lawnmower control actions:
-	_lawnmower_control.updateLawnmowerControl();
+	_lawnmower_control.updateLawnmowerControl(_vehicle_control_mode);
 }
 
 void RoverLawnmower::manualControl()

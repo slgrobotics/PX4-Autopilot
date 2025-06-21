@@ -33,10 +33,11 @@
 
 px4_add_library(LawnmowerControls
 	LawnmowerControl.cpp
-	Trace.cpp
+	Control.cpp
 	StateMachine.cpp
 	Polling.cpp
 	Publish.cpp
+	Trace.cpp
 )
 
 #target_compile_definitions(LawnmowerControls PUBLIC DEBUG_MY_PRINT DEBUG_MY_DATA)

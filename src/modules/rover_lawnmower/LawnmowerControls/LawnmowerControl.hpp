@@ -47,6 +47,7 @@
 //#include <uORB/topics/parameter_update.h>
 #include <uORB/Publication.hpp>
 #include <uORB/Subscription.hpp>
+#include <uORB/topics/vehicle_control_mode.h>
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/vehicle_local_position.h>
 
@@ -73,16 +74,19 @@ public:
 	/**
 	 * @brief Perform all operations related to lawnmower control.
 	 */
-	void updateLawnmowerControl();
+	void updateLawnmowerControl(vehicle_control_mode_s vehicle_control_mode);
 
 protected:
 	void updateParams() override;
 
 private:
 
+	void advertisePublishers();
+	void vehicleControl();
+
 #ifdef DEBUG_MY_PRINT
 	void debugPrint();
-	void debugPrintAll();
+	void debugPrintAuto();
 	void debugPrintManual();
 
 	hrt_abstime _debug_print_last_called{0};
@@ -92,6 +96,7 @@ private:
 
 #ifdef DEBUG_MY_DATA
 	void debugPublishData();
+	void publishDebugArray();
 
 	struct debug_array_s _dbg_array;
 	orb_advert_t _pub_dbg_array;
@@ -114,6 +119,8 @@ private:
 	// Variables
 	hrt_abstime _timestamp{0}; // Current timestamp
 	float _dt{0.f};	// Time since last update in seconds since last call to updateLawnmowerControl()
+
+	vehicle_control_mode_s _vehicle_control_mode{};
 
 	Vector2f _curr_pos_ned{};
 	Vector2f _start_ned{};

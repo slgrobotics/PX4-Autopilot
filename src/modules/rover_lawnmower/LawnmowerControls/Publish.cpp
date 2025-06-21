@@ -36,5 +36,30 @@
 namespace rover_lawnmower
 {
 
+void LawnmowerControl::advertisePublishers()
+{
+	//_rover_velocity_setpoint_pub.advertise();
+
+#ifdef DEBUG_MY_DATA
+	// advertise debug array:
+	_dbg_array.id = 1;
+	strncpy(_dbg_array.name, "rover_dbg", 10);
+	_pub_dbg_array = orb_advertise(ORB_ID(debug_array), &_dbg_array);
+
+#endif // DEBUG_MY_DATA
+
+}
+
+#ifdef DEBUG_MY_DATA
+
+void LawnmowerControl::publishDebugArray()
+{
+	_dbg_array.timestamp = _timestamp; // hrt_elapsed_time(&_app_started_time);
+
+	orb_publish(ORB_ID(debug_array), _pub_dbg_array, &_dbg_array);
+}
+
+#endif // DEBUG_MY_DATA
+
 } // namespace rover_lawnmower
 

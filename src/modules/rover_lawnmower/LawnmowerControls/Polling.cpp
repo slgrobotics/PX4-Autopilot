@@ -36,5 +36,23 @@
 namespace rover_lawnmower
 {
 
+void LawnmowerControl::updateSubscriptions()
+{
+	// Update uORB subscriptions:
+	if (_vehicle_attitude_sub.updated()) {
+		vehicle_attitude_s vehicle_attitude{};
+		_vehicle_attitude_sub.copy(&vehicle_attitude);
+		matrix::Quatf vehicle_attitude_quaternion = matrix::Quatf(vehicle_attitude.q);
+		_vehicle_yaw = matrix::Eulerf(vehicle_attitude_quaternion).psi();
+	}
+
+	if (_vehicle_local_position_sub.updated()) {
+		vehicle_local_position_s vehicle_local_position{};
+		_vehicle_local_position_sub.copy(&vehicle_local_position);
+		_curr_pos_ned = Vector2f(vehicle_local_position.x, vehicle_local_position.y);
+	}
+
+}
+
 } // namespace rover_lawnmower
 

@@ -33,44 +33,13 @@
 
 #include "LawnmowerControl.hpp"
 
-
 namespace rover_lawnmower
 {
 
-LawnmowerControl::LawnmowerControl(ModuleParams *parent) : ModuleParams(parent)
+void LawnmowerControl::vehicleControl()
 {
-	advertisePublishers();
-
-	updateParams();
-}
-
-void LawnmowerControl::updateParams()
-{
-	ModuleParams::updateParams();
-}
-
-void LawnmowerControl::updateLawnmowerControl(vehicle_control_mode_s vehicle_control_mode)
-{
-	_vehicle_control_mode = vehicle_control_mode;
-
-	updateSubscriptions();	// Update uORB subscriptions, poll vehicle attitude, position etc.
-
-	const hrt_abstime timestamp_prev = _timestamp;
-	_timestamp = hrt_absolute_time();
-	_dt = math::constrain(_timestamp - timestamp_prev, 1_ms, 5000_ms) * 1e-6f;
-
-	//PX4_INFO_RAW("---  dt: %f\n", (double)_dt);
-
-	vehicleControl(); // Perform vehicle control, this is where the main logic goes
-
-#ifdef DEBUG_MY_PRINT
-	debugPrint();
-#endif // DEBUG_MY_PRINT
-
-#ifdef DEBUG_MY_DATA
-	debugPublishData();
-#endif // DEBUG_MY_DATA
 
 }
 
-}
+} // namespace rover_lawnmower
+

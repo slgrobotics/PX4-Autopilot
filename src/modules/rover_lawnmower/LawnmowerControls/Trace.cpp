@@ -61,13 +61,18 @@ void LawnmowerControl::debugPrint()
 		}
 		*/
 
-		/*
-		if (_control_mode.flag_control_manual_enabled) {
-			if (_control_mode.flag_armed) {
+		if (_vehicle_control_mode.flag_control_manual_enabled) {
+
+			if (_vehicle_control_mode.flag_armed) {
 				debugPrintManual();
+
+			} else {
+				PX4_WARN("Manual control enabled, but vehicle is not armed");
 			}
 
-		} else if (_pos_ctrl_state != POS_STATE_IDLE || !_printed_idle_trace) {
+		} else if (_vehicle_control_mode.flag_control_auto_enabled) {
+			/*
+			if (_pos_ctrl_state != POS_STATE_IDLE || !_printed_idle_trace) {
 
 			if (PX4_ISFINITE(_ekfGpsDeviation) && _ekfGpsDeviation > 0.2f) {
 				PX4_WARN("EKF2 deviation: %.1f cm", (double)(_ekfGpsDeviation * 100.0f));
@@ -76,23 +81,29 @@ void LawnmowerControl::debugPrint()
 			if (PX4_ISFINITE(_crosstrack_error) && _crosstrack_error > 0.2f) {
 				PX4_WARN("crosstrack error: %.1f cm", (double)(_crosstrack_error * 100.0f));
 			}
+			*/
 
-			debugPrintAll();
+			debugPrintAuto();
+
+		} else if (_vehicle_control_mode.flag_control_offboard_enabled) {
+
+			PX4_WARN("Offboard control enabled, but not implemented yet");
+
+		} else {
+
+			PX4_WARN("Vehicle control mode not set");
 		}
 
-		_printed_idle_trace = _pos_ctrl_state == POS_STATE_IDLE;
-		*/
-
-		debugPrintAll();
+		//_printed_idle_trace = _pos_ctrl_state == POS_STATE_IDLE;
 
 		_debug_print_last_called = _timestamp;
 	}
-
-
 }
 
-void LawnmowerControl::debugPrintAll()
+void LawnmowerControl::debugPrintAuto()
 {
+	PX4_INFO_RAW("=== AUTO CONTROL\n");
+
 	PX4_INFO_RAW("_vehicle_yaw: %f\n", (double)math::degrees(_vehicle_yaw));
 
 	/*
@@ -169,36 +180,37 @@ void LawnmowerControl::debugPrintAll()
 
 void LawnmowerControl::debugPrintManual()
 {
+	PX4_INFO_RAW("=== MANUAL CONTROL\n");
 	/*
 	if (_tracing_lev > 0) {
-		PX4_INFO_RAW("=== MANUAL CONTROL %s ===== %s =====    dt: %.3f ms EKF off: %.1f cm\n",
-			     _manual_using_pids ? "using PIDs" : "direct",
-			     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f), (double)(_ekfGpsDeviation * 100.0f));
+	PX4_INFO_RAW("=== MANUAL CONTROL %s ===== %s =====    dt: %.3f ms EKF off: %.1f cm\n",
+		     _manual_using_pids ? "using PIDs" : "direct",
+		     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f), (double)(_ekfGpsDeviation * 100.0f));
 
-		PX4_INFO_RAW("---Heading:  current: %.2f  gps: %.2f  ekf: %.2f  by vel: %.2f  mag: %.2f\n",
-			     (double)math::degrees(_current_heading), (double)math::degrees(_gps_current_heading),
-			     (double)math::degrees(_ekf_current_heading),
-			     (double)math::degrees(wrap_pi(atan2f(_sensor_gps_data.vel_e_m_s, _sensor_gps_data.vel_n_m_s))),
-			     (double)math::degrees(_mag_current_heading));
+	PX4_INFO_RAW("---Heading:  current: %.2f  gps: %.2f  ekf: %.2f  by vel: %.2f  mag: %.2f\n",
+		     (double)math::degrees(_current_heading), (double)math::degrees(_gps_current_heading),
+		     (double)math::degrees(_ekf_current_heading),
+		     (double)math::degrees(wrap_pi(atan2f(_sensor_gps_data.vel_e_m_s, _sensor_gps_data.vel_n_m_s))),
+		     (double)math::degrees(_mag_current_heading));
 
-		PX4_INFO_RAW("---Speed: ground: %.2f   gps: %.2f   ekf: %.2f  x_vel: %.4f\n",
-			     (double)_ground_speed_abs, (double)_gps_ground_speed_abs, (double)_ekf_ground_speed_abs, (double)_x_vel);
+	PX4_INFO_RAW("---Speed: ground: %.2f   gps: %.2f   ekf: %.2f  x_vel: %.4f\n",
+		     (double)_ground_speed_abs, (double)_gps_ground_speed_abs, (double)_ekf_ground_speed_abs, (double)_x_vel);
 
-		if (_manual_using_pids) {
-			PX4_INFO_RAW("---     misn_vel_sp: %.2f  misn_thrust_eff: %.2f  ground_speed_abs: %.4f\n",
-				     (double)_mission_velocity_setpoint, (double)_mission_thrust_effort, (double)_ground_speed_abs);
+	if (_manual_using_pids) {
+		PX4_INFO_RAW("---     misn_vel_sp: %.2f  misn_thrust_eff: %.2f  ground_speed_abs: %.4f\n",
+			     (double)_mission_velocity_setpoint, (double)_mission_thrust_effort, (double)_ground_speed_abs);
 
-			PX4_INFO_RAW("---     mission_torq_effort: %.2f   yaw_rate: %.1f\n",
-				     (double)_mission_torque_effort, (double)math::degrees(_z_yaw_rate));
-		}
+		PX4_INFO_RAW("---     mission_torq_effort: %.2f   yaw_rate: %.1f\n",
+			     (double)_mission_torque_effort, (double)math::degrees(_z_yaw_rate));
+	}
 
-		PX4_INFO_RAW("---act_controls: yaw: %4f    thrust: %4f    engine: %.4f    tool: %.4f    alarm: %.4f\n",
-			     (double)_torque_control, (double)_thrust_control, (double)_gas_engine_throttle, (double)_cutter_setpoint,
-			     (double)_alarm_dev_level);
+	PX4_INFO_RAW("---act_controls: yaw: %4f    thrust: %4f    engine: %.4f    tool: %.4f    alarm: %.4f\n",
+		     (double)_torque_control, (double)_thrust_control, (double)_gas_engine_throttle, (double)_cutter_setpoint,
+		     (double)_alarm_dev_level);
 
-		PX4_INFO_RAW("---servos: whls L: %d R: %d   gas thrtle: %d   blades: %d   2d tool: %d\n",
-			     (int)_wheel_left_servo_position, (int)_wheel_right_servo_position,
-			     (int)_gas_throttle_servo_position, (int)_cutter_servo_position, (int)_alarm_servo_position);
+	PX4_INFO_RAW("---servos: whls L: %d R: %d   gas thrtle: %d   blades: %d   2d tool: %d\n",
+		     (int)_wheel_left_servo_position, (int)_wheel_right_servo_position,
+		     (int)_gas_throttle_servo_position, (int)_cutter_servo_position, (int)_alarm_servo_position);
 	}
 	*/
 }
@@ -211,7 +223,7 @@ void LawnmowerControl::debugPrintManual()
 
 void LawnmowerControl::debugPublishData()
 {
-	PX4_INFO_RAW("debugPublishData()\n");
+	//PX4_INFO_RAW("debugPublishData()\n");
 
 
 	/*
@@ -273,11 +285,7 @@ void LawnmowerControl::debugPublishData()
 
 	_dbg_array.data[0] = i;	// must be less than 58, per size of the data[]
 
-	_dbg_array.timestamp = _timestamp; // hrt_elapsed_time(&_app_started_time);
-
-	orb_publish(ORB_ID(debug_array), _pub_dbg_array, &_dbg_array);
-
-	//warnx("...sending debug data...");
+	publishDebugArray();
 }
 
 #endif // DEBUG_MY_DATA
