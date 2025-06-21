@@ -104,7 +104,10 @@ void LawnmowerControl::debugPrintAuto()
 {
 	PX4_INFO_RAW("=== AUTO CONTROL\n");
 
-	PX4_INFO_RAW("_vehicle_yaw: %f\n", (double)math::degrees(_vehicle_yaw));
+	PX4_INFO_RAW("distance_to_waypoint: %.1f m   vehicle_yaw: %.1f deg   mission crosstrack error: %.1f cm\n",
+		(double)(_pure_pursuit_status.distance_to_waypoint),
+		(double)math::degrees(_vehicle_yaw),
+		(double)(_pure_pursuit_status.crosstrack_error * 100.0f));
 
 	/*
 	if (_tracing_lev > 0) {

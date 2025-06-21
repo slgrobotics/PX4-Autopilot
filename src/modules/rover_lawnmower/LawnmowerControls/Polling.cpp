@@ -52,6 +52,9 @@ void LawnmowerControl::updateSubscriptions()
 		_curr_pos_ned = Vector2f(vehicle_local_position.x, vehicle_local_position.y);
 	}
 
+	if (_pure_pursuit_status_sub.updated()) {
+		_pure_pursuit_status_sub.copy(&_pure_pursuit_status);
+	}
 }
 
 } // namespace rover_lawnmower

@@ -50,6 +50,7 @@
 #include <uORB/topics/vehicle_control_mode.h>
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/vehicle_local_position.h>
+#include <uORB/topics/pure_pursuit_status.h>
 
 #ifdef DEBUG_MY_DATA
 #include <uORB/topics/debug_array.h>
@@ -112,6 +113,7 @@ private:
 	// uORB subscriptions
 	uORB::Subscription _vehicle_attitude_sub{ORB_ID(vehicle_attitude)};
 	uORB::Subscription _vehicle_local_position_sub{ORB_ID(vehicle_local_position)};
+	uORB::Subscription _pure_pursuit_status_sub{ORB_ID(pure_pursuit_status)};
 
 	// uORB publications
 	//uORB::Publication<rover_velocity_setpoint_s> _rover_velocity_setpoint_pub{ORB_ID(rover_velocity_setpoint)};
@@ -121,6 +123,7 @@ private:
 	float _dt{0.f};	// Time since last update in seconds since last call to updateLawnmowerControl()
 
 	vehicle_control_mode_s _vehicle_control_mode{};
+	pure_pursuit_status_s _pure_pursuit_status{};
 
 	Vector2f _curr_pos_ned{};
 	Vector2f _start_ned{};
