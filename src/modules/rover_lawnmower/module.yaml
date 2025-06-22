@@ -4,16 +4,16 @@ parameters:
   - group: Rover Lawnmower
     definitions:
       LM_PLCHLDR:
-          description:
-            short: Placeholder
-            long: Placeholder Placeholder.
-          type: float
-          unit: m
-          min: 0
-          max: 100
-          increment: 0.001
-          decimal: 3
-          default: 0
+        description:
+          short: Placeholder
+          long: Placeholder Placeholder.
+        type: float
+        unit: m
+        min: 0
+        max: 100
+        increment: 0.001
+        decimal: 3
+        default: 0
 
       LM_TRACING_LEV:
         description:
@@ -28,4 +28,31 @@ parameters:
           4: High
           5: Highest
 
+      LM_GPS_MINFIX:
+        description:
+          short: Minimal GPS fix
+          long: Minimum GPS fix when heading may be taken from GPS course-over-ground (cog)
+        type: int32
+        default: 6
+        min: 3
+        max: 6
 
+      LM_HD_MEAS_MODE:
+        description:
+          short: Heading measurement mode
+          long: Heading measurement mode, 0 use ekf2 heading estimate, 1 use RTK gps heading, if available.
+        type: enum
+        default: 0
+        values:
+          0: EKF2
+          1: GPS
+
+      LM_SP_MEAS_MODE:
+        description:
+          short: Speed measurement mode
+          long: Speed measurement mode. Allows the user to choose between ekf2 or GPS when measuring speed.
+        type: enum
+        default: 0
+        values:
+          0: EKF2
+          1: GPS

@@ -88,31 +88,66 @@ param set EKF2_REQ_GPS_H 5.0
 # Rovers don't have airspeed sensors:
 #param set SYS_HAS_NUM_ASPD 0
 
-# Lawnmower parameters to scale Differential Drive Kinematics output:
-#param set-default GND_THRUST_SC 1.0
-#param set-default GND_TORQUE_SC 1.0
+param set LM_TRACING_LEV 5 # Lawn mower tracing level
 
-# Rover parameters
-param set-default RD_WHEEL_TRACK 0.9
-param set-default RD_MAN_YAW_SCALE 0.25
-param set-default RO_YAW_RATE_I 0.08
-param set-default RO_YAW_RATE_P 0.6
-param set-default RO_YAW_RATE_LIM 30
-param set-default RO_YAW_P 8
-param set-default RO_YAW_I 0.01
-param set-default RO_SPEED_P 1.0
-param set-default RO_SPEED_I 0
-param set-default RO_SPEED_LIM 2.9
-param set-default RD_MISS_SPD_DEF 2.0
-param set-default RO_ACCEL_LIM 1.0
-param set-default RO_JERK_LIM 1.0
+# Data logging to "SD card" (~/px4wrk/log):
+# "0" = armed to disarmed
+param set SDLOG_MODE 0
 
-# Pure Pursuit parameters
+# Bitmask SDLOG_PROFILE:
+# 0: Default set (general log analysis)
+# 1: Estimator replay (EKF2)
+# 2: Thermal calibration
+# 3: System identification
+# 4: High rate
+# 5: Debug
+# 6: Sensor comparison
+# 7: Computer Vision and Avoidance
+# 8: Raw FIFO high-rate IMU (Gyro)
+# 9: Raw FIFO high-rate IMU (Accel)
+# 10: Mavlink tunnel message logging
+
+# 123 = 0b01111011
+# 131 = 0b10000011
+# 163 = 0b10100011
+
+#param set SDLOG_PROFILE 255
+param set SDLOG_PROFILE 123
+
+# Differential Parameters
+param set-default RD_TRANS_DRV_TRN 0.349066
+param set-default RD_TRANS_TRN_DRV 0.174533
+
+# Rover Control Parameters
+param set-default RO_ACCEL_LIM 0.1
+param set-default RO_DECEL_LIM 0.8
+param set-default RO_JERK_LIM 10
+param set-default RO_MAX_THR_SPEED 2.1
+
+# Rover Rate Control Parameters
+param set-default RO_YAW_RATE_I 0.1
+param set-default RO_YAW_RATE_P 0.5
+param set-default RO_YAW_RATE_LIM 60
+param set-default RO_YAW_ACCEL_LIM 50
+param set-default RO_YAW_DECEL_LIM 1000
+param set-default RO_YAW_RATE_CORR 1.0
+
+# Rover Attitude Control Parameters
+param set-default RO_YAW_P 0.8
+
+# Rover Velocity Control Parameters
+param set-default RO_SPEED_LIM 0.5
+param set-default RO_SPEED_I 0.01
+param set-default RO_SPEED_P 0.05
+param set-defatul RO_SPEED_RED 1.0
+
+# Pure pursuit parameters
 param set-default PP_LOOKAHD_GAIN 1
 param set-default PP_LOOKAHD_MAX 10
 param set-default PP_LOOKAHD_MIN 1
 
-echo "IP: configuring GND_* parameters for " $PX4_ROBOT_NAME
+
+echo "IP: configuring parameters for " $PX4_ROBOT_NAME
 
 # AHRS must have baro input, unless this is set to 0:
 if [ $PX4_ROBOT_NAME = DRAGGER ]
@@ -121,45 +156,42 @@ then
 	param set RD_WHEEL_TRACK 0.58
 
 	// Dragger max speed is 0.5 m/s as measired on R/C
-	param set RO_SPEED_LIM 0.55
-	param set RD_MISS_SPD_DEF 0.45
+	param set RO_MAX_THR_SPEED 0.55
 
 	# Dragger, having non-RTK GPS, needs Mag and vertical reference - Baro sim.
 	param set SYS_HAS_BARO 1
+	param set EKF2_BARO_CTRL 1
+
 	# Magnetic heading (2D):
 	param set EKF2_MAG_TYPE 1
 
-	param set EKF2_BARO_CTRL 1
 	# have EKF2 estimator use BARO (0) or GPS (1) for altitude.
 	param set EKF2_HGT_REF 0
+
 	# To disable GPS Altitute fusing set this to 5 (default 7). For dual RTK GPS heading set it to 15:
 	param set EKF2_GPS_CTRL 5
-	param set GND_GPS_MINFIX 3
+	param set LM_GPS_MINFIX 3
 
 	# For a non-RTK GPS:
-	param set GND_HD_MEAS_MODE 0
-	param set GND_SP_MEAS_MODE 0
+	param set LM_HD_MEAS_MODE 0
+	param set LM_SP_MEAS_MODE 0
 
 	param set EKF2_MULTI_IMU 1
 	param set EKF2_MULTI_MAG 1
 	param set EKF2_MULTI_MAG 1
 
-	param set GND_RATE_P 0.2
-	param set GND_RATE_I 0.0
-	param set GND_RATE_D 0.0
-
 else
 	# Set Differential Drive Kinematics Library parameters:
 	param set RD_WHEEL_TRACK 0.9
 
-	param set RO_SPEED_LIM 2.9
-	param set RD_MISS_SPD_DEF 2.0
-	param set RD_RATE_ZTRQ 0.08
+	param set RO_MAX_THR_SPEED 2.1
 
 	param set SYS_HAS_BARO 0
 	param set EKF2_BARO_CTRL 0
+
 	# have EKF2 estimator use BARO (0) or GPS (1) for altitude.
 	param set EKF2_HGT_REF 1
+
 	# To disable GPS Velocity fusing set this to 3 (default 7). For dual RTK GPS heading set it to 15:
 	#param set EKF2_GPS_CTRL 7
 	param set EKF2_GPS_CTRL 15
@@ -359,29 +391,6 @@ param set RTL_MIN_DIST 1
 param set RTL_DESCEND_ALT 3.0000
 param set RTL_RETURN_ALT 3.0000
 
-# Data logging to "SD card" (~/px4wrk/log):
-# "0" = armed to disarmed
-param set SDLOG_MODE 0
-
-# Bitmask SDLOG_PROFILE:
-# 0: Default set (general log analysis)
-# 1: Estimator replay (EKF2)
-# 2: Thermal calibration
-# 3: System identification
-# 4: High rate
-# 5: Debug
-# 6: Sensor comparison
-# 7: Computer Vision and Avoidance
-# 8: Raw FIFO high-rate IMU (Gyro)
-# 9: Raw FIFO high-rate IMU (Accel)
-# 10: Mavlink tunnel message logging
-
-# 123 = 0b01111011
-# 131 = 0b10000011
-# 163 = 0b10100011
-
-#param set SDLOG_PROFILE 255
-param set SDLOG_PROFILE 123
 
 # for debugging, allow unsafe arming rules:
 #param set COM_ARM_EKF_POS 1.0
@@ -404,7 +413,7 @@ then
 	gps start -d /dev/ttyUSB0 -b 115200 -p ubx
 
 	# start BN-880 GPS compass on I2C bus, address 0x1e:
-	hmc5883 -X -R 0 start
+	#hmc5883 -X -R 0 start
 else
 	# start u-blox ZED-F9P - dual GPS for heading (originally at /dev/ttyACM1 ACM0):
 	# follow https://github.com/slgrobotics/robots_bringup/tree/main/Docs/Dragger to assign links:
@@ -419,9 +428,9 @@ fi
 #bmi088_i2c -G -R 0 -X -a 0x69 start
 
 # start IMU on SPI (/dev/spidev0.1):
-#mpu9250 -s -R 0 -M -f 20000 start
+mpu9250 -s -R 0 -M -f 20000 start
 # same without magnitometer:
-mpu9250 -s -R 0 -f 20000 start
+#mpu9250 -s -R 0 -f 20000 start
 
 # start barometer emulation (AHRS must have baro input):
 ms5611 -X start
