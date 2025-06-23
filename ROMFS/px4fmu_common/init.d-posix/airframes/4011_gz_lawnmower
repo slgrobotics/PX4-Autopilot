@@ -36,15 +36,15 @@ param set-default RO_JERK_LIM 15
 param set-default RO_MAX_THR_SPEED 2.7
 
 # Rover Rate Control Parameters
-param set-default RO_YAW_RATE_I 0.1
-param set-default RO_YAW_RATE_P 0.5
+param set-default RO_YAW_RATE_I 0.2
+param set-default RO_YAW_RATE_P 1.0
 param set-default RO_YAW_RATE_LIM 60
 param set-default RO_YAW_ACCEL_LIM 50
 param set-default RO_YAW_DECEL_LIM 1000
-param set-default RO_YAW_RATE_CORR 1.0
+param set-default RO_YAW_RATE_CORR 1.43
 
 # Rover Attitude Control Parameters
-param set-default RO_YAW_P 0.8
+param set-default RO_YAW_P 5
 
 # Rover Velocity Control Parameters
 param set-default RO_SPEED_LIM 2.1
