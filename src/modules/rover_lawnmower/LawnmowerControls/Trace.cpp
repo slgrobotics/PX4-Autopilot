@@ -102,16 +102,26 @@ void LawnmowerControl::debugPrint()
 
 void LawnmowerControl::debugPrintAuto()
 {
-	PX4_INFO_RAW("=== AUTO CONTROL\n");
+	if (_tracing_lev > 0) {
 
-	PX4_INFO_RAW("distance_to_waypoint: %.1f m   vehicle_yaw: %.1f deg   mission crosstrack error: %.1f cm\n",
-		     (double)(_pure_pursuit_status.distance_to_waypoint),
-		     (double)math::degrees(_vehicle_yaw),
-		     (double)(_pure_pursuit_status.crosstrack_error * 100.0f));
+		PX4_INFO_RAW("=== AUTO CONTROL\n");
 
-	PX4_INFO_RAW("---    wp_curr_dist: %.2f   wp_prev_dist: %.2f   wp_next_dist: %.2f\n",
-		     (double)_wp_current_dist, (double)_wp_previous_dist, (double)_wp_next_dist);
+		PX4_INFO_RAW("distance_to_waypoint: %.1f m   vehicle_yaw: %.1f deg   mission crosstrack error: %.1f cm\n",
+			     (double)(_pure_pursuit_status.distance_to_waypoint),
+			     (double)math::degrees(_vehicle_yaw),
+			     (double)(_pure_pursuit_status.crosstrack_error * 100.0f));
 
+		PX4_INFO_RAW("--- wp_curr_dist: %.2f   wp_prev_dist: %.2f   wp_next_dist: %.2f\n",
+			     (double)_wp_current_dist, (double)_wp_previous_dist, (double)_wp_next_dist);
+
+
+		PX4_INFO_RAW("--- engine: %.4f    cutter: %.4f    alarm: %.4f\n",
+			     (double)_gas_engine_throttle, (double)_cutter_setpoint, (double)_alarm_dev_level);
+
+		PX4_INFO_RAW("--- servos: whls L: %d R: %d   gas thrtle: %d   blades: %d   alarm: %d\n",
+			     (int)_wheel_left_servo_position, (int)_wheel_right_servo_position,
+			     (int)_gas_throttle_servo_position, (int)_cutter_servo_position, (int)_alarm_servo_position);
+	}
 
 	/*
 	if (_tracing_lev > 0) {
@@ -202,13 +212,52 @@ void LawnmowerControl::debugPrintManual()
 			     (double)_manual_control_setpoint.aux1,
 			     (double)_manual_control_setpoint.aux2);
 
-		PX4_INFO_RAW("--- setpoints: yaw: %4f    thrust: %4f    engine: %.4f    tool: %.4f    alarm: %.4f\n",
-			     (double)_torque_control_manual, (double)_thrust_control_manual, (double)_gas_throttle_manual,
+		PX4_INFO_RAW("--- setpoints: yaw: %4f    thrust: %4f    engine: %.4f    cutter: %.4f    alarm: %.4f\n",
+			     (double)_torque_control_manual, (double)_thrust_control_manual,
+			     (double)_gas_throttle_manual,
 			     (double)_cutter_setpoint_manual, (double)_alarm_dev_level_manual);
 
 		PX4_INFO_RAW("--- servos: whls L: %d R: %d   gas thrtle: %d   blades: %d   alarm: %d\n",
 			     (int)_wheel_left_servo_position, (int)_wheel_right_servo_position,
 			     (int)_gas_throttle_servo_position, (int)_cutter_servo_position, (int)_alarm_servo_position);
+	}
+}
+
+const char *LawnmowerControl::control_state_name(const POS_CTRLSTATES state)
+{
+	switch (state) {
+	case POS_STATE_NONE:				// undefined/invalid state, no need controlling anything
+		return "POS_STATE_NONE";
+
+	case POS_STATE_IDLE:				// idle state, no need controlling anything
+		return "POS_STATE_IDLE";
+
+	case L1_GOTO_WAYPOINT:				// target waypoint is far away, we can use Pursuit and cruise speed
+		return "L1_GOTO_WAYPOINT";
+
+	case WP_ARRIVING:				// target waypoint is close, we need to slow down and head straight to it till stop
+		return "WP_ARRIVING";
+
+	case WP_ARRIVED:				// reached waypoint, completely stopped. Make sure mission knows about it
+		return "WP_ARRIVED";
+
+	case WP_TURNING:				// we need to turn in place to the next waypoint
+		return "WP_TURNING";
+
+	case WP_DEPARTING:				// we turned to next waypoint and must start accelerating
+		return "WP_DEPARTING";
+
+	case POS_STATE_STOPPING:			// we hit a waypoint and need to stop
+		return "POS_STATE_STOPPING";
+
+	case POS_STATE_MISSION_START:			// turn on what we need for the mission (lights, gas engine throttle, blades)
+		return "POS_STATE_MISSION_START";
+
+	case POS_STATE_MISSION_END:			// turn off what we needed for the mission at the end or error
+		return "POS_STATE_MISSION_END";
+
+	default:
+		return "???control_state_name()???";
 	}
 }
 

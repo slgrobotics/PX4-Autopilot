@@ -93,10 +93,29 @@ protected:
 
 private:
 
+	enum POS_CTRLSTATES : int {
+		POS_STATE_NONE,			// undefined/invalid state, no need controlling anything
+		POS_STATE_IDLE,			// idle state, no need controlling anything
+		L1_GOTO_WAYPOINT,		// target waypoint is far away, we can use Pursuit logic and cruise speed
+		WP_ARRIVING,			// target waypoint is close, we need to slow down and head straight to it till stop
+		WP_ARRIVED,			// reached waypoint, completely stopped. Make sure mission knows about it
+		WP_TURNING,			// we need to turn in place to the next waypoint
+		WP_DEPARTING,			// we turned to next waypoint and must start accelerating
+		POS_STATE_STOPPING,		// we hit a waypoint and need to stop
+		POS_STATE_MISSION_START,	// turn on what we need for the mission (lights, gas engine throttle, blades)
+		POS_STATE_MISSION_END		// turn off what we needed for the mission at the end or error
+	} _pos_ctrl_state {POS_STATE_NONE};	// Position control state machine
+
+	const char *control_state_name(const POS_CTRLSTATES state);
+
 	void advertisePublishers();
-	void vehicleControl();
 	void updateWaypoints();
 	void updateWaypointDistances();
+	void vehicleControl();
+	void workStateMachine();
+	void unwindStateMachine();
+	void adjustAcuatorSetpoints();
+	void setStateMachineState(const POS_CTRLSTATES desiredState);
 
 #ifdef DEBUG_MY_PRINT
 	void debugPrint();
@@ -145,6 +164,8 @@ private:
 	hrt_abstime _timestamp{0}; // Current timestamp
 	float _dt{0.f};	// Time since last update in seconds since last call to updateLawnmowerControl()
 
+	bool _stateHasChanged{false};	// only good inside the loop
+
 	vehicle_control_mode_s 		_vehicle_control_mode{};
 	vehicle_global_position_s	_global_pos{};			/**< global vehicle position */
 	vehicle_local_position_s	_vehicle_local_position{};
@@ -186,9 +207,9 @@ private:
 	bool _manual_drive_straight{false};
 
 	// Tools actuators setpoints as produced by State machine:
-	float _cutter_setpoint{0.0f};		// -1...1 - tool like lawnmower blades etc. Using INDEX_FLAPS channel
 	float _gas_engine_throttle{0.0f};	// 0...1 - using INDEX_SPOILERS channel
 	float _alarm_dev_level{-1.0f};		// horn or other alarm device - using INDEX_AIRBRAKES channel
+	float _cutter_setpoint{0.0f};		// -1...1 - tool like lawnmower blades etc. Using INDEX_FLAPS channel
 
 	// Tools actuators actual positions, as polled from actuator_outputs:
 	float _gas_throttle_servo_position{0.0f}; // gas throttle servo position, 800...2200us - after mixers
@@ -203,8 +224,17 @@ private:
 	DEFINE_PARAMETERS(
 		(ParamInt<px4::params::LM_TRACING_LEV>) _param_lm_tracing_lev,
 		(ParamInt<px4::params::LM_GPS_MINFIX>) _param_lm_gps_minfix,
+
+		// Measurement modes - from EKF2 or RTK GPS:
 		(ParamInt<px4::params::LM_HD_MEAS_MODE>) _param_lm_hd_meas_mode,
-		(ParamInt<px4::params::LM_SP_MEAS_MODE>) _param_lm_sp_meas_mode
+		(ParamInt<px4::params::LM_SP_MEAS_MODE>) _param_lm_sp_meas_mode,
+
+		// Gas engine throttle in different states:
+		(ParamFloat<px4::params::LM_GTL_IDLE>) _param_gas_throttle_idle,
+		(ParamFloat<px4::params::LM_GTL_DEPART>) _param_gas_throttle_departing,
+		(ParamFloat<px4::params::LM_GTL_TURN>) _param_gas_throttle_turning,
+		(ParamFloat<px4::params::LM_GTL_ARRIVE>) _param_gas_throttle_arriving,
+		(ParamFloat<px4::params::LM_GTL_STRAIGHT>) _param_gas_throttle_straight
 	)
 };
 

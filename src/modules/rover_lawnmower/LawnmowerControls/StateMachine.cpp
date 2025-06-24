@@ -36,5 +36,160 @@
 namespace rover_lawnmower
 {
 
+void LawnmowerControl::workStateMachine()
+{
+	_stateHasChanged = false;
+
+	POS_CTRLSTATES pos_ctrl_state_prev = _pos_ctrl_state;
+
+
+	switch (_pos_ctrl_state) {
+	case POS_STATE_NONE:				// undefined/invalid state, no need controlling anything
+		break;
+
+	case POS_STATE_IDLE:				// idle state, no need controlling anything
+		break;
+
+	case L1_GOTO_WAYPOINT:				// target waypoint is far away, we can use Pursuit and cruise speed
+		break;
+
+	case WP_ARRIVING:				// target waypoint is close, we need to slow down and head straight to it till stop
+		break;
+
+	case WP_ARRIVED:				// reached waypoint, completely stopped. Make sure mission knows about it
+		break;
+
+	case WP_TURNING:				// we need to turn in place to the next waypoint
+		break;
+
+	case WP_DEPARTING:				// we turned to next waypoint and must start accelerating
+		break;
+
+	case POS_STATE_STOPPING:			// we hit a waypoint and need to stop
+		break;
+
+	case POS_STATE_MISSION_START:			// turn on what we need for the mission (lights, gas engine throttle, blades)
+		break;
+
+	case POS_STATE_MISSION_END:			// turn off what we needed for the mission at the end or error
+		break;
+
+	default:
+		break;
+	}
+
+
+	adjustAcuatorSetpoints();
+
+	if (pos_ctrl_state_prev != _pos_ctrl_state) {
+#ifdef DEBUG_MY_PRINT
+		PX4_INFO("FYI: state changed:  %s  -->  %s", control_state_name(pos_ctrl_state_prev),
+			 control_state_name(_pos_ctrl_state));
+#endif // DEBUG_MY_PRINT
+		_stateHasChanged = true;
+	}
+
+}
+
+void LawnmowerControl::unwindStateMachine()
+{
+	setStateMachineState(POS_STATE_NONE);
+
+	workStateMachine();	// make sure we set the actuators to "off" state
+}
+
+void LawnmowerControl::adjustAcuatorSetpoints()
+{
+	switch (_pos_ctrl_state) {
+	case POS_STATE_NONE:	// undefined/invalid state, no need to control anything
+	case POS_STATE_IDLE:	// idle state, just make sure we stay put.
+
+		_gas_engine_throttle = _param_gas_throttle_idle.get();	// LM_GTL_IDLE *0.0
+		_cutter_setpoint = ACTUATOR_OFF;
+		_alarm_dev_level = ACTUATOR_OFF;
+
+		break;
+
+	case WP_ARRIVING:		// target waypoint is close, we need to slow down and head straight to it till stop
+
+		_gas_engine_throttle = _param_gas_throttle_arriving.get();	// LM_GTL_ARRIVE *0.8
+
+		break;
+
+	case WP_ARRIVED:		// reached waypoint. Make sure mission knows about it
+
+		_gas_engine_throttle = _param_gas_throttle_arriving.get();	// LM_GTL_ARRIVE *0.8
+
+		break;
+
+	case WP_TURNING:		// we need to turn in place towards the next waypoint
+
+		_gas_engine_throttle = _param_gas_throttle_turning.get();	// LM_GTL_TURN *0.2
+
+		break;
+
+	case WP_DEPARTING:		// we turned to next waypoint and must start accelerating
+
+		_gas_engine_throttle = _param_gas_throttle_departing.get();	// LM_GTL_DEPART *0.8
+		//_cutter_setpoint = ACTUATOR_ON;
+
+		break;
+
+	case L1_GOTO_WAYPOINT: 	// target waypoint is far away, we can use Pursuit and cruise speed
+
+		_gas_engine_throttle = _param_gas_throttle_straight.get();	// LM_GTL_STRAIGHT *1.0
+
+		break;
+
+	case POS_STATE_STOPPING: 		// we hit a waypoint and need to stop before we declare "we arrived"
+
+		_gas_engine_throttle = _param_gas_throttle_idle.get();	// LM_GTL_IDLE *0.0
+
+		break;
+
+	case POS_STATE_MISSION_START:	// turn on what we need for the mission (lights, gas engine throttle, blades)
+
+		_gas_engine_throttle = _param_gas_throttle_idle.get();	// LM_GTL_IDLE *0.0
+		_cutter_setpoint = ACTUATOR_OFF;			// keep the tools off until we start departing from the first waypoint of the mission
+		_alarm_dev_level = ACTUATOR_OFF;
+
+		break;
+
+	case POS_STATE_MISSION_END:		// turn off what we needed for the mission at the end or error
+
+		_gas_engine_throttle = _param_gas_throttle_idle.get();	// LM_GTL_IDLE *0.0
+		_cutter_setpoint = ACTUATOR_OFF;
+		_alarm_dev_level = ACTUATOR_OFF;
+
+		break;
+
+	default:
+		break;
+	}
+}
+
+void LawnmowerControl::setStateMachineState(const POS_CTRLSTATES desiredState)
+{
+#ifdef DEBUG_MY_PRINT
+	PX4_INFO("FYI: setting new state:  %s  -->  %s", control_state_name(_pos_ctrl_state), control_state_name(desiredState));
+#endif // DEBUG_MY_PRINT
+
+	/*
+	switch (desiredState) {
+	case L1_GOTO_WAYPOINT:
+		// make small adjustments more effective on straight lines:
+		_rate_control.setFeedForwardGain(matrix::Vector3f(0.0f, 0.0f, _param_rate_ff.get()));
+		break;
+
+	default:
+		//_rate_control.setFeedForwardGain(matrix::Vector3f(0.0f, 0.0f, _param_rate_ff.get() / 50.0f));
+		_rate_control.setFeedForwardGain(matrix::Vector3f(0.0f, 0.0f, 0.0f));
+		break;
+	}
+	*/
+
+	_pos_ctrl_state = desiredState;
+}
+
 } // namespace rover_lawnmower
 

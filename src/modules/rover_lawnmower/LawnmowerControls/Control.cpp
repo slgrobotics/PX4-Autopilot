@@ -39,6 +39,45 @@ namespace rover_lawnmower
 void LawnmowerControl::vehicleControl()
 {
 
+	if (_vehicle_control_mode.flag_control_manual_enabled) {
+
+		if(_pos_ctrl_state != POS_STATE_IDLE) {
+
+			unwindStateMachine();
+		}
+
+		if (_vehicle_control_mode.flag_armed) {
+
+			_gas_engine_throttle = _gas_throttle_manual;	// Left knob on R/C transmitter
+			_alarm_dev_level = _alarm_dev_level_manual;	// Horn - right knob on R/C transmitter
+
+			// for cutter deck clutch we have direct R/C to servo setting, no need to use _cutter_setpoint_manual
+			//_cutter_setpoint = _cutter_setpoint_manual;	// Cutter - right switch on R/C transmitter
+
+			//} else {
+			//PX4_WARN("Manual control enabled, but vehicle is not armed");
+		}
+
+	} else if (_vehicle_control_mode.flag_control_auto_enabled) {
+
+		if (_vehicle_control_mode.flag_armed) {
+
+			// Note: Gas engine, cutter deck clutch and alarm device are controlled by the state machine.
+
+			workStateMachine();
+
+			//} else {
+			//PX4_WARN("Auto control enabled, but vehicle is not armed");
+		}
+
+	} else if (_vehicle_control_mode.flag_control_offboard_enabled) {
+
+		PX4_WARN("Offboard control enabled, but not implemented yet");
+
+	} else {
+
+		PX4_WARN("Vehicle control mode not set");
+	}
 }
 
 } // namespace rover_lawnmower
