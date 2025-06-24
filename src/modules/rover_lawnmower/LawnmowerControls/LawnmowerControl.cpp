@@ -61,14 +61,16 @@ void LawnmowerControl::updateLawnmowerControl(vehicle_control_mode_s vehicle_con
 
 	//PX4_INFO_RAW("---  dt: %f\n", (double)_dt);
 
-	vehicleControl(); // Perform vehicle control, this is where the main logic goes
+	vehicleControl(); // Perform vehicle control, this is where the main logic goes including state machine
+
+	publishAuxActuators(); // Publish auxiliary actuators, like cutter, gas engine throttle, etc.
 
 #ifdef DEBUG_MY_PRINT
 	debugPrint();
 #endif // DEBUG_MY_PRINT
 
 #ifdef DEBUG_MY_DATA
-	debugPublishData();
+	publishDebugData();
 #endif // DEBUG_MY_DATA
 
 }

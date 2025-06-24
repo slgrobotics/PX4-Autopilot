@@ -66,8 +66,8 @@ void LawnmowerControl::debugPrint()
 			if (_vehicle_control_mode.flag_armed) {
 				debugPrintManual();
 
-			//} else {
-			//	PX4_WARN("Manual control enabled, but vehicle is not armed");
+				//} else {
+				//	PX4_WARN("Manual control enabled, but vehicle is not armed");
 			}
 
 		} else if (_vehicle_control_mode.flag_control_auto_enabled) {
@@ -105,79 +105,79 @@ void LawnmowerControl::debugPrintAuto()
 	PX4_INFO_RAW("=== AUTO CONTROL\n");
 
 	PX4_INFO_RAW("distance_to_waypoint: %.1f m   vehicle_yaw: %.1f deg   mission crosstrack error: %.1f cm\n",
-		(double)(_pure_pursuit_status.distance_to_waypoint),
-		(double)math::degrees(_vehicle_yaw),
-		(double)(_pure_pursuit_status.crosstrack_error * 100.0f));
+		     (double)(_pure_pursuit_status.distance_to_waypoint),
+		     (double)math::degrees(_vehicle_yaw),
+		     (double)(_pure_pursuit_status.crosstrack_error * 100.0f));
 
 	PX4_INFO_RAW("---    wp_curr_dist: %.2f   wp_prev_dist: %.2f   wp_next_dist: %.2f\n",
-			(double)_wp_current_dist, (double)_wp_previous_dist, (double)_wp_next_dist);
+		     (double)_wp_current_dist, (double)_wp_previous_dist, (double)_wp_next_dist);
 
 
-			/*
+	/*
 	if (_tracing_lev > 0) {
-		PX4_INFO_RAW("=== %s ===================    dt: %.3f ms EKF off: %.1f cm\n", control_state_name(_pos_ctrl_state),
-			     (double)(_dt * 1000.0f), (double)(_ekfGpsDeviation * 100.0f));
-		//print_run_status();   // scheduler calling rate
+	PX4_INFO_RAW("=== %s ===================    dt: %.3f ms EKF off: %.1f cm\n", control_state_name(_pos_ctrl_state),
+	     (double)(_dt * 1000.0f), (double)(_ekfGpsDeviation * 100.0f));
+	//print_run_status();   // scheduler calling rate
 
-		if (PX4_ISFINITE(_crosstrack_error_avg)) {
-			PX4_INFO_RAW("---    last leg crosstrack error:  avg: %.1f cm  max: %.1f cm\n",
-				     (double)(_crosstrack_error_avg * 100.0f),
-				     (double)(_crosstrack_error_max * 100.0f));
-			PX4_INFO_RAW("---    mission crosstrack error:   avg: %.1f cm  max: %.1f cm  outside: %i\n",
-				     (double)(_crosstrack_error_mission_avg * 100.0f),
-				     (double)(_crosstrack_error_mission_max * 100.0f),
-				     _cte_count_outside);
-		}
+	if (PX4_ISFINITE(_crosstrack_error_avg)) {
+	PX4_INFO_RAW("---    last leg crosstrack error:  avg: %.1f cm  max: %.1f cm\n",
+		     (double)(_crosstrack_error_avg * 100.0f),
+		     (double)(_crosstrack_error_max * 100.0f));
+	PX4_INFO_RAW("---    mission crosstrack error:   avg: %.1f cm  max: %.1f cm  outside: %i\n",
+		     (double)(_crosstrack_error_mission_avg * 100.0f),
+		     (double)(_crosstrack_error_mission_max * 100.0f),
+		     _cte_count_outside);
+	}
 
-		if (_tracing_lev < 4) {
-			PX4_INFO_RAW("---    trgt_berng: %.2f  curr_hdg: %.2f  hdg_error: %.2f\n",
-				     (double) math::degrees(_target_bearing), (double) math::degrees(_current_heading),
-				     (double) math::degrees(_heading_error));
+	if (_tracing_lev < 4) {
+	PX4_INFO_RAW("---    trgt_berng: %.2f  curr_hdg: %.2f  hdg_error: %.2f\n",
+		     (double) math::degrees(_target_bearing), (double) math::degrees(_current_heading),
+		     (double) math::degrees(_heading_error));
 
-			if (_pos_ctrl_state == L1_GOTO_WAYPOINT) {
-				PX4_INFO_RAW("---    XTrack err: %.1f cm\n",
-					     (double)(_crosstrack_error * 100.0f));
-			}
-		}
+	if (_pos_ctrl_state == L1_GOTO_WAYPOINT) {
+		PX4_INFO_RAW("---    XTrack err: %.1f cm\n",
+			     (double)(_crosstrack_error * 100.0f));
+	}
+	}
 	}
 
 	if (_tracing_lev > 3) {
-		PX4_INFO_RAW("---    dist_trgt: %.2f   leg: %.2f   trgt_berng: %.2f  nav_berng: %.2f\n",
-			     (double) _dist_target, (double)_leg_distance, (double) math::degrees(_target_bearing),
-			     (double) math::degrees(_nav_bearing));
+	PX4_INFO_RAW("---    dist_trgt: %.2f   leg: %.2f   trgt_berng: %.2f  nav_berng: %.2f\n",
+	     (double) _dist_target, (double)_leg_distance, (double) math::degrees(_target_bearing),
+	     (double) math::degrees(_nav_bearing));
 
-		if (_pos_ctrl_state == L1_GOTO_WAYPOINT) {
-			PX4_INFO_RAW("---    XTrack err: %.1f cm\n",
-				     (double)(_crosstrack_error * 100.0f));
-		}
+	if (_pos_ctrl_state == L1_GOTO_WAYPOINT) {
+	PX4_INFO_RAW("---    XTrack err: %.1f cm\n",
+		     (double)(_crosstrack_error * 100.0f));
+	}
 
-		PX4_INFO_RAW("---    hdg_er: %.4f   abbe: %.2f m   gas: %.2f tool: %.2f alrm: %.1f\n",
-			     (double)math::degrees(_heading_error), (double)_abbe_error,
-			     (double)_gas_engine_throttle, (double)_cutter_setpoint, (double)_alarm_dev_level);
+	PX4_INFO_RAW("---    hdg_er: %.4f   abbe: %.2f m   gas: %.2f tool: %.2f alrm: %.1f\n",
+	     (double)math::degrees(_heading_error), (double)_abbe_error,
+	     (double)_gas_engine_throttle, (double)_cutter_setpoint, (double)_alarm_dev_level);
 	}
 
 	if (_tracing_lev > 1) {
-		PX4_INFO_RAW("---    servos: whls L: %d R: %d   gas thrtle: %d   blades: %d   alarm: %d\n",
-			     (int)_wheel_left_servo_position, (int)_wheel_right_servo_position,
-			     (int)_gas_throttle_servo_position, (int)_cutter_servo_position, (int)_alarm_servo_position);
+	PX4_INFO_RAW("---    servos: whls L: %d R: %d   gas thrtle: %d   blades: %d   alarm: %d\n",
+	     (int)_wheel_left_servo_position, (int)_wheel_right_servo_position,
+	     (int)_gas_throttle_servo_position, (int)_cutter_servo_position, (int)_alarm_servo_position);
 	}
 
 	if (_tracing_lev > 2) {
-		PX4_INFO_RAW("---    spd abs: %.2f  x_vel: %.4f  yaw_rate: %.1f\n",
-			     (double)_ground_speed_abs, (double)_x_vel,
-			     (double)math::degrees(_z_yaw_rate));
+	PX4_INFO_RAW("---    spd abs: %.2f  x_vel: %.4f  yaw_rate: %.1f\n",
+	     (double)_ground_speed_abs, (double)_x_vel,
+	     (double)math::degrees(_z_yaw_rate));
 
-		PX4_INFO_RAW("---    wp_curr_dist: %.2f   wp_prev_dist: %.2f   wp_next_dist: %.2f\n",
-			     (double)_wp_current_dist, (double)_wp_previous_dist, (double)_wp_next_dist);
+	PX4_INFO_RAW("---    wp_curr_dist: %.2f   wp_prev_dist: %.2f   wp_next_dist: %.2f\n",
+	     (double)_wp_current_dist, (double)_wp_previous_dist, (double)_wp_next_dist);
 	}
 
 	if (_tracing_lev > 1) {
-		PX4_INFO_RAW("---    misn_vel_sp: %.4f   misn_thrust_eff: %.4f   nav_state: %d\n",
-			     (double)_mission_velocity_setpoint, (double)_mission_thrust_effort,
-			     (int)_nav_state);
+	PX4_INFO_RAW("---    misn_vel_sp: %.4f   misn_thrust_eff: %.4f   nav_state: %d\n",
+	     (double)_mission_velocity_setpoint, (double)_mission_thrust_effort,
+	     (int)_nav_state);
 
-		PX4_INFO_RAW("---    misn_turn_sp: %.4f  misn_torq_effrt: %.4f  cnt_run: %d  cnt_calc: %d\n",
-			     (double)_mission_yaw_rate_setpoint, (double)_mission_torque_effort, _cnt_run, _cnt_calc);
+	PX4_INFO_RAW("---    misn_turn_sp: %.4f  misn_torq_effrt: %.4f  cnt_run: %d  cnt_calc: %d\n",
+	     (double)_mission_yaw_rate_setpoint, (double)_mission_torque_effort, _cnt_run, _cnt_calc);
 	}
 
 	_cnt_run = 0;
@@ -188,38 +188,28 @@ void LawnmowerControl::debugPrintAuto()
 void LawnmowerControl::debugPrintManual()
 {
 	PX4_INFO_RAW("=== MANUAL CONTROL\n");
-	/*
+
 	if (_tracing_lev > 0) {
-	PX4_INFO_RAW("=== MANUAL CONTROL %s ===== %s =====    dt: %.3f ms EKF off: %.1f cm\n",
-		     _manual_using_pids ? "using PIDs" : "direct",
-		     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f), (double)(_ekfGpsDeviation * 100.0f));
 
-	PX4_INFO_RAW("---Heading:  current: %.2f  gps: %.2f  ekf: %.2f  by vel: %.2f  mag: %.2f\n",
-		     (double)math::degrees(_current_heading), (double)math::degrees(_gps_current_heading),
-		     (double)math::degrees(_ekf_current_heading),
-		     (double)math::degrees(wrap_pi(atan2f(_sensor_gps_data.vel_e_m_s, _sensor_gps_data.vel_n_m_s))),
-		     (double)math::degrees(_mag_current_heading));
+		PX4_INFO_RAW("R/C: roll: %.2f  pitch: %.2f  yaw: %.2f  throttle: %.2f\n",
+			     (double)_manual_control_setpoint.roll,
+			     (double)_manual_control_setpoint.pitch,
+			     (double)_manual_control_setpoint.yaw,
+			     (double)_manual_control_setpoint.throttle);
 
-	PX4_INFO_RAW("---Speed: ground: %.2f   gps: %.2f   ekf: %.2f  x_vel: %.4f\n",
-		     (double)_ground_speed_abs, (double)_gps_ground_speed_abs, (double)_ekf_ground_speed_abs, (double)_x_vel);
+		PX4_INFO_RAW("     flaps: %.2f  aux1: %.2f  aux2: %.2f\n",
+			     (double)_manual_control_setpoint.flaps,
+			     (double)_manual_control_setpoint.aux1,
+			     (double)_manual_control_setpoint.aux2);
 
-	if (_manual_using_pids) {
-		PX4_INFO_RAW("---     misn_vel_sp: %.2f  misn_thrust_eff: %.2f  ground_speed_abs: %.4f\n",
-			     (double)_mission_velocity_setpoint, (double)_mission_thrust_effort, (double)_ground_speed_abs);
+		PX4_INFO_RAW("--- setpoints: yaw: %4f    thrust: %4f    engine: %.4f    tool: %.4f    alarm: %.4f\n",
+			     (double)_torque_control_manual, (double)_thrust_control_manual, (double)_gas_throttle_manual,
+			     (double)_cutter_setpoint_manual, (double)_alarm_dev_level_manual);
 
-		PX4_INFO_RAW("---     mission_torq_effort: %.2f   yaw_rate: %.1f\n",
-			     (double)_mission_torque_effort, (double)math::degrees(_z_yaw_rate));
+		PX4_INFO_RAW("--- servos: whls L: %d R: %d   gas thrtle: %d   blades: %d   alarm: %d\n",
+			     (int)_wheel_left_servo_position, (int)_wheel_right_servo_position,
+			     (int)_gas_throttle_servo_position, (int)_cutter_servo_position, (int)_alarm_servo_position);
 	}
-
-	PX4_INFO_RAW("---act_controls: yaw: %4f    thrust: %4f    engine: %.4f    tool: %.4f    alarm: %.4f\n",
-		     (double)_torque_control, (double)_thrust_control, (double)_gas_engine_throttle, (double)_cutter_setpoint,
-		     (double)_alarm_dev_level);
-
-	PX4_INFO_RAW("---servos: whls L: %d R: %d   gas thrtle: %d   blades: %d   2d tool: %d\n",
-		     (int)_wheel_left_servo_position, (int)_wheel_right_servo_position,
-		     (int)_gas_throttle_servo_position, (int)_cutter_servo_position, (int)_alarm_servo_position);
-	}
-	*/
 }
 
 #endif // DEBUG_MY_PRINT
@@ -228,9 +218,9 @@ void LawnmowerControl::debugPrintManual()
 
 // see .../PX4-Autopilot/src/examples/px4_mavlink_debug/px4_mavlink_debug.cpp
 
-void LawnmowerControl::debugPublishData()
+void LawnmowerControl::publishDebugData()
 {
-	//PX4_INFO_RAW("debugPublishData()\n");
+	//PX4_INFO_RAW("publishDebugData()\n");
 
 
 	/*

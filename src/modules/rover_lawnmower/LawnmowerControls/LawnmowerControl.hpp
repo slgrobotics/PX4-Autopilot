@@ -54,6 +54,10 @@
 #include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/position_setpoint_triplet.h>
 #include <uORB/topics/pure_pursuit_status.h>
+#include <uORB/topics/manual_control_setpoint.h>
+#include <uORB/topics/sensor_gps.h>
+#include <uORB/topics/actuator_outputs.h>
+#include <uORB/topics/actuator_servos.h>
 
 #ifdef DEBUG_MY_DATA
 #include <uORB/topics/debug_array.h>
@@ -61,6 +65,10 @@
 
 using namespace time_literals;
 using namespace matrix;
+
+// For binary actuators, connected through PCA9685 "servo relays":
+#define ACTUATOR_ON  (1.0f)
+#define ACTUATOR_OFF (-1.0f)
 
 namespace rover_lawnmower
 {
@@ -101,11 +109,11 @@ private:
 #endif // DEBUG_MY_PRINT
 
 #ifdef DEBUG_MY_DATA
-	void debugPublishData();
+	void publishDebugData();
+	void publishAuxActuators();
 	void publishDebugArray();
 
 	struct debug_array_s _dbg_array;
-	orb_advert_t _pub_dbg_array;
 
 	hrt_abstime _debug_data_last_called{0};
 #endif // DEBUG_MY_DATA
@@ -121,9 +129,17 @@ private:
 	uORB::Subscription _vehicle_local_position_sub{ORB_ID(vehicle_local_position)};
 	uORB::Subscription _position_setpoint_triplet_sub{ORB_ID(position_setpoint_triplet)};
 	uORB::Subscription _pure_pursuit_status_sub{ORB_ID(pure_pursuit_status)};
+	uORB::Subscription _manual_control_setpoint_sub{ORB_ID(manual_control_setpoint)}; /**< notification of manual control updates */
+	uORB::Subscription _sensor_gps_sub{ORB_ID(sensor_gps)};
+#if defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA)
+	uORB::Subscription _actuator_outputs_sub {ORB_ID(actuator_outputs)}; /**< actuator outputs subscription for tracing */
+#endif // defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA)
 
 	// uORB publications
-	//uORB::Publication<rover_velocity_setpoint_s> _rover_velocity_setpoint_pub{ORB_ID(rover_velocity_setpoint)};
+	uORB::Publication<actuator_servos_s> _actuator_servos_pub{ORB_ID(actuator_servos)};
+#ifdef DEBUG_MY_DATA
+	uORB::Publication<debug_array_s> _debug_array_pub {ORB_ID(debug_array)};
+#endif // DEBUG_MY_DATA
 
 	// Variables
 	hrt_abstime _timestamp{0}; // Current timestamp
@@ -134,6 +150,11 @@ private:
 	vehicle_local_position_s	_vehicle_local_position{};
 	position_setpoint_triplet_s	_pos_sp_triplet{};		/**< triplet of mission items */
 	pure_pursuit_status_s 		_pure_pursuit_status{};
+	manual_control_setpoint_s	_manual_control_setpoint{};	/**< r/c channel data */
+	sensor_gps_s			_sensor_gps_data{};		/**< raw gps data */
+#if defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA)
+	actuator_outputs_s		_actuator_outputs {};		/**< actuator outputs */
+#endif // defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA)
 
 	MapProjection _global_local_proj_ref{};
 
@@ -150,13 +171,40 @@ private:
 	Vector2f _prev_wp_ned{NAN, NAN};
 	Vector2d _next_wp{NAN, NAN};
 
+	// from position setpoint triplet:
 	float _wp_current_dist{NAN};  		// meters, initialize to very large
 	float _wp_previous_dist{NAN};		// meters
 	float _wp_next_dist{NAN};		// meters
 
+	// from R/C inputs:
+	float _torque_control_manual {0.0f};
+	float _thrust_control_manual {0.0f};
+	float _gas_throttle_manual {0.0f};
+	float _cutter_setpoint_manual {-1.0f};
+	float _alarm_dev_level_manual {0.0f};
+	bool _manual_using_pids{false};
+	bool _manual_drive_straight{false};
+
+	// Tools actuators setpoints as produced by State machine:
+	float _cutter_setpoint{0.0f};		// -1...1 - tool like lawnmower blades etc. Using INDEX_FLAPS channel
+	float _gas_engine_throttle{0.0f};	// 0...1 - using INDEX_SPOILERS channel
+	float _alarm_dev_level{-1.0f};		// horn or other alarm device - using INDEX_AIRBRAKES channel
+
+	// Tools actuators actual positions, as polled from actuator_outputs:
+	float _gas_throttle_servo_position{0.0f}; // gas throttle servo position, 800...2200us - after mixers
+	float _cutter_servo_position{0.0f};	// cutter servo position, 800...2200us - after mixers
+	float _alarm_servo_position{0.0f};	// second tool servo position, 800...2200us - after mixers
+
+	// Wheels "servos" for logging:
+	float _wheel_left_servo_position{0.0f};	 // left wheel servo position, 800...2200us - after mixers
+	float _wheel_right_servo_position{0.0f}; // right wheel servo position
+
 	// Parameters
 	DEFINE_PARAMETERS(
-		(ParamInt<px4::params::LM_TRACING_LEV>) _param_lm_tracing_lev
+		(ParamInt<px4::params::LM_TRACING_LEV>) _param_lm_tracing_lev,
+		(ParamInt<px4::params::LM_GPS_MINFIX>) _param_lm_gps_minfix,
+		(ParamInt<px4::params::LM_HD_MEAS_MODE>) _param_lm_hd_meas_mode,
+		(ParamInt<px4::params::LM_SP_MEAS_MODE>) _param_lm_sp_meas_mode
 	)
 };
 
