@@ -42,7 +42,7 @@ void LawnmowerControl::vehicleControl()
 
 	if (_vehicle_control_mode.flag_control_manual_enabled) {
 
-		if(_pos_ctrl_state != POS_STATE_IDLE) {
+		if (_pos_ctrl_state != POS_STATE_NONE) {
 
 			unwindStateMachine();
 		}
@@ -64,6 +64,10 @@ void LawnmowerControl::vehicleControl()
 		if (_vehicle_control_mode.flag_armed) {
 
 			// Note: Gas engine, cutter deck clutch and alarm device are controlled by the state machine.
+
+			if (_pos_ctrl_state == POS_STATE_NONE) {
+				_pos_ctrl_state = POS_STATE_IDLE;	// Start in idle state, let it proceed to other states internally
+			}
 
 			workStateMachine();
 

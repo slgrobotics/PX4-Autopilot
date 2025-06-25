@@ -47,7 +47,10 @@ void LawnmowerControl::workStateMachine()
 	case POS_STATE_NONE:				// "wound down" undefined/invalid state, no need controlling anything
 		break;
 
-	case POS_STATE_IDLE:				// idle state, no need controlling anything
+	case POS_STATE_IDLE:				// idle state, no need controlling anything yet, initiate starting the mission
+
+		setStateMachineState(POS_STATE_MISSION_START);
+
 		break;
 
 	case STRAIGHT_RUN: {				// target waypoint is far away, we can use Pursuit and cruise speed
@@ -85,12 +88,32 @@ void LawnmowerControl::workStateMachine()
 		break;
 
 	case WP_ARRIVED:				// reached waypoint, completely stopped. Make sure mission knows about it
+
+		// See if that was the last waypoint of the mission:
+		if (!_pos_sp_triplet.current.valid
+		    || (_pos_sp_triplet.current.valid
+			&& _pos_sp_triplet.current.type == position_setpoint_s::SETPOINT_TYPE_LAND)) {
+			// We have arrived to the last waypoint of the mission, switch to end of mission
+			setStateMachineState(POS_STATE_MISSION_END);
+
+		} else {
+			// We have arrived to a waypoint, but there are more waypoints in the triplet,
+			// so we need to turn towards the next waypoint:
+			setStateMachineState(WP_TURNING);
+		}
+
 		break;
 
 	case WP_TURNING:				// we need to turn in place to the next waypoint
 
 		_accel_dist = _param_lm_accel_dist.get();	// LM_ACCEL_DIST (can be 0 to skip Departure phase)
 		_decel_dist = _param_lm_decel_dist.get();	// LM_DECEL_DIST
+
+		if (fabsf(math::degrees(_bearing_error)) < 5.0f) { // TODO: make it a parameter?
+
+			// We've turned close enough to the desired bearing, switch to Departing or Straight Run state:
+			setStateMachineState(_accel_dist > FLT_EPSILON ? WP_DEPARTING : STRAIGHT_RUN);
+		}
 
 		break;
 
@@ -112,9 +135,14 @@ void LawnmowerControl::workStateMachine()
 			setStateMachineState(STRAIGHT_RUN);
 			cte_begin();
 		}
-	break;
+
+		break;
 
 	case POS_STATE_STOPPING:			// we hit a waypoint and need to stop
+
+		// we need to monitor velocity here, and if it is below a threshold, we can switch to WP_ARRIVED state:
+		setStateMachineState(WP_ARRIVED);
+
 		break;
 
 	case POS_STATE_MISSION_START:			// turn on what we need for the mission (lights, gas engine throttle, blades)
@@ -133,10 +161,10 @@ void LawnmowerControl::workStateMachine()
 	case POS_STATE_MISSION_END:			// turn off what we needed for the mission at the end or error
 
 #ifdef DEBUG_MY_PRINT
-		PX4_INFO("Mission ended - turn off what we needed for the mission");
+		PX4_INFO("Mission ended - turning off what we needed for the mission");
 #endif // DEBUG_MY_PRINT
 
-		setStateMachineState(POS_STATE_IDLE); // just rest at the end of the mission
+		setStateMachineState(POS_STATE_NONE); // just rest at the end of the mission
 
 		cte_end_mission();
 
@@ -168,7 +196,7 @@ void LawnmowerControl::workStateMachine()
 
 void LawnmowerControl::unwindStateMachine()
 {
-	setStateMachineState(POS_STATE_NONE);
+	setStateMachineState(POS_STATE_MISSION_END);
 
 	workStateMachine();	// make sure we set the actuators to "off" state
 }

@@ -94,6 +94,9 @@ void LawnmowerControl::updateSubscriptions()
 		_pure_pursuit_status_sub.copy(&_pure_pursuit_status);
 
 		_crosstrack_error = _pure_pursuit_status.crosstrack_error;
+		float target_bearing = _pure_pursuit_status.target_bearing;
+		float bearing_to_waypoint = _pure_pursuit_status.bearing_to_waypoint;
+		_bearing_error = wrap_pi(target_bearing - bearing_to_waypoint);
 	}
 
 	if (_position_setpoint_triplet_sub.updated()) {

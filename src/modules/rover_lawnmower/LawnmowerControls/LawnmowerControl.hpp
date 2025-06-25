@@ -186,11 +186,12 @@ private:
 	Vector2d _curr_pos{NAN, NAN};
 	Vector2f _curr_pos_ned{NAN, NAN};	// local projection - updated when polling
 
-	float _crosstrack_error{0.0f};		// meters, how far we are from the A-B line (A = previous, visited waypoint, B = current waypoint, target)
-	float _ekfGpsDeviation{0.0f};		// meters, how far is EKF2 calculated position from GPS reading
+	float _crosstrack_error{NAN};		// meters, how far we are from the A-B line (A = previous, visited waypoint, B = current waypoint, target)
+	float _bearing_error{NAN};		// radians, bearing error to the waypoint, comes from PurePursuit, used when turning in place
+	float _ekfGpsDeviation{NAN};		// meters, how far is EKF2 calculated position from GPS reading
 	float _vehicle_yaw{NAN};
-	float _accel_dist{100.0f};		// meters
-	float _decel_dist{100.0f};		// meters
+	float _accel_dist{1.0};			// meters
+	float _decel_dist{1.0};			// meters
 
 	// Waypoints - from position_setpoint_triplet_s
 	Vector2d _curr_wp{NAN, NAN};
@@ -205,28 +206,29 @@ private:
 	float _wp_next_dist{NAN};		// meters
 
 	// from R/C inputs:
-	float _torque_control_manual {0.0f};
-	float _thrust_control_manual {0.0f};
-	float _gas_throttle_manual {0.0f};
+	float _torque_control_manual {NAN};
+	float _thrust_control_manual {NAN};
+	float _gas_throttle_manual {NAN};
 	float _cutter_setpoint_manual {-1.0f};
-	float _alarm_dev_level_manual {0.0f};
+	float _alarm_dev_level_manual {NAN};
 	bool _manual_using_pids{false};
 	bool _manual_drive_straight{false};
 
 	// Tools actuators setpoints as produced by State machine:
-	float _gas_engine_throttle{0.0f};	// 0...1 - using INDEX_SPOILERS channel
+	float _gas_engine_throttle{NAN};	// 0...1 - using INDEX_SPOILERS channel
 	float _alarm_dev_level{-1.0f};		// horn or other alarm device - using INDEX_AIRBRAKES channel
-	float _cutter_setpoint{0.0f};		// -1...1 - tool like lawnmower blades etc. Using INDEX_FLAPS channel
+	float _cutter_setpoint{NAN};		// -1...1 - tool like lawnmower blades etc. Using INDEX_FLAPS channel
 
 	// Tools actuators actual positions, as polled from actuator_outputs:
-	float _gas_throttle_servo_position{0.0f}; // gas throttle servo position, 800...2200us - after mixers
-	float _cutter_servo_position{0.0f};	// cutter servo position, 800...2200us - after mixers
-	float _alarm_servo_position{0.0f};	// second tool servo position, 800...2200us - after mixers
+	float _gas_throttle_servo_position{NAN}; // gas throttle servo position, 800...2200us - after mixers
+	float _cutter_servo_position{NAN};	// cutter servo position, 800...2200us - after mixers
+	float _alarm_servo_position{NAN};	// second tool servo position, 800...2200us - after mixers
 
 	// Wheels "servos" for logging:
-	float _wheel_left_servo_position{0.0f};	 // left wheel servo position, 800...2200us - after mixers
-	float _wheel_right_servo_position{0.0f}; // right wheel servo position
+	float _wheel_left_servo_position{NAN};	 // left wheel servo position, 800...2200us - after mixers
+	float _wheel_right_servo_position{NAN}; // right wheel servo position
 
+	// --------------------------------
 	// Mission metrics:
 	float _crosstrack_error_avg{NAN};	// average (compound) absolute crosstrack error diring the line following leg
 	float _crosstrack_error_max{NAN};	// max absolute crosstrack error diring the line following leg
@@ -294,6 +296,7 @@ private:
 		_crosstrack_error_avg = _cte_accum / _cte_count;
 		_crosstrack_error_mission_avg = _cte_accum_mission / _cte_count_mission; // keep it current for tracing
 	};
+	// --------------------------------
 
 	// Parameters
 	DEFINE_PARAMETERS(
@@ -301,7 +304,8 @@ private:
 		(ParamInt<px4::params::LM_GPS_MINFIX>) _param_lm_gps_minfix,
 
 		(ParamFloat<px4::params::LM_ACCEL_DIST>) _param_lm_accel_dist,	 // meters, distance to accelerate
-		(ParamFloat<px4::params::LM_DECEL_DIST>) _param_lm_decel_dist,	 // meters, distance to target waypoint to start decelerating
+		(ParamFloat<px4::params::LM_DECEL_DIST>)
+		_param_lm_decel_dist,	 // meters, distance to target waypoint to start decelerating
 		(ParamFloat<px4::params::LM_WP_PRECISN>) _param_lm_wp_precision, // meters, how close to waypoint we consider it reached
 
 		// Measurement modes - from EKF2 or RTK GPS:
