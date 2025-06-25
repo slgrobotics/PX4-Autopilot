@@ -37,6 +37,40 @@ parameters:
         min: 3
         max: 6
 
+      LM_ACCEL_DIST:
+        description:
+          short: Distance to accelerate from a waypoint
+        type: float
+        unit: m
+        min: 1
+        max: 200
+        increment: 0.1
+        decimal: 1
+        default: 1.0
+
+      LM_DECEL_DIST:
+        description:
+          short: Distance to decelerate straight to a waypoint not using any Pursuit logic
+        type: float
+        unit: m
+        min: 1
+        max: 200
+        increment: 0.1
+        decimal: 1
+        default: 1.0
+
+      LM_WP_PRECISN:
+        description:
+          short: Distance from destination waypoint to consider it reached
+          long: Distance from destination waypoint to consider it reached, in meters. Set it to 0.1..5.0 meters
+        type: float
+        unit: m
+        min: 0
+        max: 10
+        increment: 0.1
+        decimal: 1
+        default: 0.5
+
       LM_HD_MEAS_MODE:
         description:
           short: Heading measurement mode

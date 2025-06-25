@@ -44,37 +44,112 @@ void LawnmowerControl::workStateMachine()
 
 
 	switch (_pos_ctrl_state) {
-	case POS_STATE_NONE:				// undefined/invalid state, no need controlling anything
+	case POS_STATE_NONE:				// "wound down" undefined/invalid state, no need controlling anything
 		break;
 
 	case POS_STATE_IDLE:				// idle state, no need controlling anything
 		break;
 
-	case L1_GOTO_WAYPOINT:				// target waypoint is far away, we can use Pursuit and cruise speed
-		break;
+	case STRAIGHT_RUN: {				// target waypoint is far away, we can use Pursuit and cruise speed
+
+			bool is_arriving = PX4_ISFINITE(_wp_current_dist) ?
+					   _wp_current_dist < _decel_dist : // GND_DECEL_DIST or half leg
+					   false;
+
+			if (is_arriving) {
+				// Close enough to destination waypoint, switch from Pursuit to direct heading:
+				setStateMachineState(WP_ARRIVING);
+				cte_end();
+
+			} else {
+				// Normal run.
+				// maybe, set desired speed?
+			}
+
+		} break;
 
 	case WP_ARRIVING:				// target waypoint is close, we need to slow down and head straight to it till stop
+
+		if (PX4_ISFINITE(_wp_current_dist) && _wp_current_dist < _param_lm_wp_precision.get()) {
+#ifdef DEBUG_MY_PRINT
+			PX4_INFO("OK: got close, switching to POS_STATE_STOPPING ===========================");
+#endif // DEBUG_MY_PRINT
+			// We are closer than GND_WP_PRECISN radius to waypoint, begin stopping phase:
+			setStateMachineState(POS_STATE_STOPPING);
+		}
+
+#ifdef DEBUG_MY_PRINT
+		debugPrintArriveDepart();
+#endif // DEBUG_MY_PRINT
+
 		break;
 
 	case WP_ARRIVED:				// reached waypoint, completely stopped. Make sure mission knows about it
 		break;
 
 	case WP_TURNING:				// we need to turn in place to the next waypoint
+
+		_accel_dist = _param_lm_accel_dist.get();	// LM_ACCEL_DIST (can be 0 to skip Departure phase)
+		_decel_dist = _param_lm_decel_dist.get();	// LM_DECEL_DIST
+
 		break;
 
 	case WP_DEPARTING:				// we turned to next waypoint and must start accelerating
-		break;
+
+		cte_begin(); // just invalidate _crosstrack_error_avg to avoid confusion
+
+		if (_wp_previous_dist < _accel_dist) {  // TODO: is_first_leg here?
+
+			// just turn on tools (cutting deck) - we are on the business part of the mission:
+			_cutter_setpoint = ACTUATOR_ON;
+
+#ifdef DEBUG_MY_PRINT
+			debugPrintArriveDepart();
+#endif // DEBUG_MY_PRINT
+
+		} else {
+			// we are far enough from departure waypoint and not heading to the first waypoint, switch to Pursuit:
+			setStateMachineState(STRAIGHT_RUN);
+			cte_begin();
+		}
+	break;
 
 	case POS_STATE_STOPPING:			// we hit a waypoint and need to stop
 		break;
 
 	case POS_STATE_MISSION_START:			// turn on what we need for the mission (lights, gas engine throttle, blades)
+
+#ifdef DEBUG_MY_PRINT
+		PX4_INFO("Mission started - turn on what we need for the mission (lights, gas engine throttle, blades)");
+#endif // DEBUG_MY_PRINT
+
+		// First waypoint of the mission has arrived, go to it. First we need to turn towards it:
+		setStateMachineState(WP_TURNING);
+
+		cte_begin_mission();
+
 		break;
 
 	case POS_STATE_MISSION_END:			// turn off what we needed for the mission at the end or error
+
+#ifdef DEBUG_MY_PRINT
+		PX4_INFO("Mission ended - turn off what we needed for the mission");
+#endif // DEBUG_MY_PRINT
+
+		setStateMachineState(POS_STATE_IDLE); // just rest at the end of the mission
+
+		cte_end_mission();
+
+		PX4_WARN("Mission end: mission crosstrack error:  avg: %.1f cm  max: %.1f cm  outside: %i",
+			 (double)(_crosstrack_error_mission_avg * 100.0f),
+			 (double)(_crosstrack_error_mission_max * 100.0f),
+			 _cte_count_outside);
+
 		break;
 
 	default:
+		PX4_ERR("Unknown Rover State");
+		setStateMachineState(POS_STATE_NONE);
 		break;
 	}
 
@@ -135,7 +210,7 @@ void LawnmowerControl::adjustAcuatorSetpoints()
 
 		break;
 
-	case L1_GOTO_WAYPOINT: 	// target waypoint is far away, we can use Pursuit and cruise speed
+	case STRAIGHT_RUN: 	// target waypoint is far away, we can use Pursuit and cruise speed
 
 		_gas_engine_throttle = _param_gas_throttle_straight.get();	// LM_GTL_STRAIGHT *1.0
 
@@ -176,7 +251,7 @@ void LawnmowerControl::setStateMachineState(const POS_CTRLSTATES desiredState)
 
 	/*
 	switch (desiredState) {
-	case L1_GOTO_WAYPOINT:
+	case STRAIGHT_RUN:
 		// make small adjustments more effective on straight lines:
 		_rate_control.setFeedForwardGain(matrix::Vector3f(0.0f, 0.0f, _param_rate_ff.get()));
 		break;

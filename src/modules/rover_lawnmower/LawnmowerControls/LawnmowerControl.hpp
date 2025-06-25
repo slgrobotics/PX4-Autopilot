@@ -96,7 +96,7 @@ private:
 	enum POS_CTRLSTATES : int {
 		POS_STATE_NONE,			// undefined/invalid state, no need controlling anything
 		POS_STATE_IDLE,			// idle state, no need controlling anything
-		L1_GOTO_WAYPOINT,		// target waypoint is far away, we can use Pursuit logic and cruise speed
+		STRAIGHT_RUN,		// target waypoint is far away, we can use Pursuit logic and cruise speed
 		WP_ARRIVING,			// target waypoint is close, we need to slow down and head straight to it till stop
 		WP_ARRIVED,			// reached waypoint, completely stopped. Make sure mission knows about it
 		WP_TURNING,			// we need to turn in place to the next waypoint
@@ -109,6 +109,7 @@ private:
 	const char *control_state_name(const POS_CTRLSTATES state);
 
 	void advertisePublishers();
+	void updateEkfGpsDeviation();
 	void updateWaypoints();
 	void updateWaypointDistances();
 	void vehicleControl();
@@ -121,8 +122,10 @@ private:
 	void debugPrint();
 	void debugPrintAuto();
 	void debugPrintManual();
+	void debugPrintArriveDepart();
 
 	hrt_abstime _debug_print_last_called{0};
+	hrt_abstime _debug_print1_last_called{0};
 
 	int _tracing_lev{0}; // Tracing level, set by parameter
 #endif // DEBUG_MY_PRINT
@@ -183,7 +186,11 @@ private:
 	Vector2d _curr_pos{NAN, NAN};
 	Vector2f _curr_pos_ned{NAN, NAN};	// local projection - updated when polling
 
+	float _crosstrack_error{0.0f};		// meters, how far we are from the A-B line (A = previous, visited waypoint, B = current waypoint, target)
+	float _ekfGpsDeviation{0.0f};		// meters, how far is EKF2 calculated position from GPS reading
 	float _vehicle_yaw{NAN};
+	float _accel_dist{100.0f};		// meters
+	float _decel_dist{100.0f};		// meters
 
 	// Waypoints - from position_setpoint_triplet_s
 	Vector2d _curr_wp{NAN, NAN};
@@ -220,10 +227,82 @@ private:
 	float _wheel_left_servo_position{0.0f};	 // left wheel servo position, 800...2200us - after mixers
 	float _wheel_right_servo_position{0.0f}; // right wheel servo position
 
+	// Mission metrics:
+	float _crosstrack_error_avg{NAN};	// average (compound) absolute crosstrack error diring the line following leg
+	float _crosstrack_error_max{NAN};	// max absolute crosstrack error diring the line following leg
+
+	float _crosstrack_error_mission_avg{NAN};	// average (compound) absolute crosstrack error for the mission
+	float _crosstrack_error_mission_max{NAN};	// max absolute crosstrack error for the mission
+
+	// to compute _crosstrack_error_avg / _max:
+	float _cte_accum{NAN};
+	int _cte_count{0};
+	hrt_abstime _cte_lf_started{0};
+	hrt_abstime _cte_lf_tick{0};
+
+	float _cte_accum_mission{NAN};
+	int _cte_count_mission{0};
+	int _cte_count_outside{0};
+
+	inline void cte_begin_mission()
+	{
+		_cte_accum_mission = 0.0f; _cte_count_mission = 0; _cte_count_outside = 0;
+		_crosstrack_error_mission_avg = NAN; _crosstrack_error_mission_max = 0.0f;
+	}
+
+	inline void cte_end_mission()
+	{
+		_crosstrack_error_mission_avg = _cte_accum_mission / _cte_count_mission;
+	};
+
+	inline void cte_begin()
+	{
+		_cte_accum = 0.0f; _cte_count = 0;
+		_cte_lf_started = _cte_lf_tick = _timestamp;
+		_crosstrack_error_avg = NAN; _crosstrack_error_max = 0.0f;
+	};
+
+	inline void cte_compute()
+	{
+		if (PX4_ISFINITE(_crosstrack_error) && hrt_elapsed_time(&_cte_lf_started) > 5 * 1_s) {
+			float cte_abs = abs(_crosstrack_error);
+
+			_crosstrack_error_max = math::max(_crosstrack_error_max, cte_abs);
+			_cte_accum += cte_abs;
+			++_cte_count;
+
+			_crosstrack_error_mission_max = math::max(_crosstrack_error_mission_max, cte_abs);
+			_cte_accum_mission += cte_abs;
+			++_cte_count_mission;
+
+			if (hrt_elapsed_time(&_cte_lf_tick) > 1_s) {
+
+				// every second we see if we are outside +-20 cm corridor, and count those seconds:
+
+				_cte_lf_tick = _timestamp;
+
+				if (cte_abs > 0.2f) {
+					++_cte_count_outside;
+					PX4_WARN("+++++++++++++  outside: %i +++++++++++++", _cte_count_outside);
+				}
+			}
+		}
+	};
+
+	inline void cte_end()
+	{
+		_crosstrack_error_avg = _cte_accum / _cte_count;
+		_crosstrack_error_mission_avg = _cte_accum_mission / _cte_count_mission; // keep it current for tracing
+	};
+
 	// Parameters
 	DEFINE_PARAMETERS(
 		(ParamInt<px4::params::LM_TRACING_LEV>) _param_lm_tracing_lev,
 		(ParamInt<px4::params::LM_GPS_MINFIX>) _param_lm_gps_minfix,
+
+		(ParamFloat<px4::params::LM_ACCEL_DIST>) _param_lm_accel_dist,	 // meters, distance to accelerate
+		(ParamFloat<px4::params::LM_DECEL_DIST>) _param_lm_decel_dist,	 // meters, distance to target waypoint to start decelerating
+		(ParamFloat<px4::params::LM_WP_PRECISN>) _param_lm_wp_precision, // meters, how close to waypoint we consider it reached
 
 		// Measurement modes - from EKF2 or RTK GPS:
 		(ParamInt<px4::params::LM_HD_MEAS_MODE>) _param_lm_hd_meas_mode,

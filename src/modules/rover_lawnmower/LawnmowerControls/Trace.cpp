@@ -104,9 +104,10 @@ void LawnmowerControl::debugPrintAuto()
 {
 	if (_tracing_lev > 0) {
 
-		PX4_INFO_RAW("=== AUTO CONTROL\n");
+		PX4_INFO_RAW("=== AUTO CONTROL: %s ============  dt: %.3f ms EKF off: %.1f cm\n",
+			control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f), (double)(_ekfGpsDeviation * 100.0f));
 
-		PX4_INFO_RAW("distance_to_waypoint: %.1f m   vehicle_yaw: %.1f deg   mission crosstrack error: %.1f cm\n",
+		PX4_INFO_RAW("distance_to_waypoint: %.1f m   vehicle_yaw: %.1f deg   crosstrack error: %.1f cm\n",
 			     (double)(_pure_pursuit_status.distance_to_waypoint),
 			     (double)math::degrees(_vehicle_yaw),
 			     (double)(_pure_pursuit_status.crosstrack_error * 100.0f));
@@ -144,7 +145,7 @@ void LawnmowerControl::debugPrintAuto()
 		     (double) math::degrees(_target_bearing), (double) math::degrees(_current_heading),
 		     (double) math::degrees(_heading_error));
 
-	if (_pos_ctrl_state == L1_GOTO_WAYPOINT) {
+	if (_pos_ctrl_state == STRAIGHT_RUN) {
 		PX4_INFO_RAW("---    XTrack err: %.1f cm\n",
 			     (double)(_crosstrack_error * 100.0f));
 	}
@@ -156,7 +157,7 @@ void LawnmowerControl::debugPrintAuto()
 	     (double) _dist_target, (double)_leg_distance, (double) math::degrees(_target_bearing),
 	     (double) math::degrees(_nav_bearing));
 
-	if (_pos_ctrl_state == L1_GOTO_WAYPOINT) {
+	if (_pos_ctrl_state == STRAIGHT_RUN) {
 	PX4_INFO_RAW("---    XTrack err: %.1f cm\n",
 		     (double)(_crosstrack_error * 100.0f));
 	}
@@ -193,6 +194,20 @@ void LawnmowerControl::debugPrintAuto()
 	_cnt_run = 0;
 	_cnt_calc = 0;
 	*/
+}
+
+void LawnmowerControl::debugPrintArriveDepart()
+{
+	if (hrt_elapsed_time(&_debug_print1_last_called) > 1_s) {
+		if (_tracing_lev > 4) {
+
+			PX4_INFO_RAW("=== AUTO CONTROL: %s ============  dt: %.3f ms EKF off: %.1f cm\n",
+				control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f), (double)(_ekfGpsDeviation * 100.0f));
+
+		}
+
+		_debug_print1_last_called = _timestamp;
+	}
 }
 
 void LawnmowerControl::debugPrintManual()
@@ -232,8 +247,8 @@ const char *LawnmowerControl::control_state_name(const POS_CTRLSTATES state)
 	case POS_STATE_IDLE:				// idle state, no need controlling anything
 		return "POS_STATE_IDLE";
 
-	case L1_GOTO_WAYPOINT:				// target waypoint is far away, we can use Pursuit and cruise speed
-		return "L1_GOTO_WAYPOINT";
+	case STRAIGHT_RUN:				// target waypoint is far away, we can use Pursuit and cruise speed
+		return "STRAIGHT_RUN";
 
 	case WP_ARRIVING:				// target waypoint is close, we need to slow down and head straight to it till stop
 		return "WP_ARRIVING";

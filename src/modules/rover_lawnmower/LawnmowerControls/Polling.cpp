@@ -92,6 +92,8 @@ void LawnmowerControl::updateSubscriptions()
 
 	if (_pure_pursuit_status_sub.updated()) {
 		_pure_pursuit_status_sub.copy(&_pure_pursuit_status);
+
+		_crosstrack_error = _pure_pursuit_status.crosstrack_error;
 	}
 
 	if (_position_setpoint_triplet_sub.updated()) {
