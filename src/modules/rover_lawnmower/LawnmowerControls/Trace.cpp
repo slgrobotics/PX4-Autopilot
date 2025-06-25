@@ -104,8 +104,11 @@ void LawnmowerControl::debugPrintAuto()
 {
 	if (_tracing_lev > 0) {
 
-		PX4_INFO_RAW("=== AUTO CONTROL: %s ============  dt: %.3f ms EKF off: %.1f cm\n",
-			     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f), (double)(_ekfGpsDeviation * 100.0f));
+	PX4_INFO_RAW("=== Auto CONTROL: %s ============  dt: %.3f ms EKF off: %.1f cm   yaw: EKF: %.1f GPS: %.1f/%.1f deg\n",
+		     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f), (double)(_ekfGpsDeviation * 100.0f),
+		     (double)math::degrees(_vehicle_yaw), (double)math::degrees(_sensor_gps_data.heading),
+		     (double)math::degrees(_sensor_gps_data.cog_rad));
+
 
 		PX4_INFO_RAW("distance_to_waypoint: %.1f m   vehicle_yaw: %.1f deg   crosstrack error: %.1f cm   bearing error: %.3f degrees\n",
 			     (double)(_pure_pursuit_status.distance_to_waypoint),
@@ -222,17 +225,18 @@ void LawnmowerControl::debugPrintArriveDepart()
 
 void LawnmowerControl::debugPrintManual()
 {
-	PX4_INFO_RAW("=== MANUAL CONTROL\n");
+	PX4_INFO_RAW("=== Manual CONTROL: %s ============  dt: %.3f ms EKF off: %.1f cm   yaw: EKF: %.1f GPS: %.1f/%.1f deg\n",
+		     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f), (double)(_ekfGpsDeviation * 100.0f),
+		     (double)math::degrees(_vehicle_yaw), (double)math::degrees(_sensor_gps_data.heading),
+		     (double)math::degrees(_sensor_gps_data.cog_rad));
 
 	if (_tracing_lev > 0) {
 
-		PX4_INFO_RAW("R/C: roll: %.2f  pitch: %.2f  yaw: %.2f  throttle: %.2f\n",
+		PX4_INFO_RAW("R/C: roll: %.2f  pitch: %.2f  yaw: %.2f  throttle: %.2f   flaps: %.2f  aux1: %.2f  aux2: %.2f\n",
 			     (double)_manual_control_setpoint.roll,
 			     (double)_manual_control_setpoint.pitch,
 			     (double)_manual_control_setpoint.yaw,
-			     (double)_manual_control_setpoint.throttle);
-
-		PX4_INFO_RAW("     flaps: %.2f  aux1: %.2f  aux2: %.2f\n",
+			     (double)_manual_control_setpoint.throttle,
 			     (double)_manual_control_setpoint.flaps,
 			     (double)_manual_control_setpoint.aux1,
 			     (double)_manual_control_setpoint.aux2);
