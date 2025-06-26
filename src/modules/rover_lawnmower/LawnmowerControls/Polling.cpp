@@ -40,10 +40,12 @@ void LawnmowerControl::updateSubscriptions()
 {
 	// Update uORB subscriptions:
 	if (_vehicle_attitude_sub.updated()) {
-		vehicle_attitude_s vehicle_attitude{};
-		_vehicle_attitude_sub.copy(&vehicle_attitude);
-		matrix::Quatf vehicle_attitude_quaternion = matrix::Quatf(vehicle_attitude.q);
+		_vehicle_attitude_sub.copy(&_vehicle_attitude);
+
+		matrix::Quatf vehicle_attitude_quaternion = matrix::Quatf(_vehicle_attitude.q);
 		_vehicle_yaw = matrix::Eulerf(vehicle_attitude_quaternion).psi();
+
+		_location_metrics.ekf_current_yaw = _vehicle_yaw; // radians to absolute North, -PI...PI
 	}
 
 	if (_global_position_sub.updated()) {
@@ -73,12 +75,18 @@ void LawnmowerControl::updateSubscriptions()
 		dead_reckoning: False
 		*/
 
-		// see how far EKF-calculated position is from RTK GPS position:
-		//updateEkfGpsDeviation();
+		// Update location metrics with EKF2 data:
+		_location_metrics.ekf_lat = _global_pos.lat;
+		_location_metrics.ekf_lon = _global_pos.lon;
+		_location_metrics.ekf_alt = _global_pos.alt;
 	}
 
 	if (_vehicle_local_position_sub.updated()) {
 		_vehicle_local_position_sub.copy(&_vehicle_local_position);
+
+		_location_metrics.ekf_data_good = _vehicle_local_position.xy_valid && _vehicle_local_position.v_xy_valid && _vehicle_local_position.heading_good_for_control;
+		_location_metrics.ekf_flags = {_vehicle_local_position.xy_valid, _vehicle_local_position.v_xy_valid, _vehicle_local_position.heading_good_for_control};
+
 		_curr_pos_ned = Vector2f(_vehicle_local_position.x, _vehicle_local_position.y);
 		_curr_pos = Vector2d(_vehicle_local_position.x, _vehicle_local_position.y);
 
@@ -88,6 +96,29 @@ void LawnmowerControl::updateSubscriptions()
 			_global_local_proj_ref.initReference(_vehicle_local_position.ref_lat, _vehicle_local_position.ref_lon,
 							     _vehicle_local_position.ref_timestamp);
 		}
+
+		if (_vehicle_local_position.v_xy_valid) {
+
+			_location_metrics.ekf_ground_speed = Vector3f{_vehicle_local_position.vx, _vehicle_local_position.vy, _vehicle_local_position.vz};
+			_location_metrics.ekf_ground_speed_abs = _location_metrics.ekf_ground_speed.norm();	// a.k.a. _actual_speed
+
+			// Velocity in body frame:
+			const Dcmf R_to_body(Quatf(_vehicle_attitude.q).inversed());
+			const Vector3f vel = R_to_body * _location_metrics.ekf_ground_speed;
+			_location_metrics.ekf_x_vel = vel(0);
+
+			const matrix::Vector2f gs2d(_location_metrics.ekf_ground_speed);
+			_location_metrics.ekf_ground_speed_2d = gs2d;
+
+		} else {
+			_location_metrics.ekf_x_vel = NAN;
+			_location_metrics.ekf_ground_speed = Vector3f{NAN, NAN, NAN};
+			_location_metrics.ekf_ground_speed_2d = Vector2f{NAN, NAN};
+			_location_metrics.ekf_ground_speed_abs = NAN;
+		}
+
+
+
 	}
 
 	if (_pure_pursuit_status_sub.updated()) {
@@ -245,39 +276,52 @@ void LawnmowerControl::updateSubscriptions()
 			 * print produces (comments from sensor_gps.msg):
 			INFO  [rover_pos_control] GPS data came
 			 sensor_gps
-				timestamp: 90395226584 (0.012087 seconds ago)
-				time_utc_usec: 1650659597200344
-				device_id: 11141125 (Type: 0xAA, SERIAL:0 (0x00))
-				lat: 33230009				# Latitude in 1E-7 degrees
-				lon: -862038035				# Longitude in 1E-7 degrees
-				alt: 157245					# Altitude in 1E-3 meters above MSL, (millimetres)
-				alt_ellipsoid: 116743		# Altitude in 1E-3 meters bove Ellipsoid, (millimetres)
-				s_variance_m_s: 0.0810		# GPS speed accuracy estimate, (metres/sec)
-				c_variance_rad: 3.1416		# GPS course accuracy estimate, (radians)
-				eph: 0.0140					# GPS horizontal position accuracy (metres)
-				epv: 0.0100					# GPS vertical position accuracy (metres)
-				hdop: 0.4900				# Horizontal dilution of precision
-				vdop: 1.0400				# Vertical dilution of precision
-				noise_per_ms: 71			# GPS noise per millisecond
-				jamming_indicator: 11		# indicates jamming is occurring
-				vel_m_s: 0.0200				# GPS ground speed, (metres/sec)
-				vel_n_m_s: 0.0200			# GPS North velocity, (metres/sec)
-				vel_e_m_s: 0.0020			# GPS East velocity, (metres/sec)
-				vel_d_m_s: 0.0130			# GPS Down velocity, (metres/sec)
-				cog_rad: 3.8606				# Course over ground (NOT heading, but direction of movement), -PI..PI, (radians) - !!! ACTUALLY, 0...2PI is delivered here !!!
-				timestamp_time_relative: 0	# timestamp + timestamp_time_relative = Time of the UTC timestamp since system start, (microseconds)
-				heading: nan				# heading angle of XYZ body frame rel to NED. Set to NaN if not available and updated (used for dual antenna GPS), (rad, [-PI, PI])
-				heading_offset: 0.0000		# heading offset of dual antenna array in body frame. Set to NaN if not applicable. (rad, [-PI, PI])
-				heading_accuracy: 0.0000	# heading accuracy (rad, [0, 2PI])
-				automatic_gain_control: 0   # Automatic gain control monitor
-				fix_type: 6					# 0-1: no fix, 2: 2D fix, 3: 3D fix, 4: RTCM code differential, 5: Real-Time Kinematic, float, 6: Real-Time Kinematic, fixed, 8: Extrapolated.
-				jamming_state: 1			# indicates whether jamming has been detected or suspected by the receivers. O: Unknown, 1: OK, 2: Warning, 3: Critical
-				vel_ned_valid: True			# True if NED velocity is valid
-				satellites_used: 31			# Number of satellites used
+				latitude_deg: 47.397971
+				longitude_deg: 8.546164
+				altitude_msl_m: 0.199698
+				altitude_ellipsoid_m: 0.199698
+				time_utc_usec: 0
+				device_id: 11469068 (Type: 0xAF, SIMULATION:1 (0x01))
+				s_variance_m_s: 0.40000
+				c_variance_rad: 0.10000
+				eph: 0.90000
+				epv: 1.78000
+				hdop: 0.70000
+				vdop: 1.10000
+				noise_per_ms: 0
+				jamming_indicator: 0
+				vel_m_s: 0.01494
+				vel_n_m_s: -0.00907
+				vel_e_m_s: -0.01187
+				vel_d_m_s: -0.01168
+				cog_rad: -2.22347
+				timestamp_time_relative: 0
+				heading: nan
+				heading_offset: nan
+				heading_accuracy: 0.00000
+				rtcm_injection_rate: 0.00000
+				automatic_gain_control: 0
+				fix_type: 3
+				jamming_state: 0
+				spoofing_state: 0
+				vel_ned_valid: True
+				satellites_used: 10
+				selected_rtcm_instance: 0
+				rtcm_crc_failed: False
+				rtcm_msg_used: 0
 			 */
 		}
 
 #endif // DEBUG_MY_PRINT
+
+		_location_metrics.gps_data_valid = _sensor_gps_data.fix_type >= 3; // GPS data is valid if we have at least 3D fix
+		_location_metrics.fix_type = _sensor_gps_data.fix_type; 	// GPS fix type, 0,1=No fix, 2=2D, 3=3D, 4=DGPS, 5=RTK Float, 6=RTK Fixed see msg/SensorGps.msg
+		_location_metrics.gps_lat = _sensor_gps_data.latitude_deg;	// degrees
+		_location_metrics.gps_lon = _sensor_gps_data.longitude_deg;	// degrees
+		_location_metrics.gps_alt = _sensor_gps_data.altitude_msl_m;	// meters above WGS
+		_location_metrics.gps_vel_m_s = _sensor_gps_data.vel_m_s;	// velocity in meters per second
+		_location_metrics.gps_cog_rad = wrap_pi(_sensor_gps_data.cog_rad); 	// radians to absolute North, -PI...PI
+		_location_metrics.gps_yaw = wrap_pi(_sensor_gps_data.heading);	// gps "heading" - radians to absolute North, -PI...PI
 	}
 
 

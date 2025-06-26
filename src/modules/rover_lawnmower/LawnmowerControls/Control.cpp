@@ -38,7 +38,8 @@ namespace rover_lawnmower
 
 void LawnmowerControl::vehicleControl()
 {
-	updateEkfGpsDeviation();
+	// see how far EKF-calculated position is from RTK GPS position:
+	_location_metrics.update();
 
 	if (_vehicle_control_mode.flag_control_manual_enabled) {
 
@@ -84,15 +85,6 @@ void LawnmowerControl::vehicleControl()
 		PX4_WARN("Vehicle control mode not set");
 	}
 }
-
-void LawnmowerControl::updateEkfGpsDeviation()
-{
-	// meters, how far is EKF2 calculated position from GPS reading:
-	_ekfGpsDeviation = get_distance_to_next_waypoint(_global_pos.lat, _global_pos.lon,
-			   _sensor_gps_data.latitude_deg, _sensor_gps_data.longitude_deg);
-}
-
-
 
 } // namespace rover_lawnmower
 

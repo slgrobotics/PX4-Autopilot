@@ -73,6 +73,56 @@ using namespace matrix;
 namespace rover_lawnmower
 {
 
+/**
+ * @brief Class LocationMetrics holds all location-related metrics for the rover/lawnmower control.
+ * It includes EKF2 and RTK GPS data, as well as
+ * flags indicating the validity of the data and preferences for speed and heading control.
+ * Used for tracing and debugging purposes.
+ */
+class LocationMetrics
+{
+public:
+	LocationMetrics() = default;
+	~LocationMetrics() = default;
+
+	float ekfGpsDeviation{NAN};	// meters, how far is EKF2 calculated position from GPS reading
+
+	// RTK GPS raw values from _sensor_gps:
+	bool gps_data_valid{false};	// true if GPS data is valid (i.e GPS has at least 3D fix)
+	int fix_type{0};		// GPS fix type, 0,1=No fix, 2=2D, 3=3D, 4=DGPS, 5=RTK Float, 6=RTK Fixed see msg/SensorGps.msg
+	double gps_lat{0.0};		// latitude in degrees
+	double gps_lon{0.0};		// longitude in degrees
+	float gps_alt{0.0f};		// altitude in meters above WGS
+	float gps_cog_rad{0.0f};	// course over ground, radians to absolute North, -PI...PI
+	float gps_vel_m_s{0.0f};	// velocity in meters per second
+	float gps_yaw{0.0f};		// gps "heading" - radians to absolute North, -PI...PI
+
+	// EKF2 values from _global_pos:
+	double ekf_lat{0.0};		// latitude in degrees
+	double ekf_lon{0.0};		// longitude in degrees
+	float  ekf_alt{0.0f};		// altitude in meters above WGS
+
+	// EKF values from _vehicle_local_position:
+	Vector3<bool> ekf_flags;	// xy_valid, v_xy_valid, heading_good_for_control
+	bool ekf_data_good{false};	// AND combo of the above flags
+	Vector3f ekf_ground_speed{0, 0, 0};
+	Vector2f ekf_ground_speed_2d{0, 0};
+	float ekf_ground_speed_abs{0.0f}; // meters per second, a.k.a. _actual_speed
+	float ekf_x_vel{0.0f};		// velocity in body frame, m/s, x-axis
+
+	// from _vehicle_attitude:
+	float ekf_current_yaw{0.0f};	// radians to absolute North, -PI...PI
+
+	bool ekf_override_by_gps{false}; // true if we use RTK GPS data instead of EKF2 for control algorithms
+
+	void update()
+	{
+		// meters, how far is EKF2 calculated position from GPS reading:
+		ekfGpsDeviation = get_distance_to_next_waypoint(ekf_lat, ekf_lon, gps_lat, gps_lon);
+	}
+
+};
+
 class LawnmowerControl : public ModuleParams
 {
 public:
@@ -109,7 +159,6 @@ private:
 	const char *control_state_name(const POS_CTRLSTATES state);
 
 	void advertisePublishers();
-	void updateEkfGpsDeviation();
 	void updateWaypoints();
 	void updateWaypointDistances();
 	void vehicleControl();
@@ -169,6 +218,7 @@ private:
 
 	bool _stateHasChanged{false};	// only good inside the loop
 
+	vehicle_attitude_s		_vehicle_attitude{};
 	vehicle_control_mode_s 		_vehicle_control_mode{};
 	vehicle_global_position_s	_global_pos{};			/**< global vehicle position */
 	vehicle_local_position_s	_vehicle_local_position{};
@@ -182,14 +232,14 @@ private:
 
 	MapProjection _global_local_proj_ref{};
 
+	LocationMetrics _location_metrics{};	// RTK GPS and EKF2 metrics
 
 	Vector2d _curr_pos{NAN, NAN};
 	Vector2f _curr_pos_ned{NAN, NAN};	// local projection - updated when polling
 
 	float _crosstrack_error{NAN};		// meters, how far we are from the A-B line (A = previous, visited waypoint, B = current waypoint, target)
 	float _bearing_error{NAN};		// radians, bearing error to the waypoint, comes from PurePursuit, used when turning in place
-	float _ekfGpsDeviation{NAN};		// meters, how far is EKF2 calculated position from GPS reading
-	float _vehicle_yaw{NAN};
+	float _vehicle_yaw{NAN};		// radians, vehicle yaw, comes from vehicle_attitude_s
 	float _accel_dist{1.0};			// meters
 	float _decel_dist{1.0};			// meters
 
@@ -311,6 +361,7 @@ private:
 		// Measurement modes - from EKF2 or RTK GPS:
 		(ParamInt<px4::params::LM_HD_MEAS_MODE>) _param_lm_hd_meas_mode,
 		(ParamInt<px4::params::LM_SP_MEAS_MODE>) _param_lm_sp_meas_mode,
+		(ParamInt<px4::params::LM_EKF_OVERRIDE>) _param_lm_ekf_override_by_gps,
 
 		// Gas engine throttle in different states:
 		(ParamFloat<px4::params::LM_GTL_IDLE>) _param_gas_throttle_idle,

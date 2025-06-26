@@ -91,6 +91,16 @@ parameters:
           0: EKF2
           1: GPS
 
+      LM_EKF_OVERRIDE:
+        description:
+          short: Location and heading override by GPS mode
+          long: Coordinates and heading being substituded in EKF2 data by GPS Lat/Lon/Heading values. This allows the user to choose between EKF2 or RTK GPS when calculating position and orientation for control purposes.
+        type: enum
+        default: 0
+        values:
+          0: EKF2
+          1: GPS
+
       LM_GTL_IDLE:
         description:
           short: Gas engine throttle level when idle

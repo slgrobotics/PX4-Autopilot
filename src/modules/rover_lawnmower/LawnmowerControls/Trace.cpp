@@ -74,8 +74,8 @@ void LawnmowerControl::debugPrint()
 			/*
 			if (_pos_ctrl_state != POS_STATE_IDLE || !_printed_idle_trace) {
 
-			if (PX4_ISFINITE(_ekfGpsDeviation) && _ekfGpsDeviation > 0.2f) {
-				PX4_WARN("EKF2 deviation: %.1f cm", (double)(_ekfGpsDeviation * 100.0f));
+			if (PX4_ISFINITE(_location_metrics.ekfGpsDeviation) && _location_metrics.ekfGpsDeviation > 0.2f) {
+				PX4_WARN("EKF2 deviation: %.1f cm", (double)(_location_metrics.ekfGpsDeviation * 100.0f));
 			}
 
 			if (PX4_ISFINITE(_crosstrack_error) && _crosstrack_error > 0.2f) {
@@ -105,7 +105,7 @@ void LawnmowerControl::debugPrintAuto()
 	if (_tracing_lev > 0) {
 
 	PX4_INFO_RAW("=== Auto CONTROL: %s ============  dt: %.3f ms EKF off: %.1f cm   yaw: EKF: %.1f GPS: %.1f/%.1f deg\n",
-		     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f), (double)(_ekfGpsDeviation * 100.0f),
+		     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f), (double)(_location_metrics.ekfGpsDeviation * 100.0f),
 		     (double)math::degrees(_vehicle_yaw), (double)math::degrees(_sensor_gps_data.heading),
 		     (double)math::degrees(_sensor_gps_data.cog_rad));
 
@@ -131,7 +131,7 @@ void LawnmowerControl::debugPrintAuto()
 	/*
 	if (_tracing_lev > 0) {
 	PX4_INFO_RAW("=== %s ===================    dt: %.3f ms EKF off: %.1f cm\n", control_state_name(_pos_ctrl_state),
-	     (double)(_dt * 1000.0f), (double)(_ekfGpsDeviation * 100.0f));
+	     (double)(_dt * 1000.0f), (double)(_location_metrics.ekfGpsDeviation * 100.0f));
 	//print_run_status();   // scheduler calling rate
 
 	if (PX4_ISFINITE(_crosstrack_error_avg)) {
@@ -206,7 +206,7 @@ void LawnmowerControl::debugPrintArriveDepart()
 		if (_tracing_lev > 4) {
 
 			PX4_INFO_RAW("=== AUTO CONTROL: %s ============  dt: %.3f ms EKF off: %.1f cm\n",
-				     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f), (double)(_ekfGpsDeviation * 100.0f));
+				     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f), (double)(_location_metrics.ekfGpsDeviation * 100.0f));
 
 			PX4_INFO_RAW("distance_to_waypoint: %.1f m   vehicle_yaw: %.1f deg   crosstrack error: %.1f cm   bearing error: %.3f degrees\n",
 				     (double)(_pure_pursuit_status.distance_to_waypoint),
@@ -226,7 +226,7 @@ void LawnmowerControl::debugPrintArriveDepart()
 void LawnmowerControl::debugPrintManual()
 {
 	PX4_INFO_RAW("=== Manual CONTROL: %s ============  dt: %.3f ms EKF off: %.1f cm   yaw: EKF: %.1f GPS: %.1f/%.1f deg\n",
-		     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f), (double)(_ekfGpsDeviation * 100.0f),
+		     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f), (double)(_location_metrics.ekfGpsDeviation * 100.0f),
 		     (double)math::degrees(_vehicle_yaw), (double)math::degrees(_sensor_gps_data.heading),
 		     (double)math::degrees(_sensor_gps_data.cog_rad));
 
