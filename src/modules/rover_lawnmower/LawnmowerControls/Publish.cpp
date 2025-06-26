@@ -105,7 +105,14 @@ void LawnmowerControl::publishAuxActuators()
 #ifdef PUBLISH_ADSB
 void LawnmowerControl::publishTransponderReport(const adsbData &data)
 {
-	// ADSB Transponder Report
+	// ADSB Transponder Report - - -> MAVLink ADSB_VEHICLE message - - > QGroundControl
+	//
+	// How it works:
+	//    We publish transponder_report message with PX4_ADSB_FLAGS_RETRANSLATE set.
+	//    The src/modules/mavlink/streams/ADSB_VEHICLE.hpp subscribes to it and converts it
+	//    to MAVLINK_MSG_ID_ADSB_VEHICLE message, sends it to QGC.
+	//    It is visible in Mavlink Inspector and shows on the map as well.
+	//    No need to set any parameters, it works out of the box.
 
 	if (hrt_elapsed_time(&_transponder_report_last_published) > 10_ms) {
 
