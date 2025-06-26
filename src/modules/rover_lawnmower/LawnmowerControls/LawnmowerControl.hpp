@@ -85,7 +85,9 @@ public:
 	LocationMetrics() = default;
 	~LocationMetrics() = default;
 
-	float ekfGpsDeviation{NAN};	// meters, how far is EKF2 calculated position from GPS reading
+	// meters, how far is EKF2 calculated position from GPS reading;
+	// bearing from GPS to EKF2 position degrees, -180...180
+	Vector2f ekfGpsDeviation{NAN, NAN};
 
 	// RTK GPS raw values from _sensor_gps:
 	bool gps_data_valid{false};	// true if GPS data is valid (i.e GPS has at least 3D fix)
@@ -118,7 +120,8 @@ public:
 	void update()
 	{
 		// meters, how far is EKF2 calculated position from GPS reading:
-		ekfGpsDeviation = get_distance_to_next_waypoint(ekf_lat, ekf_lon, gps_lat, gps_lon);
+		ekfGpsDeviation(0) = get_distance_to_next_waypoint(ekf_lat, ekf_lon, gps_lat, gps_lon);
+		ekfGpsDeviation(1) = math::degrees(get_bearing_to_next_waypoint(ekf_lat, ekf_lon, gps_lat, gps_lon));
 	}
 
 };
