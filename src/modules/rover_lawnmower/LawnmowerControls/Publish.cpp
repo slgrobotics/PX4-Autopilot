@@ -102,6 +102,61 @@ void LawnmowerControl::publishAuxActuators()
 	_actuator_servos_pub.publish(actuator_servos);
 }
 
+#ifdef PUBLISH_ADSB
+void LawnmowerControl::publishTransponderReport(const adsbData &data)
+{
+	// ADSB Transponder Report
+
+	if (hrt_elapsed_time(&_transponder_report_last_published) > 10_ms) {
+
+		transponder_report_s tr{};
+
+		tr.timestamp = _timestamp;
+
+		tr.emitter_type = data.emitter_type; // Type from ADSB_EMITTER_TYPE enum, UAV (14) in this case
+		tr.squawk = data.squawk; // Squawk code, 4 digits, 0-4095
+		strncpy(&tr.callsign[0], data.callsign, sizeof(tr.callsign) - 1);
+		tr.callsign[sizeof(tr.callsign) - 1] = 0;
+		tr.tslc = data.tslc; // Time since last communication in seconds
+		tr.icao_address = data.icao_address;
+
+		tr.lat = data.lat; // Latitude, expressed as degrees
+		tr.lon = data.lon; // Longitude, expressed as degrees
+		tr.altitude = data.altitude; // Altitude in meters, above WGS84 ellipsoid
+		tr.altitude_type = data.altitude_type; // ADSB_ALTITUDE_TYPE_PRESSURE_QNH=0, reported by GPS=1
+		tr.heading = data.heading; // Course over ground in radians, 0..2pi, 0 is north
+		tr.hor_velocity	= data.hor_velocity; // The horizontal velocity in m/s
+		tr.ver_velocity = data.ver_velocity; // The vertical velocity in m/s, positive is up
+
+		tr.flags = transponder_report_s::PX4_ADSB_FLAGS_VALID_COORDS |
+			   transponder_report_s::PX4_ADSB_FLAGS_VALID_HEADING |
+			   transponder_report_s::PX4_ADSB_FLAGS_VALID_VELOCITY |
+			   transponder_report_s::PX4_ADSB_FLAGS_VALID_ALTITUDE |
+			   // Important: this report should be retransmitted via MAVLINK:
+			   transponder_report_s::PX4_ADSB_FLAGS_RETRANSLATE |
+			   transponder_report_s::PX4_ADSB_FLAGS_VALID_SQUAWK |
+			   // If this is a UAV, we do not have a callsign
+			   (transponder_report_s::ADSB_EMITTER_TYPE_UAV & data.emitter_type ?
+			    0 : transponder_report_s::PX4_ADSB_FLAGS_VALID_CALLSIGN);
+
+		for (int i = 0; i < PX4_GUID_BYTE_LENGTH ; i++) {
+			tr.uas_id[i] = 0xe0 + i; //simulate GUID
+		}
+
+#ifdef DEBUG_MY_PRINT
+		//PX4_INFO_RAW("ADS-B: calsgn=%s icao_adr=0x%06x lat=%.6f lon=%.6f alt=%.2f, hdg=%.2f vel=%.2f\n",
+		//		tr.callsign, tr.icao_address, tr.lat, tr.lon, (double)tr.altitude,
+		//		(double)tr.heading, (double)tr.hor_velocity);
+#endif // DEBUG_MY_PRINT
+
+		_transponder_report_pub.publish(tr);
+
+		_transponder_report_last_published = _timestamp;
+	}
+}
+#endif // PUBLISH_ADSB
+
+
 #ifdef DEBUG_MY_DATA
 
 void LawnmowerControl::publishDebugArray()

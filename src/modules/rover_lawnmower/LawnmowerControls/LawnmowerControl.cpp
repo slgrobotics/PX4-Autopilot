@@ -65,6 +65,25 @@ void LawnmowerControl::updateLawnmowerControl(vehicle_control_mode_s vehicle_con
 
 	publishAuxActuators(); // Publish auxiliary actuators, like cutter, gas engine throttle, etc.
 
+#ifdef PUBLISH_ADSB
+	adsbData adsbDataGps {
+		.emitter_type = transponder_report_s::ADSB_EMITTER_TYPE_UAV, // Emitter type, UAV
+		.squawk = 1234, // Squawk code, 4 digits, 0-4095
+		.callsign = "GPS", // Callsign, 8 characters max, null-terminated
+		.icao_address = 0x123456, // ICAO address, 24 bits, 0x000000 to 0xFFFFFF
+		.tslc = 0.01f, // Time since last communication in seconds
+		.lat = _location_metrics.gps_lat,
+		.lon = _location_metrics.gps_lon,
+		.altitude = _location_metrics.gps_alt,
+		.altitude_type = adsbData::ADSB_ALTITUDE_TYPE_GEOMETRIC, // Altitude type, reported by GPS
+		.heading = wrap_2pi(_location_metrics.gps_cog_rad), // Course over ground in radians, 0..2pi, 0 is north
+		.hor_velocity = _location_metrics.gps_vel_m_s,
+		.ver_velocity = 0.0f // vertical velocity is not used in this case
+	};
+
+	publishTransponderReport(adsbDataGps); // Publish ADS-B transponder report for GPS location.
+#endif // PUBLISH_ADSB
+
 #ifdef DEBUG_MY_PRINT
 	debugPrint();
 #endif // DEBUG_MY_PRINT

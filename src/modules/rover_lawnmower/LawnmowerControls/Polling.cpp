@@ -84,7 +84,8 @@ void LawnmowerControl::updateSubscriptions()
 	if (_vehicle_local_position_sub.updated()) {
 		_vehicle_local_position_sub.copy(&_vehicle_local_position);
 
-		_location_metrics.ekf_data_good = _vehicle_local_position.xy_valid && _vehicle_local_position.v_xy_valid && _vehicle_local_position.heading_good_for_control;
+		_location_metrics.ekf_data_good = _vehicle_local_position.xy_valid && _vehicle_local_position.v_xy_valid
+						  && _vehicle_local_position.heading_good_for_control;
 		_location_metrics.ekf_flags = {_vehicle_local_position.xy_valid, _vehicle_local_position.v_xy_valid, _vehicle_local_position.heading_good_for_control};
 
 		_curr_pos_ned = Vector2f(_vehicle_local_position.x, _vehicle_local_position.y);
@@ -294,7 +295,7 @@ void LawnmowerControl::updateSubscriptions()
 				vel_n_m_s: -0.00907
 				vel_e_m_s: -0.01187
 				vel_d_m_s: -0.01168
-				cog_rad: -2.22347
+				cog_rad: -2.22347      <- Course over ground (NOT heading, but direction of movement), -PI..PI, (radians)
 				timestamp_time_relative: 0
 				heading: nan
 				heading_offset: nan
@@ -315,13 +316,15 @@ void LawnmowerControl::updateSubscriptions()
 #endif // DEBUG_MY_PRINT
 
 		_location_metrics.gps_data_valid = _sensor_gps_data.fix_type >= 3; // GPS data is valid if we have at least 3D fix
-		_location_metrics.fix_type = _sensor_gps_data.fix_type; 	// GPS fix type, 0,1=No fix, 2=2D, 3=3D, 4=DGPS, 5=RTK Float, 6=RTK Fixed see msg/SensorGps.msg
+		_location_metrics.fix_type =
+			_sensor_gps_data.fix_type; 	// GPS fix type, 0,1=No fix, 2=2D, 3=3D, 4=DGPS, 5=RTK Float, 6=RTK Fixed see msg/SensorGps.msg
 		_location_metrics.gps_lat = _sensor_gps_data.latitude_deg;	// degrees
 		_location_metrics.gps_lon = _sensor_gps_data.longitude_deg;	// degrees
 		_location_metrics.gps_alt = _sensor_gps_data.altitude_msl_m;	// meters above WGS
 		_location_metrics.gps_vel_m_s = _sensor_gps_data.vel_m_s;	// velocity in meters per second
-		_location_metrics.gps_cog_rad = wrap_pi(_sensor_gps_data.cog_rad); 	// radians to absolute North, -PI...PI
-		_location_metrics.gps_yaw = wrap_pi(_sensor_gps_data.heading);	// gps "heading" - radians to absolute North, -PI...PI
+		_location_metrics.gps_cog_rad = _sensor_gps_data.cog_rad; 	// radians to absolute North, -PI...PI
+		_location_metrics.gps_yaw =
+			wrap_pi(_sensor_gps_data.heading); // Dual antenna RTK GPS "heading" - radians to absolute North, -PI...PI
 	}
 
 

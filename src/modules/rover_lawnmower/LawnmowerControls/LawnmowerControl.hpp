@@ -35,6 +35,7 @@
 
 #define DEBUG_MY_PRINT
 #define DEBUG_MY_DATA
+#define PUBLISH_ADSB
 
 // PX4 includes
 #include <px4_platform_common/module_params.h>
@@ -58,6 +59,9 @@
 #include <uORB/topics/sensor_gps.h>
 #include <uORB/topics/actuator_outputs.h>
 #include <uORB/topics/actuator_servos.h>
+#ifdef PUBLISH_ADSB
+#include <uORB/topics/transponder_report.h>
+#endif // PUBLISH_ADSB
 
 #ifdef DEBUG_MY_DATA
 #include <uORB/topics/debug_array.h>
@@ -125,6 +129,33 @@ public:
 	}
 
 };
+
+#ifdef PUBLISH_ADSB
+class adsbData
+{
+public:
+	adsbData() = default;
+	~adsbData() = default;
+
+	static constexpr uint8_t ADSB_ALTITUDE_TYPE_PRESSURE_QNH{0}; 	// Barometric altitude, QNH pressure setting
+	static constexpr uint8_t ADSB_ALTITUDE_TYPE_GEOMETRIC{1};	// Geometric altitude, reported by GPS
+
+	uint16_t emitter_type{transponder_report_s::ADSB_EMITTER_TYPE_UAV};
+	uint16_t squawk{1234}; // Squawk code, 4 digits, 0-4095
+	char callsign[9] {"PX4TEST"}; // 8 chars max + null terminator
+	uint32_t icao_address{0x123456}; // ICAO address, 24 bits, 0x000000 to 0xFFFFFF
+	float tslc{0.01f}; 	  // Time since last communication in seconds
+
+	double lat{0.0};	  // latitude in degrees
+	double lon{0.0};	  // longitude in degrees
+	float altitude{0.0f};	  // altitude in meters
+	uint8_t altitude_type{ADSB_ALTITUDE_TYPE_PRESSURE_QNH};
+	float heading{0.0f};	  // Course over ground in radians, 0..2pi, 0 is north
+	float hor_velocity{0.0f}; // horizontal velocity in m/s
+	float ver_velocity{0.0f}; // vertical velocity in m/s
+};
+
+#endif // PUBLISH_ADSB
 
 class LawnmowerControl : public ModuleParams
 {
@@ -214,6 +245,14 @@ private:
 #ifdef DEBUG_MY_DATA
 	uORB::Publication<debug_array_s> _debug_array_pub {ORB_ID(debug_array)};
 #endif // DEBUG_MY_DATA
+
+#ifdef PUBLISH_ADSB
+	uORB::Publication<transponder_report_s> _transponder_report_pub {ORB_ID(transponder_report)};
+
+	void publishTransponderReport(const adsbData &data);
+
+	hrt_abstime _transponder_report_last_published{0}; // Last time transponder report was published
+#endif // PUBLISH_ADSB
 
 	// Variables
 	hrt_abstime _timestamp{0}; // Current timestamp
