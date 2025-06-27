@@ -66,6 +66,9 @@ void LawnmowerControl::updateLawnmowerControl(vehicle_control_mode_s vehicle_con
 	publishAuxActuators(); // Publish auxiliary actuators, like cutter, gas engine throttle, etc.
 
 #ifdef PUBLISH_ADSB
+
+	float gps_heading = PX4_ISFINITE(_location_metrics.gps_yaw) ? _location_metrics.gps_yaw : _location_metrics.gps_cog_rad;
+
 	adsbData adsbDataGps {
 		.emitter_type = transponder_report_s::ADSB_EMITTER_TYPE_UAV, // Emitter type, UAV
 		.squawk = 1234, // Squawk code, 4 digits, 0-4095
@@ -76,7 +79,7 @@ void LawnmowerControl::updateLawnmowerControl(vehicle_control_mode_s vehicle_con
 		.lon = _location_metrics.gps_lon,
 		.altitude = _location_metrics.gps_alt,
 		.altitude_type = adsbData::ADSB_ALTITUDE_TYPE_GEOMETRIC, // Altitude type, reported by GPS
-		.heading = wrap_2pi(_location_metrics.gps_cog_rad), // Course over ground in radians, 0..2pi, 0 is north
+		.heading = wrap_2pi(gps_heading), // Course over ground in radians, 0..2pi, 0 is north
 		.hor_velocity = _location_metrics.gps_vel_m_s,
 		.ver_velocity = 0.0f // vertical velocity is not used in this case
 	};

@@ -324,7 +324,7 @@ void LawnmowerControl::updateSubscriptions()
 		_location_metrics.gps_vel_m_s = _sensor_gps_data.vel_m_s;	// velocity in meters per second
 		_location_metrics.gps_cog_rad = _sensor_gps_data.cog_rad; 	// radians to absolute North, -PI...PI
 		_location_metrics.gps_yaw =
-			wrap_pi(_sensor_gps_data.heading); // Dual antenna RTK GPS "heading" - radians to absolute North, -PI...PI
+			wrap_pi(_sensor_gps_data.heading); // Dual antenna RTK GPS "heading" - radians to absolute North, -PI...PI or NAN
 	}
 
 
