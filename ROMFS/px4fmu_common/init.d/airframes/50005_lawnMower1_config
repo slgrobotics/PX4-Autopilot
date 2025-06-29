@@ -120,28 +120,33 @@ param set SDLOG_PROFILE 123
 param set-default RD_TRANS_DRV_TRN 0.349066
 param set-default RD_TRANS_TRN_DRV 0.174533
 
-# Rover Control Parameters
+# Rover Dynamics Control Parameters
 param set-default RO_ACCEL_LIM 1.5
 param set-default RO_DECEL_LIM 5
 param set-default RO_JERK_LIM 15
 param set-default RO_MAX_THR_SPEED 2.7
 
-# Rover Rate Control Parameters
+# Rover Turn Rate Control Parameters
 param set-default RO_YAW_RATE_I 0.2
 param set-default RO_YAW_RATE_P 1.0
-param set-default RO_YAW_RATE_LIM 60
-param set-default RO_YAW_ACCEL_LIM 50
-param set-default RO_YAW_DECEL_LIM 1000
+param set-default RO_YAW_RATE_LIM 40
+param set-default RO_YAW_ACCEL_LIM 20
+param set-default RO_YAW_DECEL_LIM 20
 param set-default RO_YAW_RATE_CORR 1.0
+param set-default RO_YAW_RATE_TH 3.0
 
-# Rover Attitude Control Parameters
-param set-default RO_YAW_P 5
+# Rover Turn Control Parameters
+param set-default RO_YAW_P 2
+
+# Rover R/C Stick dead zone for turns
+param set-default RO_YAW_STICK_DZ 0.1
 
 # Rover Velocity Control Parameters
-param set-default RO_SPEED_LIM 2.1
+param set-default RO_SPEED_LIM 1.5
 param set-default RO_SPEED_I 0.01
 param set-default RO_SPEED_P 0.1
 param set-defatul RO_SPEED_RED 1.0
+param set-defatul RO_SPEED_TH 0.1
 
 # Pure pursuit parameters
 param set-default PP_LOOKAHD_GAIN 1
@@ -159,6 +164,7 @@ then
 
 	// Dragger max speed is 0.5 m/s as measired on R/C
 	param set RO_MAX_THR_SPEED 0.55
+	param set RO_SPEED_LIM 0.45
 
 	# Dragger, having non-RTK GPS, needs Mag and vertical reference - Baro sim.
 	param set SYS_HAS_BARO 1
@@ -186,7 +192,7 @@ else
 	# Set Differential Drive Kinematics Library parameters:
 	param set RD_WHEEL_TRACK 0.9
 
-	param set RO_MAX_THR_SPEED 2.1
+	param set RO_MAX_THR_SPEED 2.7
 
 	param set SYS_HAS_BARO 0
 	param set EKF2_BARO_CTRL 0

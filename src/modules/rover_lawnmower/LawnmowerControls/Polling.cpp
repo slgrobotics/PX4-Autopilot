@@ -125,6 +125,12 @@ void LawnmowerControl::updateSubscriptions()
 	if (_pure_pursuit_status_sub.updated()) {
 		_pure_pursuit_status_sub.copy(&_pure_pursuit_status);
 
+		// float32 lookahead_distance   # [m] Lookahead distance of pure the pursuit controller
+		// float32 target_bearing       # [rad] Target bearing calculated by the pure pursuit controller
+		// float32 crosstrack_error     # [m] Shortest distance from the vehicle to the path (Positiv: Vehicle is on the right hand side with respect to the oriented path vector, Negativ: Left of the path)
+		// float32 distance_to_waypoint # [m] Distance from the vehicle to the current waypoint
+		// float32 bearing_to_waypoint  # [rad] Bearing towards current waypoint
+
 		_crosstrack_error = _pure_pursuit_status.crosstrack_error;
 		float target_bearing = _pure_pursuit_status.target_bearing;
 		float bearing_to_waypoint = _pure_pursuit_status.bearing_to_waypoint;
@@ -355,7 +361,7 @@ void LawnmowerControl::updateSubscriptions()
 		_wheel_right_servo_position  = _actuator_outputs.output[1];		// PCA9685 Channel 2
 
 		_cutter_servo_position = _actuator_outputs.output[2];			// PCA9685 Channel 3 - cutter
-		_gas_throttle_servo_position = _actuator_outputs.output[3];		// PCA9685 Channel 4
+		_ice_throttle_servo_position = _actuator_outputs.output[3];		// PCA9685 Channel 4
 		_alarm_servo_position = _actuator_outputs.output[5];			// PCA9685 Channel 6 - alarm
 
 	}

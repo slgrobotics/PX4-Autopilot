@@ -107,7 +107,7 @@ void LawnmowerControl::debugPrintAuto()
 		PX4_INFO_RAW("=== Auto CONTROL: %s ============  dt: %.3f ms EKF off: %.1f cm %.0f deg   yaw: EKF: %.1f GPS: %.1f/%.1f deg\n",
 			     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f),
 			     (double)(_location_metrics.ekfGpsDeviation(0) * 100.0f),
-			     (double)(_location_metrics.ekfGpsDeviation(1)),
+			     (double)math::degrees(_location_metrics.ekfGpsDeviation(1)),
 			     (double)math::degrees(_vehicle_yaw), (double)math::degrees(_sensor_gps_data.heading),
 			     (double)math::degrees(_sensor_gps_data.cog_rad));
 
@@ -123,11 +123,11 @@ void LawnmowerControl::debugPrintAuto()
 
 
 		PX4_INFO_RAW("--- engine: %.4f    cutter: %.4f    alarm: %.4f\n",
-			     (double)_gas_engine_throttle, (double)_cutter_setpoint, (double)_alarm_dev_level);
+			     (double)_ice_throttle_setpoint, (double)_cutter_setpoint, (double)_alarm_dev_level);
 
 		PX4_INFO_RAW("--- servos: whls L: %d R: %d   gas thrtle: %d   blades: %d   alarm: %d\n",
 			     (int)_wheel_left_servo_position, (int)_wheel_right_servo_position,
-			     (int)_gas_throttle_servo_position, (int)_cutter_servo_position, (int)_alarm_servo_position);
+			     (int)_ice_throttle_servo_position, (int)_cutter_servo_position, (int)_alarm_servo_position);
 	}
 
 	/*
@@ -143,7 +143,7 @@ void LawnmowerControl::debugPrintAuto()
 	PX4_INFO_RAW("---    mission crosstrack error:   avg: %.1f cm  max: %.1f cm  outside: %i\n",
 		     (double)(_crosstrack_error_mission_avg * 100.0f),
 		     (double)(_crosstrack_error_mission_max * 100.0f),
-		     _cte_count_outside);
+		     _cte_seconds_outside);
 	}
 
 	if (_tracing_lev < 4) {
@@ -170,13 +170,13 @@ void LawnmowerControl::debugPrintAuto()
 
 	PX4_INFO_RAW("---    hdg_er: %.4f   abbe: %.2f m   gas: %.2f tool: %.2f alrm: %.1f\n",
 	     (double)math::degrees(_heading_error), (double)_abbe_error,
-	     (double)_gas_engine_throttle, (double)_cutter_setpoint, (double)_alarm_dev_level);
+	     (double)_ice_throttle_setpoint, (double)_cutter_setpoint, (double)_alarm_dev_level);
 	}
 
 	if (_tracing_lev > 1) {
 	PX4_INFO_RAW("---    servos: whls L: %d R: %d   gas thrtle: %d   blades: %d   alarm: %d\n",
 	     (int)_wheel_left_servo_position, (int)_wheel_right_servo_position,
-	     (int)_gas_throttle_servo_position, (int)_cutter_servo_position, (int)_alarm_servo_position);
+	     (int)_ice_throttle_servo_position, (int)_cutter_servo_position, (int)_alarm_servo_position);
 	}
 
 	if (_tracing_lev > 2) {
@@ -210,7 +210,7 @@ void LawnmowerControl::debugPrintArriveDepart()
 			PX4_INFO_RAW("=== AUTO CONTROL: %s ============  dt: %.3f ms EKF off: %.1f cm %.0f deg\n",
 				     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f),
 				     (double)(_location_metrics.ekfGpsDeviation(0) * 100.0f),
-				     (double)(_location_metrics.ekfGpsDeviation(1))
+				     (double)math::degrees(_location_metrics.ekfGpsDeviation(1))
 				    );
 
 			PX4_INFO_RAW("distance_to_waypoint: %.1f m   vehicle_yaw: %.1f deg   crosstrack error: %.1f cm   bearing error: %.3f degrees\n",
@@ -233,7 +233,7 @@ void LawnmowerControl::debugPrintManual()
 	PX4_INFO_RAW("=== Manual CONTROL: %s ============  dt: %.3f ms EKF off: %.1f cm %.0f deg  yaw: EKF: %.1f GPS: %.1f/%.1f deg\n",
 		     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f),
 		     (double)(_location_metrics.ekfGpsDeviation(0) * 100.0f),
-		     (double)(_location_metrics.ekfGpsDeviation(1)),
+		     (double)math::degrees(_location_metrics.ekfGpsDeviation(1)),
 		     (double)math::degrees(_vehicle_yaw), (double)math::degrees(_sensor_gps_data.heading),
 		     (double)math::degrees(_sensor_gps_data.cog_rad));
 
@@ -255,7 +255,7 @@ void LawnmowerControl::debugPrintManual()
 
 		PX4_INFO_RAW("--- servos: whls L: %d R: %d   gas thrtle: %d   blades: %d   alarm: %d\n",
 			     (int)_wheel_left_servo_position, (int)_wheel_right_servo_position,
-			     (int)_gas_throttle_servo_position, (int)_cutter_servo_position, (int)_alarm_servo_position);
+			     (int)_ice_throttle_servo_position, (int)_cutter_servo_position, (int)_alarm_servo_position);
 	}
 }
 
@@ -360,8 +360,53 @@ void LawnmowerControl::publishDebugData()
 
 	int i = 1;	// data[0] is reserved for total number of parameters, max 58
 
+	_dbg_array.data[i++] = (float)_pos_ctrl_state;
+	_dbg_array.data[i++] = _dt;	// seconds, time since last update
+
+	_dbg_array.data[i++] = _location_metrics.gps_data_valid;	// 0 or 1, GPS data valid
+	_dbg_array.data[i++] = _location_metrics.fix_type;		// 0: no GPS, 1: no fix, 2: 2D fix, 3: 3D fix, 4: 3D DGPS, 5: RTK float, 6: RTK fixed
+	_dbg_array.data[i++] = _location_metrics.gps_vel_m_s;		// meters per second, GPS velocity magnitude
+	_dbg_array.data[i++] = math::degrees(_location_metrics.gps_cog_rad);	// degrees, GPS course over ground -PI.. PI
+	_dbg_array.data[i++] = math::degrees(_location_metrics.gps_yaw); 	// degrees, RTK dual antenna GPS "heading" -PI.. PI
+
+	_dbg_array.data[i++] = _location_metrics.ekf_data_good ? 1.0f : 0.0f;	// 1.0 if EKF data is good, 0.0 if not
+	_dbg_array.data[i++] = _location_metrics.ekf_ground_speed_abs;	// meters per second, EKF ground speed magnitude
+	_dbg_array.data[i++] = _location_metrics.ekf_x_vel;		// meters per second, EKF velocity along X axis
+	_dbg_array.data[i++] = math::degrees(_location_metrics.ekf_current_yaw);	// degrees, EKF current yaw angle -PI.. PI
+
+	_dbg_array.data[i++] = _location_metrics.ekfGpsDeviation(0);	// meters, EKF GPS deviation from the last GPS reading
+	_dbg_array.data[i++] = math::degrees(_location_metrics.ekfGpsDeviation(1));	// degrees, bearing from EKF to the last GPS reading
+
+	_dbg_array.data[i++] = _wp_current_dist;	// meters, distance to the current waypoint
+	_dbg_array.data[i++] = _wp_previous_dist;	// meters, distance to the previous waypoint
+	_dbg_array.data[i++] = _wp_next_dist;		// meters, distance to the next waypoint
+
+	_dbg_array.data[i++] = _cutter_setpoint;	// -1..1, cutter setpoint, published to PCA9685 channel 3
+	_dbg_array.data[i++] = _ice_throttle_setpoint;	// 0..1, gas engine throttle setpoint, published to PCA9685 channel 4
+	_dbg_array.data[i++] = _alarm_dev_level;	// 0..1, alarm device level setpoint, published to PCA9685 channel 6
+
+	// Actuators actual positions, as polled from actuator_outputs:
+	_dbg_array.data[i++] = _wheel_left_servo_position;	// 0..1, left wheel servo position, polled from PCA9685 channel 1
+	_dbg_array.data[i++] = _wheel_right_servo_position;	// 0..1, right wheel servo position, polled from PCA9685 channel 2
+	_dbg_array.data[i++] = _cutter_servo_position;		// 0..1, cutter servo position, polled from PCA9685 channel 3
+	_dbg_array.data[i++] = _ice_throttle_servo_position;	// 0..1, gas engine throttle servo position, polled from PCA9685 channel 4
+	_dbg_array.data[i++] = _alarm_servo_position;		// 0..1, alarm servo position, polled from PCA9685 channel 6
+
+	_dbg_array.data[i++] = _crosstrack_error_avg;	// meters, average cross track error for the straight run ("leg")
+	_dbg_array.data[i++] = _crosstrack_error_max;	// meters, maximum cross track error for the straight run
+	_dbg_array.data[i++] = _crosstrack_error_mission_avg;	// meters, average cross track error for the whole mission
+	_dbg_array.data[i++] = _crosstrack_error_mission_max;	// meters, maximum cross track error for the whole mission
+	_dbg_array.data[i++] = _cte_seconds_outside;	// time in seconds the cross track error was outside the mission limits
+
+
 	// calculated by Pursuit controller, and are present as members of _gnd_control:
 	_dbg_array.data[i++] = math::degrees(_vehicle_yaw);
+	_dbg_array.data[i++] = _crosstrack_error;	// meters
+	_dbg_array.data[i++] = math::degrees(_bearing_error);	// degrees, bearing error from the target waypoint, 0..360 degrees
+	_dbg_array.data[i++] = _pure_pursuit_status.distance_to_waypoint;	// meters, distance to the target waypoint
+	_dbg_array.data[i++] = _pure_pursuit_status.lookahead_distance;	// meters, lookahead distance of the pure pursuit controller
+
+
 
 	// TODO: more data here, polled or calculated by LawnmowerControl
 

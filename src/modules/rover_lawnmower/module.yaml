@@ -101,7 +101,7 @@ parameters:
           0: EKF2
           1: GPS
 
-      LM_GTL_IDLE:
+      LM_ICE_IDLE:
         description:
           short: Gas engine throttle level when idle
         type: float
@@ -112,7 +112,7 @@ parameters:
         decimal: 2
         default: 0
 
-      LM_GTL_DEPART:
+      LM_ICE_DEPART:
         description:
           short: Gas engine throttle level in departing
         type: float
@@ -123,7 +123,7 @@ parameters:
         decimal: 2
         default: 0.8
 
-      LM_GTL_TURN:
+      LM_ICE_TURN:
         description:
           short: Gas engine throttle level in turns
         type: float
@@ -134,7 +134,7 @@ parameters:
         decimal: 2
         default: 0.2
 
-      LM_GTL_ARRIVE:
+      LM_ICE_ARRIVE:
         description:
           short: Gas engine throttle level in arriving
         type: float
@@ -145,7 +145,7 @@ parameters:
         decimal: 2
         default: 0.8
 
-      LM_GTL_STRAIGHT:
+      LM_ICE_STRAIGHT:
         description:
           short: Gas engine throttle level on straight run
         type: float

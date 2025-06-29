@@ -50,7 +50,7 @@ void LawnmowerControl::vehicleControl()
 
 		if (_vehicle_control_mode.flag_armed) {
 
-			_gas_engine_throttle = _gas_throttle_manual;	// Left knob on R/C transmitter
+			_ice_throttle_setpoint = _gas_throttle_manual;	// Left knob on R/C transmitter
 			_alarm_dev_level = _alarm_dev_level_manual;	// Horn - right knob on R/C transmitter
 
 			// for cutter deck clutch we have direct R/C to servo setting, no need to use _cutter_setpoint_manual

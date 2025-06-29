@@ -125,7 +125,9 @@ public:
 	{
 		// meters, how far is EKF2 calculated position from GPS reading:
 		ekfGpsDeviation(0) = get_distance_to_next_waypoint(ekf_lat, ekf_lon, gps_lat, gps_lon);
-		ekfGpsDeviation(1) = math::degrees(get_bearing_to_next_waypoint(ekf_lat, ekf_lon, gps_lat, gps_lon));
+		// bearing from EKF2 to GPS position degrees, 0...360
+		// Note: this is the bearing from EKF2 to GPS, not the other:
+		ekfGpsDeviation(1) = wrap_2pi(get_bearing_to_next_waypoint(ekf_lat, ekf_lon, gps_lat, gps_lon));
 	}
 
 };
@@ -307,12 +309,12 @@ private:
 	bool _manual_drive_straight{false};
 
 	// Tools actuators setpoints as produced by State machine:
-	float _gas_engine_throttle{NAN};	// 0...1 - using INDEX_SPOILERS channel
-	float _alarm_dev_level{-1.0f};		// horn or other alarm device - using INDEX_AIRBRAKES channel
-	float _cutter_setpoint{NAN};		// -1...1 - tool like lawnmower blades etc. Using INDEX_FLAPS channel
+	float _ice_throttle_setpoint{NAN};	// 0...1 - using PCA9685 channel 4
+	float _cutter_setpoint{NAN};		// -1...1 - tool like lawnmower blades etc. Using PCA9685 channel 3
+	float _alarm_dev_level{-1.0f};		// horn or other alarm device - using PCA9685 channel 6
 
 	// Tools actuators actual positions, as polled from actuator_outputs:
-	float _gas_throttle_servo_position{NAN}; // gas throttle servo position, 800...2200us - after mixers
+	float _ice_throttle_servo_position{NAN}; // gas engine throttle servo position, 800...2200us - after mixers
 	float _cutter_servo_position{NAN};	// cutter servo position, 800...2200us - after mixers
 	float _alarm_servo_position{NAN};	// second tool servo position, 800...2200us - after mixers
 
@@ -336,11 +338,11 @@ private:
 
 	float _cte_accum_mission{NAN};
 	int _cte_count_mission{0};
-	int _cte_count_outside{0};
+	int _cte_seconds_outside{0};
 
 	inline void cte_begin_mission()
 	{
-		_cte_accum_mission = 0.0f; _cte_count_mission = 0; _cte_count_outside = 0;
+		_cte_accum_mission = 0.0f; _cte_count_mission = 0; _cte_seconds_outside = 0;
 		_crosstrack_error_mission_avg = NAN; _crosstrack_error_mission_max = 0.0f;
 	}
 
@@ -376,8 +378,8 @@ private:
 				_cte_lf_tick = _timestamp;
 
 				if (cte_abs > 0.2f) {
-					++_cte_count_outside;
-					PX4_WARN("+++++++++++++  outside: %i +++++++++++++", _cte_count_outside);
+					++_cte_seconds_outside;
+					PX4_WARN("+++++++++++++  outside: %i +++++++++++++", _cte_seconds_outside);
 				}
 			}
 		}
@@ -406,11 +408,11 @@ private:
 		(ParamInt<px4::params::LM_EKF_OVERRIDE>) _param_lm_ekf_override_by_gps,
 
 		// Gas engine throttle in different states:
-		(ParamFloat<px4::params::LM_GTL_IDLE>) _param_gas_throttle_idle,
-		(ParamFloat<px4::params::LM_GTL_DEPART>) _param_gas_throttle_departing,
-		(ParamFloat<px4::params::LM_GTL_TURN>) _param_gas_throttle_turning,
-		(ParamFloat<px4::params::LM_GTL_ARRIVE>) _param_gas_throttle_arriving,
-		(ParamFloat<px4::params::LM_GTL_STRAIGHT>) _param_gas_throttle_straight
+		(ParamFloat<px4::params::LM_ICE_IDLE>) _param_ice_throttle_idle,
+		(ParamFloat<px4::params::LM_ICE_DEPART>) _param_ice_throttle_departing,
+		(ParamFloat<px4::params::LM_ICE_TURN>) _param_ice_throttle_turning,
+		(ParamFloat<px4::params::LM_ICE_ARRIVE>) _param_ice_throttle_arriving,
+		(ParamFloat<px4::params::LM_ICE_STRAIGHT>) _param_ice_throttle_straight
 	)
 };
 
