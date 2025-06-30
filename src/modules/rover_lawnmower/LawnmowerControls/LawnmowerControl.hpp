@@ -57,7 +57,9 @@
 #include <uORB/topics/pure_pursuit_status.h>
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/sensor_gps.h>
+#if (defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA)) && !defined(CONFIG_ARCH_BOARD_PX4_SITL)
 #include <uORB/topics/actuator_outputs.h>
+#endif // (defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA)) && !defined(CONFIG_ARCH_BOARD_PX4_SITL)
 #include <uORB/topics/actuator_servos.h>
 #ifdef PUBLISH_ADSB
 #include <uORB/topics/transponder_report.h>
@@ -208,9 +210,10 @@ private:
 	void debugPrintAuto();
 	void debugPrintManual();
 	void debugPrintArriveDepart();
+	void debugPrintCrosstrackStats();
 
 	hrt_abstime _debug_print_last_called{0};
-	hrt_abstime _debug_print1_last_called{0};
+	hrt_abstime _debug_print_ad_last_called{0};
 
 	int _tracing_lev{0}; // Tracing level, set by parameter
 #endif // DEBUG_MY_PRINT
@@ -238,9 +241,9 @@ private:
 	uORB::Subscription _pure_pursuit_status_sub{ORB_ID(pure_pursuit_status)};
 	uORB::Subscription _manual_control_setpoint_sub{ORB_ID(manual_control_setpoint)}; /**< notification of manual control updates */
 	uORB::Subscription _sensor_gps_sub{ORB_ID(sensor_gps)};
-#if defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA)
+#if (defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA)) && !defined(CONFIG_ARCH_BOARD_PX4_SITL)
 	uORB::Subscription _actuator_outputs_sub {ORB_ID(actuator_outputs)}; /**< actuator outputs subscription for tracing */
-#endif // defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA)
+#endif // (defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA)) && !defined(CONFIG_ARCH_BOARD_PX4_SITL)
 
 	// uORB publications
 	uORB::Publication<actuator_servos_s> _actuator_servos_pub{ORB_ID(actuator_servos)};
@@ -270,9 +273,9 @@ private:
 	pure_pursuit_status_s 		_pure_pursuit_status{};
 	manual_control_setpoint_s	_manual_control_setpoint{};	/**< r/c channel data */
 	sensor_gps_s			_sensor_gps_data{};		/**< raw gps data */
-#if defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA)
+#if (defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA)) && !defined(CONFIG_ARCH_BOARD_PX4_SITL)
 	actuator_outputs_s		_actuator_outputs {};		/**< actuator outputs */
-#endif // defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA)
+#endif // (defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA)) && !defined(CONFIG_ARCH_BOARD_PX4_SITL)
 
 	MapProjection _global_local_proj_ref{};
 
@@ -323,7 +326,7 @@ private:
 	float _wheel_right_servo_position{NAN}; // right wheel servo position
 
 	// --------------------------------
-	// Mission metrics:
+	// Mission crosstrack metrics:
 	float _crosstrack_error_avg{NAN};	// average (compound) absolute crosstrack error diring the line following leg
 	float _crosstrack_error_max{NAN};	// max absolute crosstrack error diring the line following leg
 
@@ -360,7 +363,7 @@ private:
 
 	inline void cte_compute()
 	{
-		if (PX4_ISFINITE(_crosstrack_error) && hrt_elapsed_time(&_cte_lf_started) > 5 * 1_s) {
+		if (PX4_ISFINITE(_crosstrack_error) && hrt_elapsed_time(&_cte_lf_started) > 5_s) {
 			float cte_abs = abs(_crosstrack_error);
 
 			_crosstrack_error_max = math::max(_crosstrack_error_max, cte_abs);

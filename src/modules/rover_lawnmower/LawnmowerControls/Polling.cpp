@@ -334,7 +334,7 @@ void LawnmowerControl::updateSubscriptions()
 	}
 
 
-#if defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA)
+#if (defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA)) && !defined(CONFIG_ARCH_BOARD_PX4_SITL)
 
 	if (_actuator_outputs_sub.updated()) {
 		_actuator_outputs_sub.copy(&_actuator_outputs);
@@ -366,7 +366,7 @@ void LawnmowerControl::updateSubscriptions()
 
 	}
 
-#endif // defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA)
+#endif // defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA) && !defined(CONFIG_ARCH_BOARD_PX4_SITL)
 
 
 }

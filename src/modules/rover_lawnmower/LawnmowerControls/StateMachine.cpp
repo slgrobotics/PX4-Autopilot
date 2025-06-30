@@ -67,6 +67,8 @@ void LawnmowerControl::workStateMachine()
 			} else {
 				// Normal run.
 				// maybe, set desired speed?
+
+				cte_compute();
 			}
 
 		} break;
@@ -119,22 +121,21 @@ void LawnmowerControl::workStateMachine()
 
 	case WP_DEPARTING:				// we turned to next waypoint and must start accelerating
 
-		cte_begin(); // just invalidate _crosstrack_error_avg to avoid confusion
+		cte_begin(); // just invalidate _crosstrack_error_avg while departing to avoid confusion
 
 		if (_wp_previous_dist < _accel_dist) {  // TODO: is_first_leg here?
 
 			// just turn on tools (cutting deck) - we are on the business part of the mission:
 			_cutter_setpoint = ACTUATOR_ON;
 
-#ifdef DEBUG_MY_PRINT
-			debugPrintArriveDepart();
-#endif // DEBUG_MY_PRINT
-
 		} else {
 			// we are far enough from departure waypoint and not heading to the first waypoint, switch to Pursuit:
 			setStateMachineState(STRAIGHT_RUN);
-			cte_begin();
 		}
+
+#ifdef DEBUG_MY_PRINT
+		debugPrintArriveDepart();
+#endif // DEBUG_MY_PRINT
 
 		break;
 
