@@ -42,6 +42,10 @@ void LawnmowerControl::workStateMachine()
 
 	POS_CTRLSTATES pos_ctrl_state_prev = _pos_ctrl_state;
 
+	// clear intermediate locally-computed variables:
+	_bearing_to_curr_wp = NAN;
+	_yaw_error = NAN;
+	_abbe_error = NAN;
 
 	switch (_pos_ctrl_state) {
 	case POS_STATE_NONE:				// "wound down" undefined/invalid state, no need controlling anything
@@ -54,6 +58,8 @@ void LawnmowerControl::workStateMachine()
 		break;
 
 	case STRAIGHT_RUN: {				// target waypoint is far away, we can use Pursuit and cruise speed
+
+			updateBearings();
 
 			bool is_arriving = PX4_ISFINITE(_wp_current_dist) ?
 					   _wp_current_dist < _decel_dist : // GND_DECEL_DIST or half leg
@@ -75,11 +81,13 @@ void LawnmowerControl::workStateMachine()
 
 	case WP_ARRIVING:				// target waypoint is close, we need to slow down and head straight to it till stop
 
-		if (PX4_ISFINITE(_wp_current_dist) && _wp_current_dist < _param_lm_wp_precision.get()) {
+		updateBearings();
+
+		if (PX4_ISFINITE(_wp_current_dist) && _wp_current_dist < _param_nav_acc_rad.get() * 1.2f) {
 #ifdef DEBUG_MY_PRINT
 			PX4_INFO("OK: got close, switching to POS_STATE_STOPPING ===========================");
 #endif // DEBUG_MY_PRINT
-			// We are closer than GND_WP_PRECISN radius to waypoint, begin stopping phase:
+			// We are closer than NAV_ACC_RAD radius to waypoint (with 1.2x margin), begin stopping phase:
 			setStateMachineState(POS_STATE_STOPPING);
 		}
 
@@ -90,6 +98,8 @@ void LawnmowerControl::workStateMachine()
 		break;
 
 	case WP_ARRIVED:				// reached waypoint, completely stopped. Make sure mission knows about it
+
+		updateBearings();
 
 		// See if that was the last waypoint of the mission:
 		if (!_pos_sp_triplet.current.valid
@@ -111,7 +121,9 @@ void LawnmowerControl::workStateMachine()
 		_accel_dist = _param_lm_accel_dist.get();	// LM_ACCEL_DIST (can be 0 to skip Departure phase)
 		_decel_dist = _param_lm_decel_dist.get();	// LM_DECEL_DIST
 
-		if (fabsf(math::degrees(_bearing_error)) < 5.0f) { // TODO: make it a parameter?
+		updateBearings();
+
+		if (fabsf(math::degrees(_yaw_error)) < 5.0f) { // TODO: make it a parameter?
 
 			// We've turned close enough to the desired bearing, switch to Departing or Straight Run state:
 			setStateMachineState(_accel_dist > FLT_EPSILON ? WP_DEPARTING : STRAIGHT_RUN);
@@ -122,6 +134,8 @@ void LawnmowerControl::workStateMachine()
 	case WP_DEPARTING:				// we turned to next waypoint and must start accelerating
 
 		cte_begin(); // just invalidate _crosstrack_error_avg while departing to avoid confusion
+
+		updateBearings();
 
 		if (_wp_previous_dist < _accel_dist) {  // TODO: is_first_leg here?
 
@@ -200,6 +214,24 @@ void LawnmowerControl::unwindStateMachine()
 	setStateMachineState(POS_STATE_MISSION_END);
 
 	workStateMachine();	// make sure we set the actuators to "off" state
+}
+
+bool LawnmowerControl::updateBearings()
+{
+	// get the direction errors between the current position and "current"" (target) waypoint:
+
+	const Vector2f curr_pos_to_curr_wp = _curr_wp_ned - _curr_pos_ned;
+	_bearing_to_curr_wp = wrap_2pi(atan2f(curr_pos_to_curr_wp(1), curr_pos_to_curr_wp(0)));
+
+	// for now, assume we want to turn to the target waypoint. Pursuit may correct that.
+	// don't touch double wrap! TODO - why?
+	//_yaw_error = wrap_pi(_bearing_to_curr_wp - wrap_pi(_vehicle_yaw)); // where the robot wants to turn
+	_yaw_error = wrap_pi(_bearing_to_curr_wp - _vehicle_yaw); // where the robot wants to turn
+
+	// ~28.6 degrees deviation makes sense, NAN for more:
+	_abbe_error = abs(_yaw_error) < 0.5f ? _wp_current_dist * sin(_yaw_error) : NAN; // meters at target point
+
+	return PX4_ISFINITE(_yaw_error);
 }
 
 void LawnmowerControl::adjustAcuatorSetpoints()

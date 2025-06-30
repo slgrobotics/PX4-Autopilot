@@ -202,6 +202,7 @@ private:
 	void vehicleControl();
 	void workStateMachine();
 	void unwindStateMachine();
+	bool updateBearings();
 	void adjustAcuatorSetpoints();
 	void setStateMachineState(const POS_CTRLSTATES desiredState);
 
@@ -281,16 +282,24 @@ private:
 
 	LocationMetrics _location_metrics{};	// RTK GPS and EKF2 metrics
 
-	Vector2d _curr_pos{NAN, NAN};
-	Vector2f _curr_pos_ned{NAN, NAN};	// local projection - updated when polling
+	// Vehicle attitude and position from polling:
+	float _vehicle_yaw{NAN};		// radians, vehicle yaw, comes from vehicle_attitude_s
+	Vector2f _curr_pos_ned{NAN, NAN};	// local projection of the current position in NED coordinates, meters
 
+	// Some values that we calculate locally to decide on throttling thrust near waypoints and state changes:
+	float _bearing_to_curr_wp{NAN};		// radians, bearing to the current waypoint, calculated by updateBearings() 0...2*PI, 0 is North
+	float _yaw_error{0.0f};			// radians, yaw error to the current waypoint, Positive - right turn, negative - left turn expected.
+	float _abbe_error{0.0f};		// meters, heading error at the target point
+
+	// These come from PurePursuit:
 	float _crosstrack_error{NAN};		// meters, how far we are from the A-B line (A = previous, visited waypoint, B = current waypoint, target)
 	float _bearing_error{NAN};		// radians, bearing error to the waypoint, comes from PurePursuit, used when turning in place
-	float _vehicle_yaw{NAN};		// radians, vehicle yaw, comes from vehicle_attitude_s
+
+	// Threshold distances to the waypoints for state changes:
 	float _accel_dist{1.0};			// meters
 	float _decel_dist{1.0};			// meters
 
-	// Waypoints - from position_setpoint_triplet_s
+	// Mission waypoints - from position_setpoint_triplet_s
 	Vector2d _curr_wp{NAN, NAN};
 	Vector2f _curr_wp_ned{NAN, NAN};
 	Vector2d _prev_wp{NAN, NAN};
@@ -316,12 +325,12 @@ private:
 	float _cutter_setpoint{NAN};		// -1...1 - tool like lawnmower blades etc. Using PCA9685 channel 3
 	float _alarm_dev_level{-1.0f};		// horn or other alarm device - using PCA9685 channel 6
 
-	// Tools actuators actual positions, as polled from actuator_outputs:
+	// Tools actuators (servos) actual positions, as polled from actuator_outputs:
 	float _ice_throttle_servo_position{NAN}; // gas engine throttle servo position, 800...2200us - after mixers
 	float _cutter_servo_position{NAN};	// cutter servo position, 800...2200us - after mixers
 	float _alarm_servo_position{NAN};	// second tool servo position, 800...2200us - after mixers
 
-	// Wheels "servos" for logging:
+	// Wheels "servos" actual values for logging:
 	float _wheel_left_servo_position{NAN};	 // left wheel servo position, 800...2200us - after mixers
 	float _wheel_right_servo_position{NAN}; // right wheel servo position
 
@@ -403,7 +412,7 @@ private:
 		(ParamFloat<px4::params::LM_ACCEL_DIST>) _param_lm_accel_dist,	 // meters, distance to accelerate
 		(ParamFloat<px4::params::LM_DECEL_DIST>)
 		_param_lm_decel_dist,	 // meters, distance to target waypoint to start decelerating
-		(ParamFloat<px4::params::LM_WP_PRECISN>) _param_lm_wp_precision, // meters, how close to waypoint we consider it reached
+		(ParamFloat<px4::params::NAV_ACC_RAD>) _param_nav_acc_rad, // meters, how close to waypoint we consider it reached
 
 		// Measurement modes - from EKF2 or RTK GPS:
 		(ParamInt<px4::params::LM_HD_MEAS_MODE>) _param_lm_hd_meas_mode,

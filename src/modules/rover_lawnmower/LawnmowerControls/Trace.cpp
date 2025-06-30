@@ -118,6 +118,9 @@ void LawnmowerControl::debugPrintAuto()
 		PX4_INFO_RAW("--- WP: curr_dist: %.2f   prev_dist: %.2f   next_dist: %.2f\n",
 			     (double)_wp_current_dist, (double)_wp_previous_dist, (double)_wp_next_dist);
 
+		PX4_INFO_RAW("--- AN: bearing_to_curr_wp: %.1f deg   yaw_error: %.2f deg   abbe_error: %.2f m\n",
+			     (double)math::degrees(_bearing_to_curr_wp), (double)math::degrees(_yaw_error), (double)_abbe_error);
+
 		PX4_INFO_RAW("--- PP: crosstrack error: %.1f cm   bearing error: %.3f degrees   distance_to_waypoint: %.2f m\n",
 			     (double)(_pure_pursuit_status.crosstrack_error * 100.0f),
 			     (double)math::degrees(_bearing_error),
@@ -351,13 +354,17 @@ void LawnmowerControl::publishDebugData()
 
 	// calculated by Pursuit controller, and are present as members of _gnd_control:
 	_dbg_array.data[i++] = math::degrees(_vehicle_yaw);
-	_dbg_array.data[i++] = _crosstrack_error;	// meters
+	_dbg_array.data[i++] = _crosstrack_error;		// meters
 	_dbg_array.data[i++] = math::degrees(_bearing_error);	// degrees, bearing error from the target waypoint, 0..360 degrees
 	_dbg_array.data[i++] = _pure_pursuit_status.distance_to_waypoint;	// meters, distance to the target waypoint
 	_dbg_array.data[i++] =
 		_pure_pursuit_status.lookahead_distance;	// meters, lookahead distance of the pure pursuit controller
 
-
+	_dbg_array.data[i++] = math::degrees(
+				       _bearing_to_curr_wp); // radians, bearing to the current waypoint, calculated by updateBearings()
+	_dbg_array.data[i++] = math::degrees(
+				       _yaw_error);	// radians, yaw error to the current waypoint, positive - right turn, negative - left turn expected
+	_dbg_array.data[i++] = _abbe_error;		//  meters, heading error at the target point
 
 	// TODO: more data here, polled or calculated by LawnmowerControl
 

@@ -89,7 +89,6 @@ void LawnmowerControl::updateSubscriptions()
 		_location_metrics.ekf_flags = {_vehicle_local_position.xy_valid, _vehicle_local_position.v_xy_valid, _vehicle_local_position.heading_good_for_control};
 
 		_curr_pos_ned = Vector2f(_vehicle_local_position.x, _vehicle_local_position.y);
-		_curr_pos = Vector2d(_vehicle_local_position.x, _vehicle_local_position.y);
 
 		if (!_global_local_proj_ref.isInitialized()
 		    || (_global_local_proj_ref.getProjectionReferenceTimestamp() != _vehicle_local_position.ref_timestamp)) {
@@ -382,7 +381,7 @@ void LawnmowerControl::updateWaypoints()
 		_curr_wp = Vector2d(_pos_sp_triplet.current.lat, _pos_sp_triplet.current.lon);
 
 	} else {
-		_curr_wp = Vector2d(0, 0);
+		_curr_wp = Vector2d(NAN, NAN);
 	}
 
 	if (_pos_sp_triplet.previous.valid && PX4_ISFINITE(_pos_sp_triplet.previous.lat)
@@ -390,14 +389,15 @@ void LawnmowerControl::updateWaypoints()
 		_prev_wp = Vector2d(_pos_sp_triplet.previous.lat, _pos_sp_triplet.previous.lon);
 
 	} else {
-		_prev_wp = _curr_pos; // this is first leg - towards the first waypoint
+		_prev_wp = Vector2d(NAN, NAN); // this is first leg - towards the first waypoint
 	}
 
 	if (_pos_sp_triplet.next.valid && PX4_ISFINITE(_pos_sp_triplet.next.lat)
 	    && PX4_ISFINITE(_pos_sp_triplet.next.lon)) {
 		_next_wp = Vector2d(_pos_sp_triplet.next.lat, _pos_sp_triplet.next.lon);
 
-		//} else {
+	} else {
+		_next_wp = Vector2d(NAN, NAN);
 		//	_next_wp = _home_position;
 	}
 
