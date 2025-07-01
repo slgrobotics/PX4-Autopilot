@@ -118,6 +118,9 @@ void LawnmowerControl::debugPrintAuto()
 		PX4_INFO_RAW("--- WP: curr_dist: %.2f   prev_dist: %.2f   next_dist: %.2f\n",
 			     (double)_wp_current_dist, (double)_wp_previous_dist, (double)_wp_next_dist);
 
+		PX4_INFO_RAW("--- Speed: setpoint: %.2f    actual: %.2f    gps_vel: %.2f\n",
+			     (double)_rover_speed_setpoint, (double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s);
+
 		PX4_INFO_RAW("--- AN: bearing_to_curr_wp: %.1f deg   yaw_error: %.2f deg   abbe_error: %.2f m\n",
 			     (double)math::degrees(_bearing_to_curr_wp), (double)math::degrees(_yaw_error), (double)_abbe_error);
 

@@ -54,6 +54,7 @@
 #include <uORB/topics/vehicle_global_position.h>
 #include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/position_setpoint_triplet.h>
+#include <uORB/topics/rover_velocity_setpoint.h>
 #include <uORB/topics/pure_pursuit_status.h>
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/sensor_gps.h>
@@ -239,6 +240,7 @@ private:
 	uORB::Subscription _global_position_sub{ORB_ID(vehicle_global_position)};
 	uORB::Subscription _vehicle_local_position_sub{ORB_ID(vehicle_local_position)};
 	uORB::Subscription _position_setpoint_triplet_sub{ORB_ID(position_setpoint_triplet)};
+	uORB::Subscription _rover_velocity_setpoint_sub{ORB_ID(rover_velocity_setpoint)};
 	uORB::Subscription _pure_pursuit_status_sub{ORB_ID(pure_pursuit_status)};
 	uORB::Subscription _manual_control_setpoint_sub{ORB_ID(manual_control_setpoint)}; /**< notification of manual control updates */
 	uORB::Subscription _sensor_gps_sub{ORB_ID(sensor_gps)};
@@ -271,6 +273,7 @@ private:
 	vehicle_global_position_s	_global_pos{};			/**< global vehicle position */
 	vehicle_local_position_s	_vehicle_local_position{};
 	position_setpoint_triplet_s	_pos_sp_triplet{};		/**< triplet of mission items */
+	rover_velocity_setpoint_s 	_rover_velocity_setpoint{};	/**< rover velocity setpoint, bearing and speed */
 	pure_pursuit_status_s 		_pure_pursuit_status{};
 	manual_control_setpoint_s	_manual_control_setpoint{};	/**< r/c channel data */
 	sensor_gps_s			_sensor_gps_data{};		/**< raw gps data */
@@ -290,6 +293,10 @@ private:
 	float _bearing_to_curr_wp{NAN};		// radians, bearing to the current waypoint, calculated by updateBearings() 0...2*PI, 0 is North
 	float _yaw_error{0.0f};			// radians, yaw error to the current waypoint, Positive - right turn, negative - left turn expected.
 	float _abbe_error{0.0f};		// meters, heading error at the target point
+
+	// from _rover_velocity_setpoint, published by DifferentialPosControl:
+	float _rover_speed_setpoint{NAN};	// meters per second, speed setpoint for the rover/lawnmower, comes from rover_velocity_setpoint_s
+	float _rover_bearing_setpoint{NAN};	// radians, bearing setpoint for the rover
 
 	// These come from PurePursuit:
 	float _crosstrack_error{NAN};		// meters, how far we are from the A-B line (A = previous, visited waypoint, B = current waypoint, target)
@@ -408,6 +415,9 @@ private:
 	DEFINE_PARAMETERS(
 		(ParamInt<px4::params::LM_TRACING_LEV>) _param_lm_tracing_lev,
 		(ParamInt<px4::params::LM_GPS_MINFIX>) _param_lm_gps_minfix,
+
+		(ParamFloat<px4::params::RD_TRANS_TRN_DRV>) _param_rd_trans_trn_drv, // turn to drive transition threshold, radians
+		(ParamFloat<px4::params::RD_TRANS_DRV_TRN>) _param_rd_trans_drv_trn, // drive to turn transition threshold, radians
 
 		(ParamFloat<px4::params::LM_ACCEL_DIST>) _param_lm_accel_dist,	 // meters, distance to accelerate
 		(ParamFloat<px4::params::LM_DECEL_DIST>)

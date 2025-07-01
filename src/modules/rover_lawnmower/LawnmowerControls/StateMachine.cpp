@@ -83,11 +83,14 @@ void LawnmowerControl::workStateMachine()
 
 		updateBearings();
 
-		if (PX4_ISFINITE(_wp_current_dist) && _wp_current_dist < _param_nav_acc_rad.get() * 1.2f) {
+		if (_rover_speed_setpoint < FLT_EPSILON
+		    && PX4_ISFINITE(_wp_current_dist) && _wp_current_dist < _param_nav_acc_rad.get() * 1.2f) {
+
 #ifdef DEBUG_MY_PRINT
 			PX4_INFO("OK: got close, switching to POS_STATE_STOPPING ===========================");
 #endif // DEBUG_MY_PRINT
-			// We are closer than NAV_ACC_RAD radius to waypoint (with 1.2x margin), begin stopping phase:
+			// DifferentialVelControl has switched from DRIVING to SPOT_TURNING, we try mirroring that.
+			// We are also closer than NAV_ACC_RAD radius to waypoint (with 1.2x margin), begin stopping phase:
 			setStateMachineState(POS_STATE_STOPPING);
 		}
 
@@ -123,9 +126,12 @@ void LawnmowerControl::workStateMachine()
 
 		updateBearings();
 
-		if (fabsf(math::degrees(_yaw_error)) < 5.0f) { // TODO: make it a parameter?
+		if (_rover_speed_setpoint > FLT_EPSILON
+		    && fabsf(_yaw_error) < _param_rd_trans_trn_drv.get()
+		    && fabsf(_bearing_error) < _param_rd_trans_trn_drv.get()) {
 
-			// We've turned close enough to the desired bearing, switch to Departing or Straight Run state:
+			// DifferentialVelControl has switched from SPOT_TURNING to DRIVING, we try mirroring that.
+			// We also checked if we are close enough to the target waypoint bearing:
 			setStateMachineState(_accel_dist > FLT_EPSILON ? WP_DEPARTING : STRAIGHT_RUN);
 		}
 
@@ -156,6 +162,12 @@ void LawnmowerControl::workStateMachine()
 	case POS_STATE_STOPPING:			// we hit a waypoint and need to stop
 
 		// we need to monitor velocity here, and if it is below a threshold, we can switch to WP_ARRIVED state:
+
+#ifdef DEBUG_MY_PRINT
+		PX4_WARN("POS_STATE_STOPPING : initial velocity: ekf: %.2f   gps: %.2f m/s",
+			 (double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s);
+#endif // DEBUG_MY_PRINT
+
 		setStateMachineState(WP_ARRIVED);
 
 		break;

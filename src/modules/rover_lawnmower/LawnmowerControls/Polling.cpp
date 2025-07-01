@@ -121,6 +121,13 @@ void LawnmowerControl::updateSubscriptions()
 
 	}
 
+	if (_rover_velocity_setpoint_sub.updated()) {
+		_rover_velocity_setpoint_sub.copy(&_rover_velocity_setpoint);
+
+		_rover_speed_setpoint = _rover_velocity_setpoint.speed;
+		_rover_bearing_setpoint = _rover_velocity_setpoint.bearing;
+	}
+
 	if (_pure_pursuit_status_sub.updated()) {
 		_pure_pursuit_status_sub.copy(&_pure_pursuit_status);
 
