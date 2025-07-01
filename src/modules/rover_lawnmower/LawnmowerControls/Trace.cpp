@@ -71,21 +71,13 @@ void LawnmowerControl::debugPrint()
 			}
 
 		} else if (_vehicle_control_mode.flag_control_auto_enabled) {
-			/*
-			if (_pos_ctrl_state != POS_STATE_IDLE || !_printed_idle_trace) {
 
-			if (PX4_ISFINITE(_location_metrics.ekfGpsDeviation) && _location_metrics.ekfGpsDeviation > 0.2f) {
-				PX4_WARN("EKF2 deviation: %.1f cm", (double)(_location_metrics.ekfGpsDeviation * 100.0f));
+			if (_pos_ctrl_state != POS_STATE_NONE || !_printed_none_trace) {
+
+				debugPrintAuto();
+
+				debugPrintCrosstrackStats();
 			}
-
-			if (PX4_ISFINITE(_crosstrack_error) && _crosstrack_error > 0.2f) {
-				PX4_WARN("crosstrack error: %.1f cm", (double)(_crosstrack_error * 100.0f));
-			}
-			*/
-
-			debugPrintAuto();
-
-			debugPrintCrosstrackStats();
 
 		} else if (_vehicle_control_mode.flag_control_offboard_enabled) {
 
@@ -96,7 +88,7 @@ void LawnmowerControl::debugPrint()
 			PX4_WARN("Vehicle control mode not set");
 		}
 
-		//_printed_idle_trace = _pos_ctrl_state == POS_STATE_IDLE;
+		_printed_none_trace = _pos_ctrl_state == POS_STATE_NONE;
 
 		_debug_print_last_called = _timestamp;
 	}

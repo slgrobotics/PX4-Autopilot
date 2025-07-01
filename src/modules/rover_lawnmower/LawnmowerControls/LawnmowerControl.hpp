@@ -216,6 +216,7 @@ private:
 
 	hrt_abstime _debug_print_last_called{0};
 	hrt_abstime _debug_print_ad_last_called{0};
+	bool _printed_none_trace{false};
 
 	int _tracing_lev{0}; // Tracing level, set by parameter
 #endif // DEBUG_MY_PRINT

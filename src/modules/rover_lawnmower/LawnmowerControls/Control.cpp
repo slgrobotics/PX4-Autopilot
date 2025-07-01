@@ -45,6 +45,8 @@ void LawnmowerControl::vehicleControl()
 
 		if (_pos_ctrl_state != POS_STATE_NONE) {
 
+			PX4_WARN("Control mode is set to manual, unwinding the state machine");
+
 			unwindStateMachine();
 		}
 
@@ -74,7 +76,14 @@ void LawnmowerControl::vehicleControl()
 
 			//} else {
 			//PX4_WARN("Auto control enabled, but vehicle is not armed");
+
+		} else if (_pos_ctrl_state != POS_STATE_NONE) {
+
+			PX4_WARN("Vehicle is disarmed, but control mode is set to auto, unwinding the state machine");
+
+			unwindStateMachine();
 		}
+
 
 	} else if (_vehicle_control_mode.flag_control_offboard_enabled) {
 
