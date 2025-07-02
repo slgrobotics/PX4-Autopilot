@@ -1,25 +1,17 @@
 #!/bin/sh
 #
-# @name Aion Robotics R1 UGV
+# @name Zero Turn Lawn Mower
 #
-# @url http://docs.aionrobotics.com/en/latest/r1-ugv.html
+# @url https://photos.app.goo.gl/jwYZRtTi1LVshQoW8
 #
 # @type Rover
 # @class Rover
 #
-# @board px4_fmu-v2 exclude
-#
-# @output MAIN0 Speed of left wheels
-# @output MAIN1 Speed of right wheels
-#
-# @maintainer Timothy Scott
-#
-# @board px4_fmu-v2 exclude
-# @board intel_aerofc-v1 exclude
-# @board bitcraze_crazyflie exclude
+# @maintainer Sergei Grichine
 #
 
 export MYSCRIPTNAME="`pwd`/.../50005_lawnMower1_config"
+
 echo "====================================="
 echo "IP: starting " $MYSCRIPTNAME
 echo "FYI: work dir: `pwd`     running at nice=`nice`"
