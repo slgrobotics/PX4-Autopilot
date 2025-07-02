@@ -106,17 +106,13 @@ param set SDLOG_MODE 0
 #param set SDLOG_PROFILE 255
 param set SDLOG_PROFILE 123
 
+# ====================================================================================
 # Differential Parameters
 # See https://docs.px4.io/main/en/config_rover/differential.html
 
+# Turn precision control parameters - heading errors to transition from DRIVE to TURN:
 param set-default RD_TRANS_DRV_TRN 0.349066
 param set-default RD_TRANS_TRN_DRV 0.174533
-
-# Rover Dynamics Control Parameters
-param set-default RO_ACCEL_LIM 1.5
-param set-default RO_DECEL_LIM 5
-param set-default RO_JERK_LIM 15
-param set-default RO_MAX_THR_SPEED 2.7
 
 # Rover Turn Rate Control Parameters
 param set-default RO_YAW_RATE_I 0.2
@@ -127,13 +123,14 @@ param set-default RO_YAW_DECEL_LIM 20
 param set-default RO_YAW_RATE_CORR 1.0
 param set-default RO_YAW_RATE_TH 3.0
 
-# Rover Turn Control Parameters
+# Rover Attitude (Turn) Control Parameters
 param set-default RO_YAW_P 2
 
-# Rover R/C Stick dead zone for turns
-param set-default RO_YAW_STICK_DZ 0.1
-
 # Rover Velocity Control Parameters
+param set-default RO_ACCEL_LIM 1.5
+param set-default RO_DECEL_LIM 5
+param set-default RO_JERK_LIM 15
+param set-default RO_MAX_THR_SPEED 2.7
 param set-default RO_SPEED_LIM 1.5
 param set-default RO_SPEED_I 0.01
 param set-default RO_SPEED_P 0.1
@@ -145,6 +142,9 @@ param set-default PP_LOOKAHD_GAIN 1
 param set-default PP_LOOKAHD_MAX 10
 param set-default PP_LOOKAHD_MIN 1
 
+# Rover R/C Stick dead zone for turns
+param set-default RO_YAW_STICK_DZ 0.1
+# ====================================================================================
 
 echo "IP: configuring parameters for " $PX4_ROBOT_NAME
 
