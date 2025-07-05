@@ -49,6 +49,15 @@ void LawnmowerControl::updateParams()
 	ModuleParams::updateParams();
 }
 
+/**
+ * @brief Update the LawnmowerControl state machine and perform vehicle control.
+ *
+ * This function is called periodically to update the state machine, perform vehicle control,
+ * and publish auxiliary actuators. It also handles ADS-B transponder report publishing if enabled.
+ *
+ * @param vehicle_control_mode The current vehicle control mode.
+ * @param isSpotTurning True if we are in spot turning state, used to adjust the control logic.
+ */
 void LawnmowerControl::updateLawnmowerControl(vehicle_control_mode_s vehicle_control_mode, bool isSpotTurning)
 {
 	_vehicle_control_mode = vehicle_control_mode;
@@ -73,9 +82,9 @@ void LawnmowerControl::updateLawnmowerControl(vehicle_control_mode_s vehicle_con
 
 	adsbData adsbDataGps {
 		.emitter_type = transponder_report_s::ADSB_EMITTER_TYPE_UAV, // Emitter type, UAV
-		.squawk = 1234, // Squawk code, 4 digits, 0-4095
-		.callsign = "GPS", // Callsign, 8 characters max, null-terminated
-		.icao_address = 0x123456, // ICAO address, 24 bits, 0x000000 to 0xFFFFFF
+		.squawk = 7400, // Squawk code, 4 digits, 0-4095 (7400=UAV). https://en.wikipedia.org/wiki/List_of_transponder_codes
+		.callsign = "MYGPS", // Callsign, 8 characters max, null-terminated
+		.icao_address = 0x123456, // ICAO address, 24 bits, 0x000000 to 0xFFFFFF http://www.kloth.net/radio/icao24lookup.php
 		.tslc = 0.01f, // Time since last communication in seconds
 		.lat = _location_metrics.gps_lat,
 		.lon = _location_metrics.gps_lon,
@@ -97,6 +106,22 @@ void LawnmowerControl::updateLawnmowerControl(vehicle_control_mode_s vehicle_con
 	publishDebugData();
 #endif // DEBUG_MY_DATA
 
+}
+
+/**
+ * @brief Reset the LawnmowerControl state machine and parameters.
+ *
+ * Called when switching to a new mission or at the end of a mission, with other controllers' reset().
+ *
+ * This function unwinds the state machine to ensure that the lawnmower control
+ * system is in a safe state, typically at the end of a mission or when switching
+ * to a new mission.
+ */
+void LawnmowerControl::reset()
+{
+	PX4_INFO("LawnmowerControl::reset() - Unwinding state machine");
+
+	unwindStateMachine(); // Unwind the state machine to end mission and put it into a safe state
 }
 
 }

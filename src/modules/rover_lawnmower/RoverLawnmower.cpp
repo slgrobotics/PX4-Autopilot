@@ -185,9 +185,12 @@ void RoverLawnmower::runSanityChecks()
 
 void RoverLawnmower::reset()
 {
+	PX4_INFO("RoverLawnmower::reset() - Resetting Rover and ManualMode controllers");
+
 	_differential_vel_control.reset();
 	_differential_att_control.reset();
 	_differential_rate_control.reset();
+	_lawnmower_control.reset();
 	_manual_mode.reset();
 }
 

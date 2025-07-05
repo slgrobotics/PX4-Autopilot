@@ -177,6 +177,11 @@ public:
 	 */
 	void updateLawnmowerControl(vehicle_control_mode_s vehicle_control_mode, bool isSpotTurning);
 
+	/**
+	 * @brief Reset controller, when switching to a new mission.
+	 */
+	void reset();
+
 protected:
 	void updateParams() override;
 
