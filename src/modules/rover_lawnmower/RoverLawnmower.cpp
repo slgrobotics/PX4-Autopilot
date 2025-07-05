@@ -88,6 +88,8 @@ void RoverLawnmower::Run()
 
 	}
 
+	bool isSpotTurning = false;
+
 	if (_vehicle_control_mode.flag_armed && _sanity_checks_passed) {
 
 		_was_armed = true;
@@ -105,6 +107,8 @@ void RoverLawnmower::Run()
 
 		updateControllers();
 
+		isSpotTurning = _differential_vel_control.getCurrentState() == DrivingState::SPOT_TURNING;
+
 	} else if (_was_armed) { // Reset all controllers and stop the vehicle
 		reset();
 		_differential_act_control.stopVehicle();
@@ -112,7 +116,7 @@ void RoverLawnmower::Run()
 	}
 
 	// run custom lawnmower control actions:
-	_lawnmower_control.updateLawnmowerControl(_vehicle_control_mode);
+	_lawnmower_control.updateLawnmowerControl(_vehicle_control_mode, isSpotTurning);
 }
 
 void RoverLawnmower::manualControl()

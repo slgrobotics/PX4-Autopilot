@@ -98,8 +98,10 @@ void LawnmowerControl::debugPrintAuto()
 {
 	if (_tracing_lev > 0) {
 
-		PX4_INFO_RAW("=== %s ============  dt: %.3f ms\n",
-			     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f));
+		PX4_INFO_RAW("=== %s %s============  dt: %.3f ms\n",
+			     control_state_name(_pos_ctrl_state),
+			     _isSpotTurning ? ": SPOT_TURNING " : "",
+			     (double)(_dt * 1000.0f));
 
 		PX4_INFO_RAW("--- EKF off: %.1f cm %.0f deg   --- YAW: EKF: %.1f GPS: %.1f  cog: %.1f deg\n",
 			     (double)(_location_metrics.ekfGpsDeviation(0) * 100.0f),
@@ -360,6 +362,8 @@ void LawnmowerControl::publishDebugData()
 	_dbg_array.data[i++] = math::degrees(
 				       _yaw_error);	// radians, yaw error to the current waypoint, positive - right turn, negative - left turn expected
 	_dbg_array.data[i++] = _abbe_error;		//  meters, heading error at the target point
+
+	_dbg_array.data[i++] = _isSpotTurning ? 1.0f : 0.0f; // 1.0 if we are in spot turning state, 0.0 otherwise
 
 	// TODO: more data here, polled or calculated by LawnmowerControl
 

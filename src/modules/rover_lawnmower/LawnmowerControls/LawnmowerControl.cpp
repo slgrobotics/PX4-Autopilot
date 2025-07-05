@@ -49,9 +49,11 @@ void LawnmowerControl::updateParams()
 	ModuleParams::updateParams();
 }
 
-void LawnmowerControl::updateLawnmowerControl(vehicle_control_mode_s vehicle_control_mode)
+void LawnmowerControl::updateLawnmowerControl(vehicle_control_mode_s vehicle_control_mode, bool isSpotTurning)
 {
 	_vehicle_control_mode = vehicle_control_mode;
+
+	_isSpotTurning = isSpotTurning; // true if we are in spot turning state, used to adjust the control logic
 
 	updateSubscriptions();	// Update uORB subscriptions, poll vehicle attitude, position etc.
 

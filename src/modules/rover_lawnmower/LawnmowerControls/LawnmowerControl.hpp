@@ -175,7 +175,7 @@ public:
 	/**
 	 * @brief Perform all operations related to lawnmower control.
 	 */
-	void updateLawnmowerControl(vehicle_control_mode_s vehicle_control_mode);
+	void updateLawnmowerControl(vehicle_control_mode_s vehicle_control_mode, bool isSpotTurning);
 
 protected:
 	void updateParams() override;
@@ -268,6 +268,8 @@ private:
 	float _dt{0.f};	// Time since last update in seconds since last call to updateLawnmowerControl()
 
 	bool _stateHasChanged{false};	// only good inside the loop
+
+	bool _isSpotTurning{false}; // true if we are in spot turning state, used to adjust the control logic
 
 	vehicle_attitude_s		_vehicle_attitude{};
 	vehicle_control_mode_s 		_vehicle_control_mode{};
