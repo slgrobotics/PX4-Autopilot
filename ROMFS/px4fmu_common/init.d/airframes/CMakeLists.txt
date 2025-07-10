@@ -140,6 +140,8 @@ if(CONFIG_MODULES_ROVER_DIFFERENTIAL)
 		# [50000, 50999] Differential rovers
 		50000_generic_rover_differential
 		50001_aion_robotics_r1_rover
+		50005_lawnMower1_config
+		50005_lawnMower1_config.post
 	)
 endif()
 
@@ -155,16 +157,6 @@ if(CONFIG_MODULES_ROVER_MECANUM)
 	px4_add_romfs_files(
 		# [52000, 52999] Mecanum rovers
 		52000_generic_rover_mecanum
-	)
-endif()
-
-if(CONFIG_MODULES_ROVER_POS_CONTROL)
-	px4_add_romfs_files(
-		# [59000, 59999] Rover position control (deprecated)
-		59000_generic_ground_vehicle
-		59001_nxpcup_car_dfrobot_gpx
-		50005_lawnMower1_config
-		50005_lawnMower1_config.post
 	)
 endif()
 
