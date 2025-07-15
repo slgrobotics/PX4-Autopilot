@@ -137,6 +137,8 @@ void LawnmowerControl::updateSubscriptions()
 		// float32 distance_to_waypoint # [m] Distance from the vehicle to the current waypoint
 		// float32 bearing_to_waypoint  # [rad] Bearing towards current waypoint
 
+		//print_message(ORB_ID(pure_pursuit_status), _pure_pursuit_status);
+
 		_crosstrack_error = _pure_pursuit_status.crosstrack_error;
 		float target_bearing = _pure_pursuit_status.target_bearing;
 		float bearing_to_waypoint = _pure_pursuit_status.bearing_to_waypoint;

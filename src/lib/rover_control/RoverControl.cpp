@@ -112,50 +112,31 @@ float speedControl(SlewRate<float> &speed_with_rate_limit, PID &pid_speed, const
 		return NAN;
 	}
 
-	// Apply acceleration and deceleration limit
-	if (fabsf(speed_setpoint) >= fabsf(vehicle_speed) && max_accel > FLT_EPSILON) {
-		speed_with_rate_limit.setSlewRate(max_accel);
-		speed_with_rate_limit.update(speed_setpoint, dt);
+	// no need for slew here, just execute the PosControl's speed profile/plan.
+	// I removed the slew rate control here, using speed_setpoint in PID controller directly - slg.
 
-		// Reinitialize slew rate if current value is closer to setpoint than post slew rate value
-		if (fabsf(speed_with_rate_limit.getState() - vehicle_speed) > fabsf(
-			    speed_setpoint - vehicle_speed)) {
-			speed_with_rate_limit.setForcedValue(speed_setpoint);
-		}
-
-	} else if (fabsf(speed_setpoint) < fabsf(vehicle_speed) && max_decel > FLT_EPSILON) {
-		speed_with_rate_limit.setSlewRate(max_decel);
-		speed_with_rate_limit.update(speed_setpoint, dt);
-
-		// Reinitialize slew rate if current value is closer to setpoint than post slew rate value
-		if (fabsf(speed_with_rate_limit.getState() - vehicle_speed) > fabsf(
-			    speed_setpoint - vehicle_speed)) {
-			speed_with_rate_limit.setForcedValue(speed_setpoint);
-		}
-
-	} else { // Fallthrough if slew rate is not configured
-		speed_with_rate_limit.setForcedValue(speed_setpoint);
-	}
+	speed_with_rate_limit.setForcedValue(speed_setpoint); // just in case
 
 	// Calculate normalized forward speed setpoint
 	float forward_speed_normalized{0.f};
 
 	// Feedforward
 	if (max_thr_speed > FLT_EPSILON) {
-		forward_speed_normalized = math::interpolate<float>(speed_with_rate_limit.getState(),
+		forward_speed_normalized = math::interpolate<float>(speed_setpoint, //speed_with_rate_limit.getState(),
 					   -max_thr_speed, max_thr_speed,
 					   -1.f, 1.f);
 	}
 
 	// Feedback control
-	if (fabsf(speed_with_rate_limit.getState()) > FLT_EPSILON) {
-		pid_speed.setSetpoint(speed_with_rate_limit.getState());
+	//if (fabsf(speed_with_rate_limit.getState()) > FLT_EPSILON) {
+	if (fabsf(speed_setpoint) > FLT_EPSILON) {
+		//pid_speed.setSetpoint(speed_with_rate_limit.getState());
+		pid_speed.setSetpoint(speed_setpoint);
 		forward_speed_normalized += pid_speed.update(vehicle_speed, dt);
 
 	} else {
 		pid_speed.resetIntegral();
 	}
-
 
 	return math::constrain(forward_speed_normalized, -1.f, 1.f);
 }

@@ -107,7 +107,7 @@ void RoverLawnmower::Run()
 
 		updateControllers();
 
-		//isSpotTurning = _differential_pos_control.getCurrentState() == DrivingState::SPOT_TURNING;
+		isSpotTurning = _differential_pos_control.getCurrentState() == DrivingState::SPOT_TURNING;
 
 	} else if (_was_armed) { // Reset all controllers and stop the vehicle
 		reset();

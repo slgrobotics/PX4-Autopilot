@@ -72,9 +72,12 @@ void DifferentialActControl::updateActControl()
 		actuator_motors_s actuator_motors_sub{};
 		_actuator_motors_sub.copy(&actuator_motors_sub);
 		const float current_throttle = (actuator_motors_sub.control[0] + actuator_motors_sub.control[1]) / 2.f;
-		const float adjusted_throttle_setpoint = RoverControl::throttleControl(_adjusted_throttle_setpoint,
-				_throttle_setpoint, current_throttle, _param_ro_accel_limit.get(),
-				_param_ro_decel_limit.get(), _param_ro_max_thr_speed.get(), dt);
+		float adjusted_throttle_setpoint = RoverControl::throttleControl(_adjusted_throttle_setpoint,
+						   _throttle_setpoint, current_throttle, _param_ro_accel_limit.get(),
+						   _param_ro_decel_limit.get(), _param_ro_max_thr_speed.get(), dt);
+
+		adjusted_throttle_setpoint = _throttle_setpoint; // overriding _adjusted_throttle_setpoint, no need for slew here
+
 		actuator_motors_s actuator_motors{};
 		actuator_motors.reversible_flags = _param_r_rev.get();
 		computeInverseKinematics(adjusted_throttle_setpoint, _speed_diff_setpoint).copyTo(actuator_motors.control);

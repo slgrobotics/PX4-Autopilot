@@ -74,6 +74,9 @@ void DifferentialAutoMode::autoControl()
 
 		float waypoint_transition_angle = RoverControl::calcWaypointTransitionAngle(prev_wp_ned, curr_wp_ned, next_wp_ned);
 
+		PX4_WARN("==== position_setpoint_triplet arrived === Waypoint transition angle: %.1f degrees",
+			 math::degrees((double)waypoint_transition_angle));
+
 		// Waypoint cruising speed
 		float cruising_speed = position_setpoint_triplet.current.cruising_speed > 0.f ? math::constrain(
 					       position_setpoint_triplet.current.cruising_speed, 0.f, _param_ro_speed_limit.get()) : _param_ro_speed_limit.get();

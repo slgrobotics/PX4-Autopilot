@@ -126,9 +126,10 @@ void LawnmowerControl::workStateMachine()
 
 		updateBearings();
 
-		if (_rover_speed_setpoint > FLT_EPSILON
+		if (!_isSpotTurning // _rover_speed_setpoint > FLT_EPSILON
 		    && fabsf(_yaw_error) < _param_rd_trans_trn_drv.get()
-		    && fabsf(_bearing_error) < _param_rd_trans_trn_drv.get()) {
+		    && fabsf(_bearing_error) < _param_rd_trans_trn_drv.get()
+		   ) {
 
 			// DifferentialVelControl has switched from SPOT_TURNING to DRIVING, we try mirroring that.
 			// We also checked if we are close enough to the target waypoint bearing:
