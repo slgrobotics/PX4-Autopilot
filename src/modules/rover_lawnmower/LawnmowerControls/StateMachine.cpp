@@ -67,6 +67,7 @@ void LawnmowerControl::workStateMachine()
 
 			if (is_arriving) {
 				// Close enough to destination waypoint, switch from Pursuit to direct heading:
+				adjustRateParams(true); // isSpotTurning = true
 				setStateMachineState(WP_ARRIVING);
 				cte_end();
 
@@ -151,6 +152,7 @@ void LawnmowerControl::workStateMachine()
 
 		} else {
 			// we are far enough from departure waypoint and not heading to the first waypoint, switch to Pursuit:
+			adjustRateParams(false); // isSpotTurning = false
 			setStateMachineState(STRAIGHT_RUN);
 		}
 
@@ -180,6 +182,7 @@ void LawnmowerControl::workStateMachine()
 #endif // DEBUG_MY_PRINT
 
 		// First waypoint of the mission has arrived, go to it. First we need to turn towards it:
+		adjustRateParams(true); // isSpotTurning = true
 		setStateMachineState(WP_TURNING);
 
 		cte_begin_mission();
@@ -210,7 +213,7 @@ void LawnmowerControl::workStateMachine()
 	}
 
 
-	adjustAcuatorSetpoints();
+	adjustActuatorSetpoints();
 
 	if (pos_ctrl_state_prev != _pos_ctrl_state) {
 #ifdef DEBUG_MY_PRINT
@@ -247,7 +250,42 @@ bool LawnmowerControl::updateBearings()
 	return PX4_ISFINITE(_yaw_error);
 }
 
-void LawnmowerControl::adjustAcuatorSetpoints()
+void LawnmowerControl::adjustRateParams(bool isSpotTurning)
+{
+	auto _p_yaw_rate_p = param_find("RO_YAW_RATE_P");
+	auto _p_yaw_rate_i = param_find("RO_YAW_RATE_I");
+
+	if (isSpotTurning) {
+		float new_yaw_rate_p = _param_lm_yaw_rate_t_p.get();
+
+		if (new_yaw_rate_p > FLT_EPSILON) {
+			float new_yaw_rate_i = _param_lm_yaw_rate_t_i.get();
+
+			PX4_WARN("Spot turning: using LM_YAW_RATE_T_P: %.3f  LM_YAW_RATE_T_I: %.4f",
+				(double)new_yaw_rate_p, (double)new_yaw_rate_i);
+
+			param_set(_p_yaw_rate_p, &new_yaw_rate_p);
+			param_set(_p_yaw_rate_i, &new_yaw_rate_i);
+		}
+
+	} else {
+		float new_yaw_rate_p = _param_lm_yaw_rate_p.get();
+
+		if (new_yaw_rate_p > FLT_EPSILON) {
+			float new_yaw_rate_i = _param_lm_yaw_rate_i.get();
+
+			PX4_WARN("Spot turning: using LM_YAW_RATE_P: %.3f  LM_YAW_RATE_I: %.4f",
+				(double)new_yaw_rate_p, (double)new_yaw_rate_i);
+
+			param_set(_p_yaw_rate_p, &new_yaw_rate_p);
+			param_set(_p_yaw_rate_i, &new_yaw_rate_i);
+		}
+	}
+
+	//param_notify_changes();
+}
+
+void LawnmowerControl::adjustActuatorSetpoints()
 {
 	switch (_pos_ctrl_state) {
 	case POS_STATE_NONE:	// undefined/invalid state, no need to control anything

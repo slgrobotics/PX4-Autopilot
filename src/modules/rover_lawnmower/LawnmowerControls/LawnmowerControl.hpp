@@ -209,7 +209,8 @@ private:
 	void workStateMachine();
 	void unwindStateMachine();
 	bool updateBearings();
-	void adjustAcuatorSetpoints();
+	void adjustRateParams(bool isSpotTurning);
+	void adjustActuatorSetpoints();
 	void setStateMachineState(const POS_CTRLSTATES desiredState);
 
 #ifdef DEBUG_MY_PRINT
@@ -426,6 +427,15 @@ private:
 
 		(ParamFloat<px4::params::RD_TRANS_TRN_DRV>) _param_rd_trans_trn_drv, // turn to drive transition threshold, radians
 		(ParamFloat<px4::params::RD_TRANS_DRV_TRN>) _param_rd_trans_drv_trn, // drive to turn transition threshold, radians
+
+		(ParamFloat<px4::params::RO_YAW_RATE_P>)    _param_ro_yaw_rate_p,
+		(ParamFloat<px4::params::RO_YAW_RATE_I>)    _param_ro_yaw_rate_i,
+
+		(ParamFloat<px4::params::LM_YAW_RATE_T_P>)  _param_lm_yaw_rate_t_p, // radians, yaw rate P gain in spot turn mode
+		(ParamFloat<px4::params::LM_YAW_RATE_T_I>)  _param_lm_yaw_rate_t_i,
+
+		(ParamFloat<px4::params::LM_YAW_RATE_P>)    _param_lm_yaw_rate_p, // radians, yaw rate P gain in line following mode
+		(ParamFloat<px4::params::LM_YAW_RATE_I>)    _param_lm_yaw_rate_i,
 
 		(ParamFloat<px4::params::LM_ACCEL_DIST>) _param_lm_accel_dist,	 // meters, distance to accelerate
 		(ParamFloat<px4::params::LM_DECEL_DIST>)

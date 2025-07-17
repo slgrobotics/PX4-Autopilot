@@ -58,3 +58,55 @@ parameters:
         decimal: 2
         default: 1.5
 
+      LM_YAW_RATE_P:
+        description:
+            short: A P gain for the yaw rate control in line following mode
+            long: |
+              A higher value will cause the rover to turn more aggressively during line following.
+        type: float
+        unit: norm
+        min: 0
+        max: 100
+        increment: 0.01
+        decimal: 2
+        default: 1.0
+
+      LM_YAW_RATE_I:
+        description:
+            short: A I gain for the yaw rate control in line following mode
+            long: |
+              A higher value will cause the rover to turn more aggressively during line following.
+        type: float
+        unit: norm
+        min: 0
+        max: 10000
+        increment: 0.01
+        decimal: 2
+        default: 0.0
+
+      LM_YAW_RATE_T_P:
+        description:
+            short: A P gain for the yaw rate control in turns
+            long: |
+              A higher value will cause the rover to turn more aggressively during spot turns.
+        type: float
+        unit: norm
+        min: 0
+        max: 100
+        increment: 0.01
+        decimal: 2
+        default: 1.0
+
+      LM_YAW_RATE_T_I:
+        description:
+            short: A I gain for the yaw rate control in turns
+            long: |
+              A higher value will cause the rover to turn more aggressively during spot turns.
+        type: float
+        unit: norm
+        min: 0
+        max: 10000
+        increment: 0.01
+        decimal: 2
+        default: 0.0
+

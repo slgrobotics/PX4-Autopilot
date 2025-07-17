@@ -19,8 +19,6 @@ param set SDLOG_PROFILE 123
 
 param set-default SIM_GZ_EN 1 # Gazebo bridge
 
-param set-default NAV_ACC_RAD 0.5
-
 # We can arm and drive in manual mode when it slides and GPS check fails:
 param set-default COM_ARM_WO_GPS 1
 
@@ -31,6 +29,16 @@ param set-default COM_ARM_WO_GPS 1
 # Turn precision control parameters - heading errors to transition from DRIVE to TURN:
 param set-default RD_TRANS_DRV_TRN 0.349066
 param set-default RD_TRANS_TRN_DRV 0.174533
+
+param set-default NAV_ACC_RAD 0.5
+param set-default RD_ACC_RAD_MARGN 1.5
+
+# Straight Run Control Parameters
+param set-default LM_YAW_RATE_I 0.25
+param set-default LM_YAW_RATE_P 0.6
+# Spot Turn Control Parameters
+param set-default LM_YAW_RATE_T_I 0.05
+param set-default LM_YAW_RATE_T_P 0.1
 
 # Rover Turn Rate Control Parameters
 param set-default RO_YAW_RATE_I 0.2
