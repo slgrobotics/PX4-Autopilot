@@ -431,15 +431,18 @@ private:
 		(ParamFloat<px4::params::RO_YAW_RATE_P>)    _param_ro_yaw_rate_p,
 		(ParamFloat<px4::params::RO_YAW_RATE_I>)    _param_ro_yaw_rate_i,
 
-		(ParamFloat<px4::params::LM_YAW_RATE_T_P>)  _param_lm_yaw_rate_t_p, // radians, yaw rate P gain in spot turn mode
+		(ParamFloat<px4::params::LM_YAW_RATE_T_P>)  _param_lm_yaw_rate_t_p, // yaw rate P gain in spot turn mode
 		(ParamFloat<px4::params::LM_YAW_RATE_T_I>)  _param_lm_yaw_rate_t_i,
+		(ParamFloat<px4::params::LM_YAW_RATE_TLIM>) _param_lm_yaw_rate_t_lim, // rad/s, yaw rate limit in spot turn mode
+		(ParamFloat<px4::params::LM_YAW_T_P>)       _param_lm_yaw_t_p, // yaw rate P gain in spot turn mode
 
-		(ParamFloat<px4::params::LM_YAW_RATE_P>)    _param_lm_yaw_rate_p, // radians, yaw rate P gain in line following mode
+		(ParamFloat<px4::params::LM_YAW_RATE_P>)    _param_lm_yaw_rate_p, // yaw rate P gain in line following mode
 		(ParamFloat<px4::params::LM_YAW_RATE_I>)    _param_lm_yaw_rate_i,
+		(ParamFloat<px4::params::LM_YAW_RATE_LIM>)  _param_lm_yaw_rate_lim, // rad/s, yaw rate limit in line following mode
+		(ParamFloat<px4::params::LM_YAW_P>)         _param_lm_yaw_p, // yaw rate P gain in line following mode
 
-		(ParamFloat<px4::params::LM_ACCEL_DIST>) _param_lm_accel_dist,	 // meters, distance to accelerate
-		(ParamFloat<px4::params::LM_DECEL_DIST>)
-		_param_lm_decel_dist,	 // meters, distance to target waypoint to start decelerating
+		(ParamFloat<px4::params::LM_ACCEL_DIST>) _param_lm_accel_dist, // meters, distance to accelerate
+		(ParamFloat<px4::params::LM_DECEL_DIST>) _param_lm_decel_dist, // meters, distance to target wp to start decelerating
 		(ParamFloat<px4::params::NAV_ACC_RAD>) _param_nav_acc_rad, // meters, how close to waypoint we consider it reached
 
 		// Measurement modes - from EKF2 or RTK GPS:

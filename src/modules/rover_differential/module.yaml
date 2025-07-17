@@ -56,20 +56,20 @@ parameters:
         max: 3.0
         increment: 0.01
         decimal: 2
-        default: 1.5
+        default: 1.0
 
       LM_YAW_RATE_P:
         description:
             short: A P gain for the yaw rate control in line following mode
             long: |
-              A higher value will cause the rover to turn more aggressively during line following.
+              A higher value will cause the rover to turn more aggressively during line following. Set to 0 to disable switching.
         type: float
         unit: norm
         min: 0
         max: 100
         increment: 0.01
         decimal: 2
-        default: 1.0
+        default: 0.0
 
       LM_YAW_RATE_I:
         description:
@@ -84,22 +84,46 @@ parameters:
         decimal: 2
         default: 0.0
 
+      LM_YAW_RATE_LIM:
+        description:
+            short: Yaw rate limit in line following mode
+            long: |
+              Used to cap yaw rate setpoints and map controller inputs to yaw rate setpoints in line following mode.
+        type: float
+        unit: deg/s
+        min: 0
+        max: 10000
+        increment: 0.01
+        decimal: 2
+        default: 0.0
+
+      LM_YAW_P:
+        description:
+            short: Proportional gain for closed loop yaw controller in line following mode
+        type: float
+        unit: norm
+        min: 0
+        max: 100
+        increment: 0.01
+        decimal: 3
+        default: 0.0
+
       LM_YAW_RATE_T_P:
         description:
-            short: A P gain for the yaw rate control in turns
+            short: A P gain for the yaw rate control in spot turns
             long: |
-              A higher value will cause the rover to turn more aggressively during spot turns.
+              A higher value will cause the rover to turn more aggressively during spot turns. Set to 0 to disable switching.
         type: float
         unit: norm
         min: 0
         max: 100
         increment: 0.01
         decimal: 2
-        default: 1.0
+        default: 0.0
 
       LM_YAW_RATE_T_I:
         description:
-            short: A I gain for the yaw rate control in turns
+            short: A I gain for the yaw rate control in spot turns
             long: |
               A higher value will cause the rover to turn more aggressively during spot turns.
         type: float
@@ -108,5 +132,29 @@ parameters:
         max: 10000
         increment: 0.01
         decimal: 2
+        default: 0.0
+
+      LM_YAW_RATE_TLIM:
+        description:
+            short: Yaw rate limit in spot turns
+            long: |
+              Used to cap yaw rate setpoints and map controller inputs to yaw rate setpoints in spot turns.
+        type: float
+        unit: deg/s
+        min: 0
+        max: 10000
+        increment: 0.01
+        decimal: 2
+        default: 0.0
+
+      LM_YAW_T_P:
+        description:
+            short: Proportional gain for closed loop yaw controller in spot turns
+        type: float
+        unit: norm
+        min: 0
+        max: 100
+        increment: 0.01
+        decimal: 3
         default: 0.0
 

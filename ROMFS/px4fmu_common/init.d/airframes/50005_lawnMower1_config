@@ -114,6 +114,20 @@ param set SDLOG_PROFILE 123
 param set-default RD_TRANS_DRV_TRN 0.349066
 param set-default RD_TRANS_TRN_DRV 0.174533
 
+param set-default NAV_ACC_RAD 0.5
+param set-default RD_ACC_RAD_MARGN 1.5
+
+# Straight Run Control Parameters
+param set-default LM_YAW_RATE_I 0.2
+param set-default LM_YAW_RATE_P 0.5
+param set-default LM_YAW_RATE_LIM 80
+param set-default LM_YAW_P 6
+# Spot Turn Control Parameters
+param set-default LM_YAW_RATE_T_I 0.1
+param set-default LM_YAW_RATE_T_P 0.3
+param set-default LM_YAW_RATE_TLIM 30
+param set-default LM_YAW_T_P 3
+
 # Rover Turn Rate Control Parameters
 param set-default RO_YAW_RATE_I 0.2
 param set-default RO_YAW_RATE_P 0.5
@@ -127,8 +141,8 @@ param set-default RO_YAW_RATE_TH 3.0
 param set-default RO_YAW_P 2
 
 # Rover Velocity Control Parameters
-param set-default RO_ACCEL_LIM 0.5
-param set-default RO_DECEL_LIM 0.5
+param set-default RO_ACCEL_LIM 0.3
+param set-default RO_DECEL_LIM 0.2
 param set-default RO_JERK_LIM 10
 param set-default RO_MAX_THR_SPEED 2.7
 param set-default RO_SPEED_LIM 1.5
@@ -285,10 +299,6 @@ param set IMU_GYRO_RATEMAX 800
 param set IMU_INTEG_RATE 250
 param set LND_FLIGHT_T_HI 63
 param set LND_FLIGHT_T_LO 1916514503
-
-# Mission and Navigation:
-param set NAV_ACC_RAD 0.3000
-# param set NAV_FW_ALT_RAD 200.0000  < already set to 1000 in rc.rover_defaults
 
 # Control Allocation (a.k.a. Mixers) for wheels:
 param set CA_AIRFRAME 6
