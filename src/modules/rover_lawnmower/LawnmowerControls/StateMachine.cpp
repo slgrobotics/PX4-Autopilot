@@ -262,7 +262,7 @@ void LawnmowerControl::adjustRateParams(bool isSpotTurning)
 			float new_yaw_rate_i = _param_lm_yaw_rate_t_i.get();
 
 			PX4_WARN("Spot turning: using LM_YAW_RATE_T_P: %.3f  LM_YAW_RATE_T_I: %.4f",
-				(double)new_yaw_rate_p, (double)new_yaw_rate_i);
+				 (double)new_yaw_rate_p, (double)new_yaw_rate_i);
 
 			param_set(_p_yaw_rate_p, &new_yaw_rate_p);
 			param_set(_p_yaw_rate_i, &new_yaw_rate_i);
@@ -275,7 +275,7 @@ void LawnmowerControl::adjustRateParams(bool isSpotTurning)
 			float new_yaw_rate_i = _param_lm_yaw_rate_i.get();
 
 			PX4_WARN("Spot turning: using LM_YAW_RATE_P: %.3f  LM_YAW_RATE_I: %.4f",
-				(double)new_yaw_rate_p, (double)new_yaw_rate_i);
+				 (double)new_yaw_rate_p, (double)new_yaw_rate_i);
 
 			param_set(_p_yaw_rate_p, &new_yaw_rate_p);
 			param_set(_p_yaw_rate_i, &new_yaw_rate_i);
