@@ -51,6 +51,8 @@ void DifferentialRateControl::updateParams()
 		 (double)_param_ro_yaw_accel_limit.get(), (double)_param_ro_yaw_decel_limit.get());
 
 	// Set up PID controller
+	_pid_yaw_rate.resetIntegral();
+	_pid_yaw_rate.resetDerivative();
 	_pid_yaw_rate.setGains(_param_ro_yaw_rate_p.get(), _param_ro_yaw_rate_i.get(), 0.f);
 	_pid_yaw_rate.setIntegralLimit(1.f);
 	_pid_yaw_rate.setOutputLimit(1.f);
