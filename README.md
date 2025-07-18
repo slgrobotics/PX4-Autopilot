@@ -1,3 +1,30 @@
+# My *Lawnmower* fork of PX4
+
+This is a *dev* branch of my PX4 "*main*" fork - created specifically to make my lawnmower do its job - mow the lawn.
+
+My notes are [here](https://github.com/slgrobotics/robots_bringup/tree/main/Docs/Lawnmower).
+
+There are substantial changes to the code, some rationale for those are in the following PRs:
+- https://github.com/PX4/PX4-Autopilot/pull/23611 - Implement Stanley Pursuit for rovers
+- https://github.com/PX4/PX4-Autopilot/pull/25165 - Smooth acceleration planning for Rover Differential
+- https://github.com/PX4/PX4-Autopilot/pull/25170 - separating planning and execution responsibilities
+- https://github.com/PX4/PX4-Autopilot/issues/25157 - [Bug] Rover Differential velocity control fails to stop smoothly in sharp turns
+- https://github.com/PX4/PX4-Autopilot/pull/25221 - rover: fix speed setpoint in position controller
+
+There is a good illustration of Rover Control architecture here: https://github.com/PX4/PX4-Autopilot/pull/24640
+
+Related documentation is here: https://docs.px4.io/main/en/frames_rover/
+
+You can see the progress of **PX4 Rover** team project here: https://github.com/orgs/PX4/projects/50/views/1
+
+I am not a member of Droncode/PX4 team and just use their code while playing with my toys.
+
+--------------
+
+**Below is original text from the upstream**
+
+--------------
+
 # PX4 Drone Autopilot
 
 [![Releases](https://img.shields.io/github/release/PX4/PX4-Autopilot.svg)](https://github.com/PX4/PX4-Autopilot/releases) [![DOI](https://zenodo.org/badge/22634/PX4/PX4-Autopilot.svg)](https://zenodo.org/badge/latestdoi/22634/PX4/PX4-Autopilot)
