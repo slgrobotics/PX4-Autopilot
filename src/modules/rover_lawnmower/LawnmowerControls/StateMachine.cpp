@@ -65,6 +65,11 @@ void LawnmowerControl::workStateMachine()
 					   _wp_current_dist < _decel_dist : // GND_DECEL_DIST or half leg
 					   false;
 
+			if (_rover_speed_setpoint > _location_metrics.ekf_x_vel * 0.3f) {
+				// this is a fly-by waypoint, we are not going to stop at it, just pass by:
+				is_arriving = false;
+			}
+
 			if (is_arriving) {
 				// Close enough to destination waypoint, switch from Pursuit to direct heading:
 				setStateMachineState(WP_ARRIVING);

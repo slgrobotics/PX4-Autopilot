@@ -80,8 +80,6 @@ param set EKF2_REQ_GPS_H 5.0
 # Rovers don't have airspeed sensors:
 #param set SYS_HAS_NUM_ASPD 0
 
-param set LM_TRACING_LEV 5 # Lawn mower tracing level
-
 # Data logging to "SD card" (/fs/microsd/log):
 # "0" = armed to disarmed
 param set SDLOG_MODE 0
@@ -110,9 +108,25 @@ param set SDLOG_PROFILE 123
 # Differential Parameters
 # See https://docs.px4.io/main/en/config_rover/differential.html
 
+# Lawnmower specific parameters:
+param set-default LM_TRACING_LEV 5
+param set-default LM_GPS_MINFIX 6
+param set-default LM_ACCEL_DIST 1.5
+param set-default LM_DECEL_DIST 1.5
+param set-default LM_HD_MEAS_MODE 0
+param set-default LM_SP_MEAS_MODE 0
+param set-default LM_EKF_OVERRIDE 0
+
+# Internal Combustion Engine parameters in different phases of operation:
+param set-default LM_ICE_IDLE 0
+param set-default LM_ICE_DEPART 0.8
+param set-default LM_ICE_TURN 0.2
+param set-default LM_ICE_ARRIVE 0.8
+param set-default LM_ICE_STRAIGHT 1.0
+
 # Turn precision control parameters - heading errors to transition from DRIVE to TURN:
 param set-default RD_TRANS_DRV_TRN 0.349066
-param set-default RD_TRANS_TRN_DRV 0.174533
+param set-default RD_TRANS_TRN_DRV 0.087266
 
 param set-default NAV_ACC_RAD 0.5
 param set-default RD_ACC_RAD_MARGN 1.5
