@@ -1,6 +1,6 @@
 # My *Lawnmower* fork of PX4
 
-This is a *dev* branch of my PX4 "*main*" fork - created specifically to make my lawnmower do its job - mow the lawn.
+I forked this *dev* branch off the *PX4 main* with a single goal: to make my lawnmower do its job - mow the lawn.
 
 My notes are [here](https://github.com/slgrobotics/robots_bringup/tree/main/Docs/Lawnmower).
 
