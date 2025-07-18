@@ -102,6 +102,9 @@ void LawnmowerControl::debugPrintAuto()
 			     control_state_name(_pos_ctrl_state),
 			     _isSpotTurning ? ": SPOT_TURNING " : "",
 			     (double)(_dt * 1000.0f));
+	}
+
+	if (_tracing_lev > 1) {
 
 		PX4_INFO_RAW("--- EKF off: %.1f cm %.0f deg   --- YAW: EKF: %.1f GPS: %.1f  cog: %.1f deg\n",
 			     (double)(_location_metrics.ekfGpsDeviation(0) * 100.0f),
@@ -168,14 +171,17 @@ void LawnmowerControl::debugPrintArriveDepart()
 
 void LawnmowerControl::debugPrintManual()
 {
-	PX4_INFO_RAW("=== Manual CONTROL: %s ============  dt: %.3f ms EKF off: %.1f cm %.0f deg  yaw: EKF: %.1f GPS: %.1f/%.1f deg\n",
-		     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f),
-		     (double)(_location_metrics.ekfGpsDeviation(0) * 100.0f),
-		     (double)math::degrees(_location_metrics.ekfGpsDeviation(1)),
-		     (double)math::degrees(_vehicle_yaw), (double)math::degrees(_sensor_gps_data.heading),
-		     (double)math::degrees(_sensor_gps_data.cog_rad));
-
 	if (_tracing_lev > 0) {
+
+		PX4_INFO_RAW("=== Manual CONTROL: %s ============  dt: %.3f ms EKF off: %.1f cm %.0f deg  yaw: EKF: %.1f GPS: %.1f/%.1f deg\n",
+			control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f),
+			(double)(_location_metrics.ekfGpsDeviation(0) * 100.0f),
+			(double)math::degrees(_location_metrics.ekfGpsDeviation(1)),
+			(double)math::degrees(_vehicle_yaw), (double)math::degrees(_sensor_gps_data.heading),
+			(double)math::degrees(_sensor_gps_data.cog_rad));
+	}
+
+	if (_tracing_lev > 1) {
 
 		PX4_INFO_RAW("R/C: roll: %.2f  pitch: %.2f  yaw: %.2f  throttle: %.2f   flaps: %.2f  aux1: %.2f  aux2: %.2f\n",
 			     (double)_manual_control_setpoint.roll,
@@ -364,6 +370,7 @@ void LawnmowerControl::publishDebugData()
 	_dbg_array.data[i++] = _abbe_error;		//  meters, heading error at the target point
 
 	_dbg_array.data[i++] = _isSpotTurning ? 1.0f : 0.0f; // 1.0 if we are in spot turning state, 0.0 otherwise
+	_dbg_array.data[i++] = _isTurningPids ? 1.0f : 0.0f; // 1.0 if turning PID parameters were applied, 0.0 otherwise
 
 	// TODO: more data here, polled or calculated by LawnmowerControl
 

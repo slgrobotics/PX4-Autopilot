@@ -67,7 +67,6 @@ void LawnmowerControl::workStateMachine()
 
 			if (is_arriving) {
 				// Close enough to destination waypoint, switch from Pursuit to direct heading:
-				adjustRateParams(true); // isSpotTurning = true
 				setStateMachineState(WP_ARRIVING);
 				cte_end();
 
@@ -101,6 +100,19 @@ void LawnmowerControl::workStateMachine()
 
 		break;
 
+	case POS_STATE_STOPPING:			// we hit a waypoint and need to stop
+
+		// we need to monitor velocity here, and if it is below a threshold, we can switch to WP_ARRIVED state:
+
+#ifdef DEBUG_MY_PRINT
+		PX4_WARN("POS_STATE_STOPPING : initial velocity: ekf: %.2f   gps: %.2f m/s",
+			 (double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s);
+#endif // DEBUG_MY_PRINT
+
+		setStateMachineState(WP_ARRIVED);
+
+		break;
+
 	case WP_ARRIVED:				// reached waypoint, completely stopped. Make sure mission knows about it
 
 		updateBearings();
@@ -115,6 +127,7 @@ void LawnmowerControl::workStateMachine()
 		} else {
 			// We have arrived to a waypoint, but there are more waypoints in the triplet,
 			// so we need to turn towards the next waypoint:
+			adjustRateParams(true); // adjust yaw PIDs for spot turning
 			setStateMachineState(WP_TURNING);
 		}
 
@@ -134,6 +147,7 @@ void LawnmowerControl::workStateMachine()
 
 			// DifferentialVelControl has switched from SPOT_TURNING to DRIVING, we try mirroring that.
 			// We also checked if we are close enough to the target waypoint bearing:
+			adjustRateParams(false); // // adjust yaw PIDs for straight run
 			setStateMachineState(_accel_dist > FLT_EPSILON ? WP_DEPARTING : STRAIGHT_RUN);
 		}
 
@@ -152,26 +166,12 @@ void LawnmowerControl::workStateMachine()
 
 		} else {
 			// we are far enough from departure waypoint and not heading to the first waypoint, switch to Pursuit:
-			adjustRateParams(false); // isSpotTurning = false
 			setStateMachineState(STRAIGHT_RUN);
 		}
 
 #ifdef DEBUG_MY_PRINT
 		debugPrintArriveDepart();
 #endif // DEBUG_MY_PRINT
-
-		break;
-
-	case POS_STATE_STOPPING:			// we hit a waypoint and need to stop
-
-		// we need to monitor velocity here, and if it is below a threshold, we can switch to WP_ARRIVED state:
-
-#ifdef DEBUG_MY_PRINT
-		PX4_WARN("POS_STATE_STOPPING : initial velocity: ekf: %.2f   gps: %.2f m/s",
-			 (double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s);
-#endif // DEBUG_MY_PRINT
-
-		setStateMachineState(WP_ARRIVED);
 
 		break;
 
@@ -182,7 +182,7 @@ void LawnmowerControl::workStateMachine()
 #endif // DEBUG_MY_PRINT
 
 		// First waypoint of the mission has arrived, go to it. First we need to turn towards it:
-		adjustRateParams(true); // isSpotTurning = true
+		adjustRateParams(true); //  // adjust yaw PIDs for spot turning
 		setStateMachineState(WP_TURNING);
 
 		cte_begin_mission();
@@ -194,6 +194,10 @@ void LawnmowerControl::workStateMachine()
 #ifdef DEBUG_MY_PRINT
 		PX4_INFO("Mission ended - turning off what we needed for the mission");
 #endif // DEBUG_MY_PRINT
+
+		if (_isTurningPids) {
+			adjustRateParams(false); // reset to straight run PIDs
+		}
 
 		setStateMachineState(POS_STATE_NONE); // just rest at the end of the mission
 
@@ -250,15 +254,15 @@ bool LawnmowerControl::updateBearings()
 	return PX4_ISFINITE(_yaw_error);
 }
 
-void LawnmowerControl::adjustRateParams(bool isSpotTurning)
+void LawnmowerControl::adjustRateParams(bool setSpotTurningPids)
 {
-	// locate parameters for yaw rate control we want to replace:
+	// locate parameters for yaw rate control we want to override:
 	param_t p_yaw_rate_p = param_find("RO_YAW_RATE_P");
 	param_t p_yaw_rate_i = param_find("RO_YAW_RATE_I");
 	param_t p_yaw_rate_lim = param_find("RO_YAW_RATE_LIM");
 	param_t p_yaw_p = param_find("RO_YAW_P");
 
-	if (isSpotTurning) {
+	if (setSpotTurningPids) {
 		float new_yaw_rate_p = _param_lm_yaw_rate_t_p.get();
 
 		if (new_yaw_rate_p > FLT_EPSILON) {
@@ -266,7 +270,7 @@ void LawnmowerControl::adjustRateParams(bool isSpotTurning)
 			float new_yaw_rate_lim = _param_lm_yaw_rate_t_lim.get();
 			float new_yaw_p = _param_lm_yaw_t_p.get();
 
-			PX4_WARN("Spot turning: YAW_RATE_P: %.3f  YAW_RATE_I: %.4f  YAW_RATE_LIM: %.1f  YAW_P: %.3f",
+			PX4_WARN("Turning PIDs: YAW_RATE: P: %.3f  I: %.4f  LIM: %.1f  YAW_P: %.3f",
 				 (double)new_yaw_rate_p, (double)new_yaw_rate_i, (double)new_yaw_rate_lim, (double)new_yaw_p);
 
 			param_set(p_yaw_rate_p, &new_yaw_rate_p);
@@ -274,6 +278,8 @@ void LawnmowerControl::adjustRateParams(bool isSpotTurning)
 			param_set(p_yaw_rate_lim, &new_yaw_rate_lim);
 			param_set(p_yaw_p, &new_yaw_p);
 		}
+
+		_isTurningPids = true;
 
 	} else {
 		float new_yaw_rate_p = _param_lm_yaw_rate_p.get();
@@ -283,7 +289,7 @@ void LawnmowerControl::adjustRateParams(bool isSpotTurning)
 			float new_yaw_rate_lim = _param_lm_yaw_rate_lim.get();
 			float new_yaw_p = _param_lm_yaw_p.get();
 
-			PX4_WARN("Straight run: YAW_RATE_P: %.3f  YAW_RATE_I: %.4f  YAW_RATE_LIM: %.1f  YAW_P: %.3f",
+			PX4_WARN("Normal PIDs: YAW_RATE: P: %.3f  I: %.4f  LIM: %.1f  YAW_P: %.3f",
 				 (double)new_yaw_rate_p, (double)new_yaw_rate_i, (double)new_yaw_rate_lim, (double)new_yaw_p);
 
 			param_set(p_yaw_rate_p, &new_yaw_rate_p);
@@ -291,6 +297,8 @@ void LawnmowerControl::adjustRateParams(bool isSpotTurning)
 			param_set(p_yaw_rate_lim, &new_yaw_rate_lim);
 			param_set(p_yaw_p, &new_yaw_p);
 		}
+
+		_isTurningPids = false;
 	}
 
 	//param_notify_changes();

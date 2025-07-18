@@ -276,6 +276,7 @@ private:
 	bool _stateHasChanged{false};	// only good inside the loop
 
 	bool _isSpotTurning{false}; // true if we are in spot turning state, used to adjust the control logic
+	bool _isTurningPids{false}; // true if we are LM_YAW*T* parameters used for yaw control.
 
 	vehicle_attitude_s		_vehicle_attitude{};
 	vehicle_control_mode_s 		_vehicle_control_mode{};
