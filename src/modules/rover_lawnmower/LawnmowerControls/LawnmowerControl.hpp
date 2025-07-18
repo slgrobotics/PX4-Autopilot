@@ -324,7 +324,7 @@ private:
 	Vector2d _next_wp{NAN, NAN};
 
 	// from position setpoint triplet:
-	float _wp_current_dist{NAN};  		// meters, initialize to very large
+	float _wp_current_dist{NAN};  		// meters
 	float _wp_previous_dist{NAN};		// meters
 	float _wp_next_dist{NAN};		// meters
 

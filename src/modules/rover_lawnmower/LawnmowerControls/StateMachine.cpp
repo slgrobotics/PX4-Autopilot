@@ -91,6 +91,7 @@ void LawnmowerControl::workStateMachine()
 #endif // DEBUG_MY_PRINT
 			// DifferentialVelControl has switched from DRIVING to SPOT_TURNING, we try mirroring that.
 			// We are also closer than NAV_ACC_RAD radius to waypoint (with 1.2x margin), begin stopping phase:
+			adjustRateParams(true); // adjust yaw PIDs for spot turning
 			setStateMachineState(POS_STATE_STOPPING);
 		}
 
@@ -100,20 +101,25 @@ void LawnmowerControl::workStateMachine()
 
 		break;
 
-	case POS_STATE_STOPPING:			// we hit a waypoint and need to stop
+	case POS_STATE_STOPPING:			// we hit the waypoint's bubble and need to stop
 
 		// we need to monitor velocity here, and if it is below a threshold, we can switch to WP_ARRIVED state:
 
 #ifdef DEBUG_MY_PRINT
-		PX4_WARN("POS_STATE_STOPPING : initial velocity: ekf: %.2f   gps: %.2f m/s",
-			 (double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s);
+		PX4_WARN("POS_STATE_STOPPING : vel: ekf: %.2f  gps: %.2f m/s  curr dist: %.2f m",
+			 (double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s, (double)_wp_current_dist);
 #endif // DEBUG_MY_PRINT
 
-		setStateMachineState(WP_ARRIVED);
+		if (_isSpotTurning
+		    || (PX4_ISFINITE(_wp_current_dist)
+			&& _wp_current_dist > _param_nav_acc_rad.get() * 1.3f) // we are already departing from the waypoint
+		    || abs(_location_metrics.ekf_x_vel) < 0.05f) {
+			setStateMachineState(WP_ARRIVED);
+		}
 
 		break;
 
-	case WP_ARRIVED:				// reached waypoint, completely stopped. Make sure mission knows about it
+	case WP_ARRIVED:				// reached waypoint, stopped. Or already left it behind, departing
 
 		updateBearings();
 
@@ -127,7 +133,6 @@ void LawnmowerControl::workStateMachine()
 		} else {
 			// We have arrived to a waypoint, but there are more waypoints in the triplet,
 			// so we need to turn towards the next waypoint:
-			adjustRateParams(true); // adjust yaw PIDs for spot turning
 			setStateMachineState(WP_TURNING);
 		}
 
@@ -139,6 +144,12 @@ void LawnmowerControl::workStateMachine()
 		_decel_dist = _param_lm_decel_dist.get();	// LM_DECEL_DIST
 
 		updateBearings();
+
+#ifdef DEBUG_MY_PRINT
+		// PX4_WARN("WP_TURNING : vel: %.2f / %.2f m/s  curr dist: %.2f m  yaw err: %.1f deg",
+		// 	 (double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s, (double)_wp_current_dist,
+		// 	 (double)math::degrees(_yaw_error));
+#endif // DEBUG_MY_PRINT
 
 		if (!_isSpotTurning // _rover_speed_setpoint > FLT_EPSILON
 		    && fabsf(_yaw_error) < _param_rd_trans_trn_drv.get()
