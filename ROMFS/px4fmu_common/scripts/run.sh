@@ -33,6 +33,12 @@ export PATH=/home/pi/px4/bin:$PATH
 echo "PATH=" $PATH
 
 #
+echo "IP: making sure SD card emulation folders /fs/* exist..."
+#
+
+mkdir -pv /fs/mtd_caldata /fs/microsd/log /fs/microsd
+
+#
 echo "IP: setting parameters..."
 #
 
