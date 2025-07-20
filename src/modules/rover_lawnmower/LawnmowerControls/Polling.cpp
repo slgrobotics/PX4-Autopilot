@@ -202,6 +202,12 @@ void LawnmowerControl::updateSubscriptions()
 
 #endif // DEBUG_MY_PRINT
 
+		if (!_pos_sp_triplet.previous.valid) {
+			// Starting the mission, no previous waypoint, use current position as previous waypoint:
+	        	_prev_wp = Vector2d(_global_pos.lat, _global_pos.lon);
+		}
+
+
 	}
 
 	if (_global_local_proj_ref.isInitialized() && (_pos_sp_triplet.current.valid || _pos_sp_triplet.previous.valid
@@ -397,8 +403,9 @@ void LawnmowerControl::updateWaypoints()
 	    && PX4_ISFINITE(_pos_sp_triplet.previous.lon)) {
 		_prev_wp = Vector2d(_pos_sp_triplet.previous.lat, _pos_sp_triplet.previous.lon);
 
-	} else {
-		_prev_wp = Vector2d(NAN, NAN); // this is first leg - towards the first waypoint
+	// } else {
+	// already initialized to a starting point if this is start of the mission.
+	// 	_prev_wp = Vector2d(NAN, NAN); // this is first leg - towards the first waypoint
 	}
 
 	if (_pos_sp_triplet.next.valid && PX4_ISFINITE(_pos_sp_triplet.next.lat)

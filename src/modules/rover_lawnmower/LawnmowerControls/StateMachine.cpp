@@ -47,6 +47,24 @@ void LawnmowerControl::workStateMachine()
 	_yaw_error = NAN;
 	_abbe_error = NAN;
 
+	// === Figure out which set of PID parameters to use: ===
+	const float turning_params_threshold = math::max(math::min(_param_lm_accel_dist.get(),
+					       _param_lm_decel_dist.get()) * 0.8f, 1.0f);
+	const bool current_wp_is_close = PX4_ISFINITE(_wp_current_dist) && _wp_current_dist < turning_params_threshold;
+	const bool previous_wp_is_close = PX4_ISFINITE(_wp_previous_dist) && _wp_previous_dist < turning_params_threshold;
+	const bool isFlybyWaypoint = _location_metrics.ekf_x_vel > _param_ro_speed_lim.get() * 0.3f;
+
+	if ((current_wp_is_close || previous_wp_is_close) && !isFlybyWaypoint) {
+
+		// Close to either current or previous waypoint, use spot turning PIDs parameters:
+		adjustRateParams(true);
+
+	} else {
+		// Far from both waypoints, we can use normal driving PIDs:
+		adjustRateParams(false);
+	}
+	// =========================================================
+
 	switch (_pos_ctrl_state) {
 	case POS_STATE_NONE:				// "wound down" undefined/invalid state, no need controlling anything
 		break;
@@ -96,7 +114,7 @@ void LawnmowerControl::workStateMachine()
 #endif // DEBUG_MY_PRINT
 			// DifferentialVelControl has switched from DRIVING to SPOT_TURNING, we try mirroring that.
 			// We are also closer than NAV_ACC_RAD radius to waypoint (with 1.2x margin), begin stopping phase:
-			adjustRateParams(true); // adjust yaw PIDs for spot turning
+			//adjustRateParams(true); // adjust yaw PIDs for spot turning
 			setStateMachineState(POS_STATE_STOPPING);
 		}
 
@@ -163,7 +181,7 @@ void LawnmowerControl::workStateMachine()
 
 			// DifferentialVelControl has switched from SPOT_TURNING to DRIVING, we try mirroring that.
 			// We also checked if we are close enough to the target waypoint bearing:
-			adjustRateParams(false); // // adjust yaw PIDs for straight run
+			//adjustRateParams(false); // // adjust yaw PIDs for straight run
 			setStateMachineState(_accel_dist > FLT_EPSILON ? WP_DEPARTING : STRAIGHT_RUN);
 		}
 
@@ -198,7 +216,7 @@ void LawnmowerControl::workStateMachine()
 #endif // DEBUG_MY_PRINT
 
 		// First waypoint of the mission has arrived, go to it. First we need to turn towards it:
-		adjustRateParams(true); //  // adjust yaw PIDs for spot turning
+		//adjustRateParams(true); //  // adjust yaw PIDs for spot turning
 		setStateMachineState(WP_TURNING);
 
 		cte_begin_mission();
@@ -211,9 +229,9 @@ void LawnmowerControl::workStateMachine()
 		PX4_INFO("Mission ended - turning off what we needed for the mission");
 #endif // DEBUG_MY_PRINT
 
-		if (_isTurningPids) {
-			adjustRateParams(false); // reset to straight run PIDs
-		}
+		//if (_isTurningPids) {
+		//	adjustRateParams(false); // reset to straight run PIDs
+		//}
 
 		setStateMachineState(POS_STATE_NONE); // just rest at the end of the mission
 
@@ -272,6 +290,11 @@ bool LawnmowerControl::updateBearings()
 
 void LawnmowerControl::adjustRateParams(bool setSpotTurningPids)
 {
+	if (setSpotTurningPids == _isTurningPids) {
+		// no need to change PIDs settings, they are already set for the current state:
+		return;
+	}
+
 	// locate parameters for yaw rate control we want to override:
 	param_t p_yaw_rate_p = param_find("RO_YAW_RATE_P");
 	param_t p_yaw_rate_i = param_find("RO_YAW_RATE_I");

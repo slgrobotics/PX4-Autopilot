@@ -431,6 +431,7 @@ private:
 
 		(ParamFloat<px4::params::RO_YAW_RATE_P>)    _param_ro_yaw_rate_p,
 		(ParamFloat<px4::params::RO_YAW_RATE_I>)    _param_ro_yaw_rate_i,
+		(ParamFloat<px4::params::RO_SPEED_LIM>)     _param_ro_speed_lim,
 
 		(ParamFloat<px4::params::LM_YAW_RATE_T_P>)  _param_lm_yaw_rate_t_p, // yaw rate P gain in spot turn mode
 		(ParamFloat<px4::params::LM_YAW_RATE_T_I>)  _param_lm_yaw_rate_t_i,
