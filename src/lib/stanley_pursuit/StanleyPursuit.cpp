@@ -32,38 +32,28 @@
  ****************************************************************************/
 
 #include "StanleyPursuit.hpp"
-#include <mathlib/mathlib.h>
+#include <px4_platform_common/log.h>
 
-
-StanleyPursuit::StanleyPursuit(ModuleParams *parent) : ModuleParams(parent)
+using namespace matrix;
+namespace StanleyPursuit
 {
-	_param_handles.xtrack_gain = param_find("ST_XTRACK_GAIN");
-	_param_handles.softening_factor = param_find("ST_SOFTENING");
-	updateParams();
-}
-
-void StanleyPursuit::updateParams()
+float calcTargetBearing(pure_pursuit_status_s &pure_pursuit_status, const float xtrack_gain,
+			const float lookahead_max, const float softening_factor, const Vector2f &curr_wp_ned, const Vector2f &prev_wp_ned,
+			const Vector2f &curr_pos_ned, const float vehicle_speed)
 {
-	param_get(_param_handles.xtrack_gain, &_params.xtrack_gain);
-	param_get(_param_handles.softening_factor, &_params.softening_factor);
+//	return 0.0f; // Placeholder for the actual implementation
 
-	ModuleParams::updateParams();
-}
-
-float StanleyPursuit::calcDesiredHeading(const Vector2f &curr_wp_ned, const Vector2f &prev_wp_ned,
-		const Vector2f &curr_pos_ned,
-		const float vehicle_speed)
-{
-	//PX4_INFO_RAW("StanleyPursuit::calcDesiredHeading()\n");
+	//PX4_INFO_RAW("StanleyPursuit::calcTargetBearing()\n");
 
 	// Check input validity:
-	if (!curr_wp_ned.isAllFinite() || !curr_pos_ned.isAllFinite() || vehicle_speed < -FLT_EPSILON
-	    || !PX4_ISFINITE(vehicle_speed) || !prev_wp_ned.isAllFinite()) {
+	if (!curr_wp_ned.isAllFinite() || !curr_pos_ned.isAllFinite() || !PX4_ISFINITE(vehicle_speed)
+	    || !prev_wp_ned.isAllFinite()) {
 		return NAN;
 	}
 
 	const Vector2f P_to_C = curr_wp_ned - prev_wp_ned;
-	const Vector2f to_C_norm = (curr_wp_ned - curr_pos_ned).normalized();
+	const Vector2f curr_pos_to_curr_wp = curr_wp_ned - curr_pos_ned;
+	const Vector2f to_C_norm = curr_pos_to_curr_wp.normalized();
 
 	if (P_to_C.length() < 1.0e-6f) {
 
@@ -107,7 +97,7 @@ float StanleyPursuit::calcDesiredHeading(const Vector2f &curr_wp_ned, const Vect
 
 	// ========================================== */
 
-	float xtrack_factor = -atanf(_params.xtrack_gain * crosstrack_error / (_params.softening_factor + math::max(
+	float xtrack_factor = -atanf(xtrack_gain * crosstrack_error / (softening_factor + math::max(
 					     vehicle_speed, 0.0f)));
 
 
@@ -116,9 +106,18 @@ float StanleyPursuit::calcDesiredHeading(const Vector2f &curr_wp_ned, const Vect
 	//	     (double)(crosstrack_error * 100.0f), (double)vehicle_speed, (double)xtrack_factor,
 	//	     (double)math::degrees(xtrack_factor), (double)math::degrees(bearing_to_C));
 
-	float desired_heading = wrap_pi(parallel_heading + xtrack_factor);
+	float target_bearing = wrap_pi(parallel_heading + xtrack_factor);
 
-	//PX4_INFO_RAW("desired_heading: %.2f deg\n", (double)math::degrees(desired_heading));
+	//PX4_INFO_RAW("target_bearing: %.2f deg\n", (double)math::degrees(target_bearing));
 
-	return desired_heading;
+	const float bearing_to_curr_waypoint = matrix::wrap_pi(atan2f(curr_pos_to_curr_wp(1), curr_pos_to_curr_wp(0)));
+
+	pure_pursuit_status.lookahead_distance = NAN;
+	pure_pursuit_status.target_bearing = target_bearing;
+	pure_pursuit_status.crosstrack_error = crosstrack_error;
+	pure_pursuit_status.distance_to_waypoint = curr_pos_to_curr_wp.norm();
+	pure_pursuit_status.bearing_to_waypoint = bearing_to_curr_waypoint;
+	return target_bearing;
 }
+} // namespace StanleyPursuit
+

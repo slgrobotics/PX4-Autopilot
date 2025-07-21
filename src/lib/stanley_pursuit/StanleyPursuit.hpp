@@ -31,14 +31,6 @@
  *
  ****************************************************************************/
 
-#pragma once
-
-#include <matrix/math.hpp>
-#include <px4_platform_common/log.h>
-#include <px4_platform_common/module_params.h>
-
-using namespace matrix;
-
 /**
  * @file StanleyPursuit.hpp
  *
@@ -84,41 +76,36 @@ using namespace matrix;
  * Input:  Current/prev waypoint and the vehicle position in NED frame as well as the vehicle ground speed.
  * Output: Calculates the desired heading towards the P--C line segment.
 */
-class StanleyPursuit : public ModuleParams
+
+#pragma once
+#include <matrix/math.hpp>
+#include <mathlib/mathlib.h>
+#include <px4_platform_common/module_params.h>
+#include <uORB/topics/pure_pursuit_status.h>
+
+using namespace matrix;
+
+namespace StanleyPursuit
 {
-public:
-	StanleyPursuit(ModuleParams *parent);
-	~StanleyPursuit() = default;
+/**
+ * @brief Return bearing towards the intersection point between a circle with a radius of
+ * vehicle_speed * lookahead_gain around the vehicle and an extended line segment from the previous to the current waypoint.
+ * Exceptions:
+ * 	Will return bearing towards the current waypoint if it is closer to the vehicle than the lookahead or if the waypoints overlap.
+ * 	Will return bearing towards the closest point on the path if there are no intersection points (crosstrack error bigger than lookahead).
+ * 	Will return NAN if input is invalid.
+ * @param pure_pursuit_status Pure pursuit struct
+ * @param xtrack_gain Tuning parameter [-]
+ * @param lookahead_max not used - compatibility with pure pursuit
+ * @param softening_factor Tuning parameter for softening the movement
+ * @param curr_wp_ned North/East coordinates of current waypoint in NED frame [m].
+ * @param prev_wp_ned North/East coordinates of previous waypoint in NED frame [m].
+ * @param curr_pos_ned North/East coordinates of current position of the vehicle in NED frame [m].
+ * @param vehicle_speed Vehicle speed [m/s].
+ * @return Target bearing [rad]
+ */
+float calcTargetBearing(pure_pursuit_status_s &pure_pursuit_status, float xtrack_gain, float lookahead_max,
+			float softening_factor, const Vector2f &curr_wp_ned, const Vector2f &prev_wp_ned, const Vector2f &curr_pos_ned,
+			float vehicle_speed);
 
-	/**
-	 * @brief Return steering angle towards the line segment from the previous to the current waypoint.
-	 * Exceptions:
-	 * 	Will return NAN if input is invalid.
-	 * @param curr_wp_ned North/East coordinates of current waypoint in NED frame [m].
-	 * @param prev_wp_ned North/East coordinates of previous waypoint in NED frame [m].
-	 * @param curr_pos_ned North/East coordinates of current position of the vehicle in NED frame [m].
-	 * @param vehicle_speed Vehicle ground speed [m/s].
-	 *
-	 * @param ST_XTRACK_GAIN Tuning parameter [-]
-	 * @param ST_SOFTENING Maximum lookahead distance [m]
-	 */
-	float calcDesiredHeading(const Vector2f &curr_wp_ned, const Vector2f &prev_wp_ned, const Vector2f &curr_pos_ned,
-				 float vehicle_speed);
-
-protected:
-	/**
-	 * @brief Update the parameters of the module.
-	 */
-	void updateParams() override;
-
-	struct {
-		param_t xtrack_gain;
-		param_t softening_factor;
-	} _param_handles{};
-
-	struct {
-		float xtrack_gain{1.f};
-		float softening_factor{.1f};
-	} _params{};
-private:
-};
+}
