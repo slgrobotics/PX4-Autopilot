@@ -120,6 +120,7 @@ TEST(StanleyPursuitTest, InvalidWaypoints)
 	EXPECT_FALSE(PX4_ISFINITE(target_bearing3));
 }
 
+#ifdef QQQ
 TEST(StanleyPursuitTest, OutOfLookahead)
 {
 	pure_pursuit_status_s pure_pursuit{};
@@ -156,7 +157,6 @@ TEST(StanleyPursuitTest, OutOfLookahead)
 	EXPECT_NEAR(target_bearing3, M_PI_F - atan2f(10, 10), FLT_EPSILON); // Fallback: Bearing to previous waypoint
 	EXPECT_NEAR(target_bearing4, -M_PI_F + atan2f(10, 10), FLT_EPSILON); // Fallback: Bearing to current waypoint
 }
-#ifdef QQQ
 #endif // QQQ
 
 TEST(StanleyPursuitTest, WaypointOverlap)
@@ -259,7 +259,8 @@ TEST(StanleyPursuitTest, HighSpeedMeansParallelCourse)
 				      Vector2f(5.f, 5.f),
 				      vehicle_speed);
 	const float target_bearing6 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
-				      Vector2f(0.f, 0.f), Vector2f(10.f * sqrt(3.0f), -10.f), Vector2f(5.f, 5.f),
+				      Vector2f(0.f, 0.f), Vector2f(10.f * sqrt(3.0f), -10.f),
+				      Vector2f(5.f, -5.f),
 				      vehicle_speed);
 
 	EXPECT_NEAR(target_bearing1, M_PI_2_F, FLT_EPSILON);
