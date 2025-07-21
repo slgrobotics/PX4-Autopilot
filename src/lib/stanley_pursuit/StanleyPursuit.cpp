@@ -68,7 +68,7 @@ float calcTargetBearing(pure_pursuit_status_s &pure_pursuit_status, const float 
 
 		//PX4_INFO_RAW("V: %f   %f\n", (double)curr_pos_ned(0), (double)curr_pos_ned(1));
 		//PX4_INFO_RAW("to_C_norm: %f   %f\n", (double)to_C_norm(0), (double)to_C_norm(1));
-		PX4_INFO_RAW("heading_to_C V to C: %f   %f\n", (double)heading_to_C, (double)math::degrees(heading_to_C));
+		PX4_INFO_RAW("P_to_C.length() very small. heading_to_C V to C: %f rad = %.1f deg\n", (double)heading_to_C, (double)math::degrees(heading_to_C));
 
 		return heading_to_C;
 	}

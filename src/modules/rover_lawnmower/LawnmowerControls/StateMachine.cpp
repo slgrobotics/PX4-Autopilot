@@ -63,6 +63,7 @@ void LawnmowerControl::workStateMachine()
 		// Far from both waypoints, we can use normal driving PIDs:
 		adjustRateParams(false);
 	}
+
 	// =========================================================
 
 	switch (_pos_ctrl_state) {
