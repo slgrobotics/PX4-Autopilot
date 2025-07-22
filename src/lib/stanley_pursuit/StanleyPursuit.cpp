@@ -37,11 +37,87 @@
 using namespace matrix;
 namespace StanleyPursuit
 {
+
 float calcTargetBearing(pure_pursuit_status_s &pure_pursuit_status, const float xtrack_gain,
+			const float lookahead_max1, const float softening_factor, const Vector2f &curr_wp_ned, const Vector2f &prev_wp_ned,
+			const Vector2f &curr_pos_ned, const float vehicle_speed)
+{
+	const float lookahead_gain = 1.0f;
+	const float lookahead_max = 10.0f;
+	const float lookahead_min = 1.0f;
+
+	// Check input validity
+	if (!curr_wp_ned.isAllFinite() || !curr_pos_ned.isAllFinite() || !PX4_ISFINITE(vehicle_speed)
+	    || !prev_wp_ned.isAllFinite()) {
+		return NAN;
+	}
+
+	const float lookahead_distance = math::constrain(lookahead_gain * fabsf(vehicle_speed), lookahead_min, lookahead_max);
+	const Vector2f curr_pos_to_curr_wp = curr_wp_ned - curr_pos_ned;
+	const Vector2f prev_wp_to_curr_wp = curr_wp_ned - prev_wp_ned;
+	const Vector2f prev_wp_to_curr_pos = curr_pos_ned - prev_wp_ned;
+	const Vector2f prev_wp_to_curr_wp_u = prev_wp_to_curr_wp.unit_or_zero();
+	const Vector2f position_along_path = (prev_wp_to_curr_pos * prev_wp_to_curr_wp_u) *
+					     prev_wp_to_curr_wp_u; // Projection of prev_wp_to_curr_pos onto prev_wp_to_curr_wp
+	const Vector2f curr_pos_to_path = position_along_path -
+					  prev_wp_to_curr_pos; // Shortest vector from the current position to the path
+	const float crosstrack_error = sign(prev_wp_to_curr_wp(1) * curr_pos_to_path(
+			0) - prev_wp_to_curr_wp(0) * curr_pos_to_path(1)) * curr_pos_to_path.norm();
+	const float bearing_to_curr_waypoint = matrix::wrap_pi(atan2f(curr_pos_to_curr_wp(1), curr_pos_to_curr_wp(0)));
+	float target_bearing{NAN};
+
+	if (curr_pos_to_curr_wp.norm() < lookahead_distance
+	    || prev_wp_to_curr_wp.norm() <
+	    FLT_EPSILON) { // Target current waypoint if closer to it than lookahead or waypoints overlap
+		target_bearing = bearing_to_curr_waypoint;
+
+	} else if (fabsf(crosstrack_error) >
+		   lookahead_distance) { // Path segment is outside of lookahead (No intersection point)
+
+		const Vector2f prev_wp_to_closest_point_on_path = curr_pos_to_path + prev_wp_to_curr_pos;
+		const Vector2f curr_wp_to_closest_point_on_path = curr_pos_to_path - curr_pos_to_curr_wp;
+
+		if (prev_wp_to_closest_point_on_path * prev_wp_to_curr_wp <
+		    FLT_EPSILON) { // Target previous waypoint if closest point is on the the extended path segment "behind" previous waypoint
+			target_bearing = matrix::wrap_pi(atan2f(-prev_wp_to_curr_pos(1), -prev_wp_to_curr_pos(0)));
+
+		} else if (curr_wp_to_closest_point_on_path * prev_wp_to_curr_wp >
+			   FLT_EPSILON) { // Target current waypoint if closest point is on the extended path segment "ahead" of current waypoint
+			target_bearing = bearing_to_curr_waypoint;
+
+		} else { // Target closest point on path
+			target_bearing = matrix::wrap_pi(atan2f(curr_pos_to_path(1), curr_pos_to_path(0)));
+		}
+
+
+	} else { // Regular Stanley pursuit
+
+		float xtrack_factor = -atanf(xtrack_gain * crosstrack_error /
+					     (softening_factor + math::max(vehicle_speed, 0.0f)));
+
+		const float parallel_heading = wrap_pi(atan2f(prev_wp_to_curr_wp(1), prev_wp_to_curr_wp(0)));	// angle to North vector (X axis)
+
+		// PX4_INFO_RAW("PH: %.2f deg   Xtrk: %.1f cm  speed: %.3f   XtFctr: %f rad  %f deg   bearing_to_C: %f deg\n",
+		// 	     (double)math::degrees(parallel_heading),
+		// 	     (double)(crosstrack_error * 100.0f), (double)vehicle_speed, (double)xtrack_factor,
+		// 	     (double)math::degrees(xtrack_factor), (double)math::degrees(bearing_to_curr_waypoint));
+
+		target_bearing = wrap_pi(parallel_heading + xtrack_factor);
+	}
+
+	pure_pursuit_status.lookahead_distance = lookahead_distance;
+	pure_pursuit_status.target_bearing = target_bearing;
+	pure_pursuit_status.crosstrack_error = crosstrack_error;
+	pure_pursuit_status.distance_to_waypoint = curr_pos_to_curr_wp.norm();
+	pure_pursuit_status.bearing_to_waypoint = bearing_to_curr_waypoint;
+	return target_bearing;
+
+} // calcTargetBearing
+
+float calcTargetBearing1(pure_pursuit_status_s &pure_pursuit_status, const float xtrack_gain,
 			const float lookahead_max, const float softening_factor, const Vector2f &curr_wp_ned, const Vector2f &prev_wp_ned,
 			const Vector2f &curr_pos_ned, const float vehicle_speed)
 {
-//	return 0.0f; // Placeholder for the actual implementation
 
 	//PX4_INFO_RAW("StanleyPursuit::calcTargetBearing()\n");
 

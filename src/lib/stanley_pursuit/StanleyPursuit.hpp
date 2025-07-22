@@ -104,6 +104,10 @@ namespace StanleyPursuit
  * @param vehicle_speed Vehicle speed [m/s].
  * @return Target bearing [rad]
  */
+float calcTargetBearing1(pure_pursuit_status_s &pure_pursuit_status, float xtrack_gain, float lookahead_max,
+			float softening_factor, const Vector2f &curr_wp_ned, const Vector2f &prev_wp_ned, const Vector2f &curr_pos_ned,
+			float vehicle_speed);
+
 float calcTargetBearing(pure_pursuit_status_s &pure_pursuit_status, float xtrack_gain, float lookahead_max,
 			float softening_factor, const Vector2f &curr_wp_ned, const Vector2f &prev_wp_ned, const Vector2f &curr_pos_ned,
 			float vehicle_speed);
