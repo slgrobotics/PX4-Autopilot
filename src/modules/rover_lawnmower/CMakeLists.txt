@@ -52,7 +52,6 @@ px4_add_module(
 		px4_work_queue
 		rover_control
 		pure_pursuit
-		stanley_pursuit
 	MODULE_CONFIG
 		module.yaml
 )
