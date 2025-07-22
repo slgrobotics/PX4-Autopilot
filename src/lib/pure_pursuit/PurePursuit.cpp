@@ -45,6 +45,10 @@ float calcTargetBearing(pure_pursuit_status_s &pure_pursuit_status, const float 
 		return NAN;
 	}
 
+	// printf("        P: %f   %f\n", (double)prev_wp_ned(0), (double)prev_wp_ned(1));
+	// printf("        C: %f   %f\n", (double)curr_wp_ned(0), (double)curr_wp_ned(1));
+	// printf("        V: %f   %f\n", (double)curr_pos_ned(0), (double)curr_pos_ned(1));
+
 	const float lookahead_distance = math::constrain(lookahead_gain * fabsf(vehicle_speed), lookahead_min, lookahead_max);
 	const Vector2f curr_pos_to_curr_wp = curr_wp_ned - curr_pos_ned;
 	const Vector2f prev_wp_to_curr_wp = curr_wp_ned - prev_wp_ned;
@@ -58,6 +62,11 @@ float calcTargetBearing(pure_pursuit_status_s &pure_pursuit_status, const float 
 			0) - prev_wp_to_curr_wp(0) * curr_pos_to_path(1)) * curr_pos_to_path.norm();
 	const float bearing_to_curr_waypoint = matrix::wrap_pi(atan2f(curr_pos_to_curr_wp(1), curr_pos_to_curr_wp(0)));
 	float target_bearing{NAN};
+
+	// printf("P_to_C.length() %.2f m   V to C bearing: %f rad = %.1f deg\n", (double)prev_wp_to_curr_wp.length(),
+	// 		(double)bearing_to_curr_waypoint, (double)math::degrees(bearing_to_curr_waypoint));
+
+	bool useStanleyPursuit = true;
 
 	if (curr_pos_to_curr_wp.norm() < lookahead_distance
 	    || prev_wp_to_curr_wp.norm() <
@@ -82,6 +91,23 @@ float calcTargetBearing(pure_pursuit_status_s &pure_pursuit_status, const float 
 			target_bearing = matrix::wrap_pi(atan2f(curr_pos_to_path(1), curr_pos_to_path(0)));
 		}
 
+	} else if (useStanleyPursuit) { // Stanley pursuit
+
+		const float xtrack_gain = 1.7f; // Gain for crosstrack error
+		const float softening_factor = 1.0f; // Softening factor (not zero)
+
+		float xtrack_factor = -atanf(xtrack_gain * crosstrack_error /
+					     (softening_factor + math::max(vehicle_speed, 0.0f)));
+
+		const float parallel_heading = wrap_pi(atan2f(prev_wp_to_curr_wp(1),
+						       prev_wp_to_curr_wp(0)));	// angle to North vector (X axis)
+
+		// printf("PH: %.2f deg   Xtrk: %.1f cm  speed: %.3f   XtFctr: %f rad  %f deg   bearing_to_C: %f deg\n",
+		// 	     (double)math::degrees(parallel_heading),
+		// 	     (double)(crosstrack_error * 100.0f), (double)vehicle_speed, (double)xtrack_factor,
+		// 	     (double)math::degrees(xtrack_factor), (double)math::degrees(bearing_to_curr_waypoint));
+
+		target_bearing = wrap_pi(parallel_heading + xtrack_factor);
 
 	} else { // Regular pure pursuit
 		const float line_extension = sqrt(powf(lookahead_distance, 2.f) - powf(curr_pos_to_path.norm(),
@@ -92,6 +118,7 @@ float calcTargetBearing(pure_pursuit_status_s &pure_pursuit_status, const float 
 		target_bearing = matrix::wrap_pi(atan2f(curr_pos_to_intersection_point(1), curr_pos_to_intersection_point(0)));
 	}
 
+	//printf("target_bearing: %f rad = %.2f deg\n---------\n", (double)target_bearing, (double)math::degrees(target_bearing));
 
 	pure_pursuit_status.lookahead_distance = lookahead_distance;
 	pure_pursuit_status.target_bearing = target_bearing;
