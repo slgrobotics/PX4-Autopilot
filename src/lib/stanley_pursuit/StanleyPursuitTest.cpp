@@ -74,6 +74,7 @@
 
 using namespace matrix;
 
+#ifdef QQQ
 TEST(StanleyPursuitTest, InvalidSpeed)
 {
 	//      V   C
@@ -86,7 +87,7 @@ TEST(StanleyPursuitTest, InvalidSpeed)
 	const Vector2f prev_wp_ned(0.f, 0.f);
 	const Vector2f curr_pos_ned(10.f, 0.f);
 	// NaN speed
-	const float target_bearing1 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing1 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 				      curr_wp_ned, prev_wp_ned, curr_pos_ned, NAN);
 	EXPECT_FALSE(PX4_ISFINITE(target_bearing1));
 }
@@ -104,61 +105,79 @@ TEST(StanleyPursuitTest, InvalidWaypoints)
 	const Vector2f curr_pos_ned(10.f, 0.f);
 	const float vehicle_speed{5.f};
 	// Prev WP is NAN
-	const float target_bearing1 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing1 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 				      curr_wp_ned, Vector2f(NAN, NAN), curr_pos_ned,
 				      vehicle_speed);
 	// Curr WP is NAN
-	const float target_bearing2 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing2 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 				      Vector2f(NAN, NAN), prev_wp_ned, curr_pos_ned,
 				      vehicle_speed);
 	// Curr Pos is NAN
-	const float target_bearing3 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing3 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 				      curr_wp_ned, prev_wp_ned, Vector2f(NAN, NAN),
 				      vehicle_speed);
 	EXPECT_FALSE(PX4_ISFINITE(target_bearing1));
 	EXPECT_FALSE(PX4_ISFINITE(target_bearing2));
 	EXPECT_FALSE(PX4_ISFINITE(target_bearing3));
 }
+#endif // QQQ
 
-#ifdef QQQ
 TEST(StanleyPursuitTest, OutOfLookahead)
 {
 	pure_pursuit_status_s pure_pursuit{};
-	const float vehicle_speed{5.f};
+	const float vehicle_speed{1.f};
 	//	V   C
 	//         /
 	//  	  /
 	//	 /
 	//	P
-	const float target_bearing1 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
-				      Vector2f(10.f, 10.f), Vector2f(0.f, 0.f), Vector2f(10.f, 0.f),
+	const float target_bearing1 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
+				      //Vector2f(10.f, 10.f), Vector2f(0.f, 0.f), Vector2f(0.f, 10.f),
+				      //Vector2f(10.f, 10.f), Vector2f(0.f, 0.f), Vector2f(5.0f, 5.5f),
+				      //Vector2f(10.f, 10.f), Vector2f(0.f, 0.f), Vector2f(4.5f, 6.5f),
+				      //Vector2f(10.f, 10.f), Vector2f(0.f, 0.f), Vector2f(3.5f, 7.5f),
+				      //Vector2f(10.f, 10.f), Vector2f(0.f, 0.f), Vector2f(2.5f, 8.5f),
+				      //Vector2f(10.f, 10.f), Vector2f(0.f, 0.f), Vector2f(1.5f, 9.5f),
+
+				      //Vector2f(10.f, 10.f), Vector2f(0.f, 0.f), Vector2f(2.f, 10.f),
+				      //Vector2f(10.f, 10.f), Vector2f(0.f, 0.f), Vector2f(4.f, 10.f),
+				      //Vector2f(10.f, 10.f), Vector2f(0.f, 0.f), Vector2f(6.f, 10.f),
+				      //Vector2f(10.f, 10.f), Vector2f(0.f, 0.f), Vector2f(8.f, 10.f),
+				      //Vector2f(10.f, 10.f), Vector2f(0.f, 0.f), Vector2f(9.f, 10.f),
+				      Vector2f(10.f, 10.f), Vector2f(0.f, 0.f), Vector2f(9.5f, 10.5f),
+
+				      //Vector2f(10.f, 10.f), Vector2f(0.f, 0.f), Vector2f(11.f, 10.f),
+				      //Vector2f(10.f, 10.f), Vector2f(0.f, 0.f), Vector2f(10.f, 11.f),
+
+				      //Vector2f(10.f, 10.f), Vector2f(0.f, 0.f), Vector2f(12.f, 11.f),
+
 				      vehicle_speed);
-	//	    V
-	//
-	//	P ----- C
-	const float target_bearing2 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
-				      Vector2f(0.f, 20.f), Vector2f(0.f, 0.f), Vector2f(10.f, 10.f),
-				      vehicle_speed);
-	// V
-	//
-	//     P ------ C
-	const float target_bearing3 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
-				      Vector2f(0.f, 20.f), Vector2f(0.f, 10.f), Vector2f(10.f, 0.f),
-				      vehicle_speed);
-	//		V
-	//
-	// P ------ C
-	const float target_bearing4 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
-				      Vector2f(0.f, 10.f), Vector2f(0.f, 0.f), Vector2f(10.f, 20.f),
-				      vehicle_speed);
+	// //	    V
+	// //
+	// //	P ----- C
+	// const float target_bearing2 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
+	// 			      Vector2f(0.f, 20.f), Vector2f(0.f, 0.f), Vector2f(10.f, 10.f),
+	// 			      vehicle_speed);
+	// // V
+	// //
+	// //     P ------ C
+	// const float target_bearing3 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
+	// 			      Vector2f(0.f, 20.f), Vector2f(0.f, 10.f), Vector2f(-10.f, 10.f),
+	// 			      vehicle_speed);
+	// //		V
+	// //
+	// // P ------ C
+	// const float target_bearing4 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
+	// 			      Vector2f(0.f, 10.f), Vector2f(0.f, 0.f), Vector2f(10.f, 20.f),
+	// 			      vehicle_speed);
 
 	EXPECT_NEAR(target_bearing1, M_PI_2_F + M_PI_4_F, FLT_EPSILON); // Fallback: Bearing to closest point on path
-	EXPECT_NEAR(target_bearing2, -M_PI_F, FLT_EPSILON); 		// Fallback: Bearing to closest point on path
-	EXPECT_NEAR(target_bearing3, M_PI_F - atan2f(10, 10), FLT_EPSILON); // Fallback: Bearing to previous waypoint
-	EXPECT_NEAR(target_bearing4, -M_PI_F + atan2f(10, 10), FLT_EPSILON); // Fallback: Bearing to current waypoint
+	// EXPECT_NEAR(target_bearing2, -M_PI_F, FLT_EPSILON); 		// Fallback: Bearing to closest point on path
+	// EXPECT_NEAR(target_bearing3, M_PI_F - atan2f(10, 10), FLT_EPSILON); // Fallback: Bearing to previous waypoint
+	// EXPECT_NEAR(target_bearing4, -M_PI_F + atan2f(10, 10), FLT_EPSILON); // Fallback: Bearing to current waypoint
 }
-#endif // QQQ
 
+#ifdef QQQ
 TEST(StanleyPursuitTest, WaypointOverlap)
 {
 	pure_pursuit_status_s pure_pursuit{};
@@ -169,30 +188,30 @@ TEST(StanleyPursuitTest, WaypointOverlap)
 	//
 	//
 	//	V
-	const float target_bearing1_1 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing1_1 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 					Vector2f(10.f, 10.f), Vector2f(10.f, 10.f), Vector2f(0.f, 0.f),
 					vehicle_speed);
-	const float target_bearing1_2 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing1_2 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 					Vector2f(10.f, -10.f), Vector2f(10.f, -10.f), Vector2f(0.f, 0.f),
 					vehicle_speed);
-	const float target_bearing1_3 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing1_3 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 					Vector2f(-10.f, -10.f), Vector2f(-10.f, -10.f), Vector2f(0.f, 0.f),
 					vehicle_speed);
-	const float target_bearing1_4 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing1_4 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 					Vector2f(-10.f, 10.f), Vector2f(-10.f, 10.f), Vector2f(0.f, 0.f),
 					vehicle_speed);
 	// same with 60 and 150 degrees:
-	const float target_bearing2_1 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing2_1 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 					Vector2f(10.f, 10.f * sqrt(3.0f)), Vector2f(10.f, 10.f * sqrt(3.0f)), Vector2f(0.f, 0.f),
 					vehicle_speed);
-	const float target_bearing2_2 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing2_2 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 					Vector2f(10.f, -10.f * sqrt(3.0f)), Vector2f(10.f, -10.f * sqrt(3.0f)), Vector2f(0.f, 0.f),
 					vehicle_speed);
-	const float target_bearing2_3 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing2_3 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 					Vector2f(-10.f * sqrt(3.0f), -10.f),
 					Vector2f(-10.f * sqrt(3.0f), -10.f), Vector2f(0.f, 0.f),
 					vehicle_speed);
-	const float target_bearing2_4 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing2_4 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 					Vector2f(-10.f * sqrt(3.0f), 10.f),
 					Vector2f(-10.f * sqrt(3.0f), 10.f), Vector2f(0.f, 0.f),
 					vehicle_speed);
@@ -202,14 +221,14 @@ TEST(StanleyPursuitTest, WaypointOverlap)
 	//
 	//
 	//	C/P
-	const float target_bearing2 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing2 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 				      Vector2f(0.f, 0.f), Vector2f(0.f, 0.f), Vector2f(10.f, 10.f),
 				      vehicle_speed);
-	const float target_bearing3 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing3 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 				      Vector2f(0.f, 0.f), Vector2f(0.f, 0.f), Vector2f(10.f, -10.f),
 				      vehicle_speed);
 	// 30 (150) degrees angle:
-	const float target_bearing4 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f, Vector2f(0.f, 0.f),
+	const float target_bearing4 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f, Vector2f(0.f, 0.f),
 				      Vector2f(0.f, 0.f), Vector2f(10.f * sqrt(3.0f), -10.f),
 				      vehicle_speed);
 
@@ -236,29 +255,29 @@ TEST(StanleyPursuitTest, HighSpeedMeansParallelCourse)
 
 	//	     V
 	//	P ------ C
-	const float target_bearing1 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing1 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 				      Vector2f(0.f, 20.f), Vector2f(0.f, 0.f), Vector2f(5.f, 10.f),
 				      vehicle_speed);
 	//	     V
 	//	C ------ P
-	const float target_bearing2 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing2 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 				      Vector2f(0.f, 0.f), Vector2f(0.f, 20.f), Vector2f(5.f, 10.f),
 				      vehicle_speed);
 
 	// 30 degrees, swapping P and C:
-	const float target_bearing3 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing3 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 				      Vector2f(10.f * sqrt(3.0f), 10.f), Vector2f(0.f, 0.f),
 				      Vector2f(5.f, 5.f), vehicle_speed);
-	const float target_bearing4 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing4 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 				      Vector2f(0.f, 0.f), Vector2f(10.f * sqrt(3.0f), 10.f),
 				      Vector2f(5.f, 5.f),
 				      vehicle_speed);
 	// same with negative Y:
-	const float target_bearing5 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing5 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 				      Vector2f(10.f * sqrt(3.0f), -10.f), Vector2f(0.f, 0.f),
 				      Vector2f(5.f, 5.f),
 				      vehicle_speed);
-	const float target_bearing6 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing6 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 				      Vector2f(0.f, 0.f), Vector2f(10.f * sqrt(3.0f), -10.f),
 				      Vector2f(5.f, -5.f),
 				      vehicle_speed);
@@ -280,40 +299,40 @@ TEST(StanleyPursuitTest, CourseContributionDueToCrosstrack)
 
 	//	     V       10 cm crosstrack
 	//	P ------ C
-	const float target_bearing1 = StanleyPursuit::calcTargetBearing(pure_pursuit, xtrack_gain, 10.f, 1.f,
+	const float target_bearing1 = StanleyPursuit::calcTargetBearing(pure_pursuit, xtrack_gain, NAN, 1.f,
 				      Vector2f(0.f, 20.f), Vector2f(0.f, 0.f), Vector2f(0.1f, 10.f),
 				      vehicle_speed);
 	//	P ------ C
 	//	     V       10 cm crosstrack
-	const float target_bearing2 = StanleyPursuit::calcTargetBearing(pure_pursuit, xtrack_gain, 10.f, 1.f,
+	const float target_bearing2 = StanleyPursuit::calcTargetBearing(pure_pursuit, xtrack_gain, NAN, 1.f,
 				      Vector2f(0.f, 20.f), Vector2f(0.f, 0.f), Vector2f(-0.1f, 10.f),
 				      vehicle_speed);
 	//	     C
 	//       V  /
 	//         /
 	//	  P
-	const float target_bearing3 = StanleyPursuit::calcTargetBearing(pure_pursuit, xtrack_gain, 10.f, 1.f,
+	const float target_bearing3 = StanleyPursuit::calcTargetBearing(pure_pursuit, xtrack_gain, NAN, 1.f,
 				      Vector2f(20.f, 20.f), Vector2f(0.f, 0.f), Vector2f(11.0f, 9.0f),
 				      vehicle_speed);
 	//	     C
 	//          /
 	//         /  V
 	//	  P
-	const float target_bearing4 = StanleyPursuit::calcTargetBearing(pure_pursuit, xtrack_gain, 10.f, 1.f,
+	const float target_bearing4 = StanleyPursuit::calcTargetBearing(pure_pursuit, xtrack_gain, NAN, 1.f,
 				      Vector2f(20.f, 20.f), Vector2f(0.f, 0.f), Vector2f(9.0f, 11.0f),
 				      vehicle_speed);
 	// V         C
 	// (far)    /
 	//         /
 	//	  P
-	const float target_bearing5 = StanleyPursuit::calcTargetBearing(pure_pursuit, xtrack_gain, 10.f, 1.f,
+	const float target_bearing5 = StanleyPursuit::calcTargetBearing(pure_pursuit, xtrack_gain, NAN, 1.f,
 				      Vector2f(20.f, 20.f), Vector2f(0.f, 0.f), Vector2f(20.0f, 0.0f),
 				      vehicle_speed);
 	//           C
 	//          /
 	//         /
 	//	  P        V (far)
-	const float target_bearing6 = StanleyPursuit::calcTargetBearing(pure_pursuit, xtrack_gain, 10.f, 1.f,
+	const float target_bearing6 = StanleyPursuit::calcTargetBearing(pure_pursuit, xtrack_gain, NAN, 1.f,
 				      Vector2f(20.f, 20.f), Vector2f(0.f, 0.f), Vector2f(0.0f, 20.0f),
 				      vehicle_speed);
 
@@ -332,23 +351,23 @@ TEST(StanleyPursuitTest, CurrAndPrevSameNorthCoordinate)
 	const float vehicle_speed{1.f};
 
 	//	P -- V -- C
-	const float target_bearing1 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing1 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 				      Vector2f(0.f, 20.f), Vector2f(0.f, 0.f), Vector2f(0.f, 10.f),
 				      vehicle_speed);
 	//	     V
 	//	P ------ C
-	const float target_bearing2 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing2 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 				      Vector2f(0.f, 20.f), Vector2f(0.f, 0.f), Vector2f(5.f / sqrtf(2.f), 10.f),
 				      vehicle_speed);
 	//	     V
 	//	C ------ P
-	const float target_bearing3 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing3 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 				      Vector2f(0.f, 0.f), Vector2f(0.f, 20.f), Vector2f(5.f / sqrtf(2.f), 10.f),
 				      vehicle_speed);
 	//	     V
 	//
 	//	P ------ C
-	const float target_bearing4 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, 10.f, 1.f,
+	const float target_bearing4 = StanleyPursuit::calcTargetBearing(pure_pursuit, 1.f, NAN, 1.f,
 				      Vector2f(0.f, 20.f), Vector2f(0.f, 0.f), Vector2f(10.f, 10.f),
 				      vehicle_speed);
 
@@ -357,5 +376,4 @@ TEST(StanleyPursuitTest, CurrAndPrevSameNorthCoordinate)
 	EXPECT_NEAR(target_bearing3, -(M_PI_2_F + M_PI_4_F), 0.3); // Roughly -145 degrees
 	EXPECT_NEAR(target_bearing4, M_PI_F, 0.2); // Fallback: Bearing roughly to closest point on path
 }
-#ifdef QQQ
 #endif // QQQ

@@ -53,24 +53,30 @@ float calcTargetBearing(pure_pursuit_status_s &pure_pursuit_status, const float 
 
 	const Vector2f P_to_C = curr_wp_ned - prev_wp_ned;
 	const Vector2f curr_pos_to_curr_wp = curr_wp_ned - curr_pos_ned;
-	const Vector2f to_C_norm = curr_pos_to_curr_wp.normalized();
+
+	PX4_INFO_RAW("        P: %f   %f\n", (double)prev_wp_ned(0), (double)prev_wp_ned(1));
+	PX4_INFO_RAW("        C: %f   %f\n", (double)curr_wp_ned(0), (double)curr_wp_ned(1));
+	PX4_INFO_RAW("        V: %f   %f\n", (double)curr_pos_ned(0), (double)curr_pos_ned(1));
+
+	const float bearing_to_curr_waypoint = matrix::wrap_pi(atan2f(curr_pos_to_curr_wp(1), curr_pos_to_curr_wp(0)));
+
+	PX4_INFO_RAW("P_to_C.length() %.2f m   V to C bearing: %f rad = %.1f deg\n", (double)P_to_C.length(),
+			(double)bearing_to_curr_waypoint, (double)math::degrees(bearing_to_curr_waypoint));
 
 	if (P_to_C.length() < 1.0e-6f) {
 
 		// When P = C (overlapping waypoints), return bearing to C:
 
-		if (to_C_norm.length() < 1.0e-6f) {
-			// vehicle on top of C and P
+		PX4_INFO_RAW("P_to_C.length() very small.");
+
+		if (curr_pos_to_curr_wp.length() < 1.0e-6f) {
+			// vehicle on top of both C and P
+			PX4_INFO_RAW("vehicle on top of both C and P.");
 			return NAN;
 		}
 
-		float heading_to_C = wrap_pi(atan2f(to_C_norm(1), to_C_norm(0)));
-
-		//PX4_INFO_RAW("V: %f   %f\n", (double)curr_pos_ned(0), (double)curr_pos_ned(1));
-		//PX4_INFO_RAW("to_C_norm: %f   %f\n", (double)to_C_norm(0), (double)to_C_norm(1));
-		PX4_INFO_RAW("P_to_C.length() very small. heading_to_C V to C: %f rad = %.1f deg\n", (double)heading_to_C, (double)math::degrees(heading_to_C));
-
-		return heading_to_C;
+		// Just go to the current waypoint:
+		return bearing_to_curr_waypoint;
 	}
 
 	// Stanley pursuit calculations:
@@ -79,38 +85,39 @@ float calcTargetBearing(pure_pursuit_status_s &pure_pursuit_status, const float 
 
 	Vector2f P_to_C_norm = P_to_C.normalized();
 
-	float crosstrack_error = P_to_C_norm %
+	const float crosstrack_error = P_to_C_norm %
 				 P_to_V;   // "crosstrack" distance from Vehicle to the desired P--C trajectory, meters.
 
-	float parallel_heading = wrap_pi(atan2f(P_to_C(1), P_to_C(0)));	// angle to North vector (X axis)
+	const float parallel_heading = wrap_pi(atan2f(P_to_C(1), P_to_C(0)));	// angle to North vector (X axis)
 
-	//float bearing_to_C = wrap_pi(atan2f(to_C_norm(1), to_C_norm(0)));
+	const float diff = wrap_pi(parallel_heading - bearing_to_curr_waypoint);
 
-	/* ==========================================
+	float target_bearing = bearing_to_curr_waypoint; // assume fallback case
 
-	float diff = wrap_pi(parallel_heading - bearing_to_C);
+	PX4_INFO_RAW("crosstrack_error %f m  parallel_heading %f deg  diff %f deg   bearing_to_C %f deg\n",
+			(double)crosstrack_error, (double)math::degrees(parallel_heading), (double)math::degrees(diff), (double)math::degrees(bearing_to_curr_waypoint));
 
 	if (abs(diff) > M_PI_4_F) {
-		PX4_WARN("Stanley: cannot reach target waypoint - bearing %f deg", (double)math::degrees(bearing_to_C));
-		return bearing_to_C;
+		// Fallback: Bearing to current waypoint if the computed path is parallel to P-C line
+		PX4_WARN("Stanley: parallel_heading %f deg   bearing_to_C %f deg",
+			 (double)math::degrees(parallel_heading), (double)math::degrees(bearing_to_curr_waypoint));
+		PX4_WARN("Stanley: cannot reach target waypoint - bearing %f deg   diff %f deg", (double)math::degrees(bearing_to_curr_waypoint), (double)math::degrees(diff));
+
+	} else {
+
+		float xtrack_factor = -atanf(xtrack_gain * crosstrack_error /
+					     (softening_factor + math::max(vehicle_speed, 0.0f)));
+
+
+		PX4_INFO_RAW("PH: %.2f deg   Xtrk: %.1f cm  speed: %.3f   XtFctr: %f rad  %f deg   bearing_to_C: %f deg\n",
+			     (double)math::degrees(parallel_heading),
+			     (double)(crosstrack_error * 100.0f), (double)vehicle_speed, (double)xtrack_factor,
+			     (double)math::degrees(xtrack_factor), (double)math::degrees(bearing_to_curr_waypoint));
+
+		target_bearing = wrap_pi(parallel_heading + xtrack_factor);
 	}
 
-	// ========================================== */
-
-	float xtrack_factor = -atanf(xtrack_gain * crosstrack_error / (softening_factor + math::max(
-					     vehicle_speed, 0.0f)));
-
-
-	//PX4_INFO_RAW("H: %.2f deg   X: %.1f cm  speed: %.3f   XF: %f rad  %f deg  to_C: %f deg\n",
-	//	     (double)math::degrees(parallel_heading),
-	//	     (double)(crosstrack_error * 100.0f), (double)vehicle_speed, (double)xtrack_factor,
-	//	     (double)math::degrees(xtrack_factor), (double)math::degrees(bearing_to_C));
-
-	float target_bearing = wrap_pi(parallel_heading + xtrack_factor);
-
-	//PX4_INFO_RAW("target_bearing: %.2f deg\n", (double)math::degrees(target_bearing));
-
-	const float bearing_to_curr_waypoint = matrix::wrap_pi(atan2f(curr_pos_to_curr_wp(1), curr_pos_to_curr_wp(0)));
+	PX4_INFO_RAW("target_bearing: %f rad = %.2f deg\n---------\n", (double)target_bearing, (double)math::degrees(target_bearing));
 
 	pure_pursuit_status.lookahead_distance = NAN;
 	pure_pursuit_status.target_bearing = target_bearing;
