@@ -78,7 +78,7 @@ then
 fi
 
 #
-# Spapcecraft setup.
+# Spacecraft setup.
 #
 if [ $VEHICLE_TYPE = spacecraft ]
 then
