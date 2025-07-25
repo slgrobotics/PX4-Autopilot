@@ -45,7 +45,7 @@ param set-default RD_TRANS_DRV_TRN 0.349066
 param set-default RD_TRANS_TRN_DRV 0.087266
 
 param set-default NAV_ACC_RAD 0.5
-param set-default RD_ACC_RAD_MARGN 1.5
+param set-default RD_ACC_RAD_MARGN 1.0
 
 # Straight Run Control Parameters
 param set-default LM_YAW_RATE_I 0.2
