@@ -55,9 +55,9 @@ param set-default RO_YAW_P 4
 # Rewritable Rover Attitude (Turn) Control Parameters - actual overriding values:
 # -- Straight Run Parameters
 param set-default LM_YAW_P 3
-param set-default LM_YAW_RATE_I 0.1
-param set-default LM_YAW_RATE_P 0.5
-param set-default LM_YAW_RATE_LIM 80
+param set-default LM_YAW_RATE_I 0.05
+param set-default LM_YAW_RATE_P 1.0
+param set-default LM_YAW_RATE_LIM 200
 # -- Spot Turn Parameters
 param set-default LM_YAW_T_P 6
 param set-default LM_YAW_RATE_T_I 0.01
