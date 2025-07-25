@@ -25,50 +25,55 @@ param set-default COM_ARM_WO_GPS 1
 # See https://docs.px4.io/main/en/config_rover/differential.html
 
 # Lawnmower specific parameters:
-param set-default LM_TRACING_LEV 5
-param set-default LM_GPS_MINFIX 6
 param set-default LM_ACCEL_DIST 1.5
 param set-default LM_DECEL_DIST 1.5
+param set-default LM_EKF_OVERRIDE 0
+param set-default LM_GPS_MINFIX 6
 param set-default LM_HD_MEAS_MODE 0
 param set-default LM_SP_MEAS_MODE 0
-param set-default LM_EKF_OVERRIDE 0
+param set-default LM_TRACING_LEV 5
 
 # Internal Combustion Engine parameters in different phases of operation:
-param set-default LM_ICE_IDLE 0
-param set-default LM_ICE_DEPART 0.8
-param set-default LM_ICE_TURN 0.2
 param set-default LM_ICE_ARRIVE 0.8
+param set-default LM_ICE_DEPART 0.8
+param set-default LM_ICE_IDLE 0
 param set-default LM_ICE_STRAIGHT 1.0
-
-# Turn precision control parameters - heading errors to transition from DRIVE to TURN:
-param set-default RD_TRANS_DRV_TRN 0.349066
-param set-default RD_TRANS_TRN_DRV 0.087266
-
-param set-default NAV_ACC_RAD 0.5
-param set-default RD_ACC_RAD_MARGN 1.0
-
-# Straight Run Control Parameters
-param set-default LM_YAW_RATE_I 0.2
-param set-default LM_YAW_RATE_P 0.5
-param set-default LM_YAW_RATE_LIM 80
-param set-default LM_YAW_P 6
-# Spot Turn Control Parameters
-param set-default LM_YAW_RATE_T_I 0.1
-param set-default LM_YAW_RATE_T_P 0.3
-param set-default LM_YAW_RATE_TLIM 30
-param set-default LM_YAW_T_P 3
+param set-default LM_ICE_TURN 0.2
 
 # Rover Turn Rate Control Parameters
-param set-default RO_YAW_RATE_I 0.2
-param set-default RO_YAW_RATE_P 0.5
-param set-default RO_YAW_RATE_LIM 60
 param set-default RO_YAW_ACCEL_LIM 400
 param set-default RO_YAW_DECEL_LIM 800
-param set-default RO_YAW_RATE_CORR 1.2
-param set-default RO_YAW_RATE_TH 1.0
+param set-default RO_YAW_RATE_CORR 1.0
+param set-default RO_YAW_RATE_TH 0.0
 
-# Rover Attitude (Turn) Control Parameters
-param set-default RO_YAW_P 2
+# Rewritable Rover Attitude (Turn) Control Parameters, just initial settings:
+param set-default RO_YAW_RATE_I 0.15
+param set-default RO_YAW_RATE_P 0.45
+param set-default RO_YAW_RATE_LIM 40
+param set-default RO_YAW_P 4
+
+# Rewritable Rover Attitude (Turn) Control Parameters - actual overriding values:
+# -- Straight Run Parameters
+param set-default LM_YAW_P 3
+param set-default LM_YAW_RATE_I 0.1
+param set-default LM_YAW_RATE_P 0.5
+param set-default LM_YAW_RATE_LIM 80
+# -- Spot Turn Parameters
+param set-default LM_YAW_T_P 6
+param set-default LM_YAW_RATE_T_I 0.01
+param set-default LM_YAW_RATE_T_P 2.0
+param set-default LM_YAW_RATE_TLIM 30
+
+# Turn accuracy parameters - heading errors to transition from DRIVE to TURN:
+#param set-default RD_TRANS_DRV_TRN 0.349066
+param set-default RD_TRANS_DRV_TRN 0.785398
+
+param set-default RD_TRANS_TRN_DRV 0.087266
+#param set-default RD_TRANS_TRN_DRV 0.174533
+
+# Navigation planning parameters:
+param set-default NAV_ACC_RAD 0.5
+param set-default RD_ACC_RAD_MARGN 0.7
 
 # Rover Velocity Control Parameters
 param set-default RO_ACCEL_LIM 0.3
@@ -88,6 +93,7 @@ param set-default PP_LOOKAHD_MIN 1
 
 # Rover R/C Stick dead zone for turns
 param set-default RO_YAW_STICK_DZ 0.1
+
 # ====================================================================================
 
 # Actuator mapping - set SITL motors/servos output parameters:
