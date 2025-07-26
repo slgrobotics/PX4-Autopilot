@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2024 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2025 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,38 +32,52 @@
  ****************************************************************************/
 
 /**
- * Enable USB autostart
+ * @file mc_nn_control_params.c
+ * Parameters for the Multicopter Neural Network Control module
  *
- * @value 0 Disabled
- * @value 1 Auto-detect
- * @value 2 MAVLink
- *
- * @reboot_required true
- *
- * @group CDCACM
+ * @author Sindre Meyer Hegre <sindre.hegre@gmail.com>
  */
-PARAM_DEFINE_INT32(SYS_USB_AUTO, 2);
 
 /**
- * Specify USB MAVLink mode
+ * If true the neural network control is automatically started on boot.
  *
- * @value 0 normal
- * @value 1 custom
- * @value 2 onboard
- * @value 3 osd
- * @value 4 magic
- * @value 5 config
- * @value 6 iridium
- * @value 7 minimal
- * @value 8 extvision
- * @value 9 extvisionmin
- * @value 10 gimbal
- * @value 11 onboard_low_bandwidth
- * @value 12 uavionix
- * @value 13 Low Bandwidth
- *
- * @reboot_required true
- *
- * @group CDCACM
+ * @boolean
+ * @group Neural Control
  */
-PARAM_DEFINE_INT32(USB_MAV_MODE, 2);
+PARAM_DEFINE_INT32(MC_NN_EN, 1);
+
+/**
+ * The maximum RPM of the motors. Used to normalize the output of the neural network.
+ *
+ * @min 0
+ * @max 80000
+ * @group Neural Control
+ */
+PARAM_DEFINE_INT32(MC_NN_MAX_RPM, 22000);
+
+/**
+ * The minimum RPM of the motors. Used to normalize the output of the neural network.
+ *
+ * @min 0
+ * @max 80000
+ * @group Neural Control
+ */
+PARAM_DEFINE_INT32(MC_NN_MIN_RPM, 1000);
+
+/**
+ * Thrust coefficient of the motors. Used to normalize the output of the neural network. Divided by 100 000
+ *
+ * @min 0.0
+ * @max 5.0
+ * @group Neural Control
+ */
+PARAM_DEFINE_FLOAT(MC_NN_THRST_COEF, 1.2f);
+
+/**
+ * Enable or disable setting the trajectory setpoint with manual control.
+ *
+ * @boolean
+ * @reboot_required true
+ * @group Neural Control
+ */
+PARAM_DEFINE_INT32(MC_NN_MANL_CTRL, 1);
