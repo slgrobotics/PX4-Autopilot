@@ -130,8 +130,8 @@ void LawnmowerControl::workStateMachine()
 		// we need to monitor velocity here, and if it is below a threshold, we can switch to WP_ARRIVED state:
 
 #ifdef DEBUG_MY_PRINT
-		PX4_WARN("POS_STATE_STOPPING : vel: ekf: %.2f  gps: %.2f m/s  curr dist: %.2f m",
-			 (double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s, (double)_wp_current_dist);
+		// PX4_WARN("POS_STATE_STOPPING : vel: ekf: %.2f  gps: %.2f m/s  curr dist: %.2f m",
+		// 	 (double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s, (double)_wp_current_dist);
 #endif // DEBUG_MY_PRINT
 
 		if (_isSpotTurning
