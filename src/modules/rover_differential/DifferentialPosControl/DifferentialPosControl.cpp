@@ -81,7 +81,10 @@ void DifferentialPosControl::updatePosControl()
 
 			} else if (_current_state == DrivingState::SPOT_TURNING && fabsf(heading_error) < _param_rd_trans_trn_drv.get()) {
 				_current_state = DrivingState::DRIVING;
-				_start_ned = _curr_pos_ned; // next trapezoid calculation will start here, where we stopped
+
+				// TODO: removed the source of the "_start_ned" bug - need to figure out how to restore trapezoid planning
+				//_start_ned = _curr_pos_ned; // next trapezoid calculation will start here, where we stopped
+				
 			}
 
 			if (_current_state == DrivingState::DRIVING) {
@@ -196,9 +199,8 @@ void DifferentialPosControl::updateSubscriptions()
 			_start_ned = _curr_pos_ned;
 		}
 
-		//_start_ned = _start_ned.isAllFinite() ? _start_ned : _curr_pos_ned;
-		_arrival_speed = _rover_position_setpoint.arrival_speed;
-		_cruising_speed = _rover_position_setpoint.cruising_speed;
+		_arrival_speed = PX4_ISFINITE(_rover_position_setpoint.arrival_speed) ? _rover_position_setpoint.arrival_speed : 0.f;
+		_cruising_speed = PX4_ISFINITE(_rover_position_setpoint.cruising_speed) ? _rover_position_setpoint.cruising_speed : 0.f;
 
 		PX4_WARN("\n=== new rover_pos_setpoint:  arrival_speed=%.2f  cruising_speed=%.2f\n",
 			 (double)_arrival_speed, (double)_cruising_speed);
