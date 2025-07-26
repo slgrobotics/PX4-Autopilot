@@ -205,6 +205,9 @@ void globalToLocalSetpointTriplet(Vector2f &curr_wp_ned, Vector2f &prev_wp_ned, 
 		curr_wp_ned = global_ned_proj_ref.project(position_setpoint_triplet.current.lat, position_setpoint_triplet.current.lon);
 
 	} else {
+		printf("\nCurrent wp invalid, using current pos: %f %f\n",
+			 (double)curr_pos_ned(0), (double)curr_pos_ned(1));
+
 		curr_wp_ned = curr_pos_ned.isAllFinite() ? curr_pos_ned : Vector2f(NAN, NAN); // Fallback if current waypoint is invalid
 	}
 
@@ -214,6 +217,9 @@ void globalToLocalSetpointTriplet(Vector2f &curr_wp_ned, Vector2f &prev_wp_ned, 
 				position_setpoint_triplet.previous.lon);
 
 	} else {
+		printf("\nPrevious wp invalid, using current pos: %f %f\n",
+			 (double)curr_pos_ned(0), (double)curr_pos_ned(1));
+
 		prev_wp_ned = curr_pos_ned.isAllFinite() ? curr_pos_ned : Vector2f(NAN,
 				NAN); // Fallback if previous waypoint is invalid
 	}
@@ -223,6 +229,8 @@ void globalToLocalSetpointTriplet(Vector2f &curr_wp_ned, Vector2f &prev_wp_ned, 
 		next_wp_ned = global_ned_proj_ref.project(position_setpoint_triplet.next.lat, position_setpoint_triplet.next.lon);
 
 	} else {
+		printf("\nNext wp invalid\n");
+
 		next_wp_ned = Vector2f(NAN, NAN);
 	}
 }

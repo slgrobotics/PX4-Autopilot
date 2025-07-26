@@ -162,6 +162,14 @@ void DifferentialPosControl::updateSubscriptions()
 		_vehicle_local_position_sub.copy(&vehicle_local_position);
 		_curr_pos_ned = Vector2f(vehicle_local_position.x, vehicle_local_position.y);
 
+		if(fabs(vehicle_local_position.ref_lat - _lat0) > 1e-9 || fabs(vehicle_local_position.ref_lon - _lon0) > 1e-9) {
+			_lat0 = vehicle_local_position.ref_lat;
+			_lon0 = vehicle_local_position.ref_lon;
+
+			printf("\n********* NewProjection Ref: lat: %.7f, lon: %.7f ****\n",
+				 vehicle_local_position.ref_lat, vehicle_local_position.ref_lon);
+		}
+
 		if (vehicle_local_position.v_xy_valid) {
 			Vector3f ground_speed3f = Vector3f{vehicle_local_position.vx, vehicle_local_position.vy, vehicle_local_position.vz};
 			_ground_speed_abs = ground_speed3f.norm();
@@ -174,11 +182,25 @@ void DifferentialPosControl::updateSubscriptions()
 	if (_rover_position_setpoint_sub.updated()) {
 		_rover_position_setpoint_sub.copy(&_rover_position_setpoint);
 		_start_ned = Vector2f(_rover_position_setpoint.start_ned[0], _rover_position_setpoint.start_ned[1]);
-		_start_ned = _start_ned.isAllFinite() ? _start_ned : _curr_pos_ned;
+
+		PX4_WARN("\n==== start_ned:   %f %f\n   curr_pos_ned: %f %f\n",
+			 (double)_start_ned(0), (double)_start_ned(1),
+			 (double)_curr_pos_ned(0), (double)_curr_pos_ned(1));
+
+		if(!_start_ned.isAllFinite()) {
+
+			PX4_WARN("\n=== !_start_ned.isAllFinite() - assigning current position as start: %f %f\n",
+				  (double)_curr_pos_ned(0), (double)_curr_pos_ned(1));
+
+			// if start_ned is not set, use current position as start:
+			_start_ned = _curr_pos_ned;
+		}
+
+		//_start_ned = _start_ned.isAllFinite() ? _start_ned : _curr_pos_ned;
 		_arrival_speed = _rover_position_setpoint.arrival_speed;
 		_cruising_speed = _rover_position_setpoint.cruising_speed;
 
-		PX4_WARN("PosControl: new rover_position_setpoint:  arrival_speed=%.2f  cruising_speed=%.2f",
+		PX4_WARN("\n=== new rover_pos_setpoint:  arrival_speed=%.2f  cruising_speed=%.2f\n",
 			 (double)_arrival_speed, (double)_cruising_speed);
 	}
 

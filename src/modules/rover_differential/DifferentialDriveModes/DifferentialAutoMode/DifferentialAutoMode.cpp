@@ -60,6 +60,10 @@ void DifferentialAutoMode::autoControl()
 
 		if (!global_ned_proj_ref.isInitialized()
 		    || (global_ned_proj_ref.getProjectionReferenceTimestamp() != vehicle_local_position.ref_timestamp)) {
+
+			printf("**************** MapProjection::initReference: lat_0: %.7f, lon_0: %.7f *************\n",
+				 vehicle_local_position.ref_lat, vehicle_local_position.ref_lon);
+
 			global_ned_proj_ref.initReference(vehicle_local_position.ref_lat, vehicle_local_position.ref_lon,
 							  vehicle_local_position.ref_timestamp);
 		}
@@ -74,7 +78,7 @@ void DifferentialAutoMode::autoControl()
 
 		float waypoint_transition_angle = RoverControl::calcWaypointTransitionAngle(prev_wp_ned, curr_wp_ned, next_wp_ned);
 
-		PX4_WARN("==== position_setpoint_triplet arrived === Waypoint transition angle: %.1f degrees",
+		PX4_WARN("\n==== triplet arrived === Waypoint transition angle: %.1f deg\n",
 			 math::degrees((double)waypoint_transition_angle));
 
 		// Waypoint cruising speed
@@ -92,6 +96,15 @@ void DifferentialAutoMode::autoControl()
 		rover_position_setpoint.cruising_speed = cruising_speed;
 		rover_position_setpoint.yaw = NAN;
 		_rover_position_setpoint_pub.publish(rover_position_setpoint);
+
+		PX4_WARN("Sending rover_position_setpoint\n==== arrival_speed: %.2f   cruising_speed: %.2f m/s\n",
+			 (double)rover_position_setpoint.arrival_speed, (double)cruising_speed);
+
+		PX4_WARN("\n==== start_ned: %f %f\n   curr_wp_ned: %f %f\n  curr_pos_ned: %f %f\n",
+			 (double)rover_position_setpoint.start_ned[0], (double)rover_position_setpoint.start_ned[1],
+			 (double)curr_wp_ned(0), (double)curr_wp_ned(1),
+			 (double)curr_pos_ned(0), (double)curr_pos_ned(1));
+
 	}
 }
 
