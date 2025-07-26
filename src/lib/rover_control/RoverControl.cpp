@@ -138,6 +138,7 @@ float speedControl(SlewRate<float> &speed_with_rate_limit, PID &pid_speed, const
 		pid_speed.resetIntegral();
 	}
 
+
 	return math::constrain(forward_speed_normalized, -1.f, 1.f);
 }
 
