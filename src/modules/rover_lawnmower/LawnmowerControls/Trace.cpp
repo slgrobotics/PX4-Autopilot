@@ -98,9 +98,10 @@ void LawnmowerControl::debugPrintAuto()
 {
 	if (_tracing_lev > 0) {
 
-		PX4_INFO_RAW("=== %s %s============  dt: %.3f ms\n",
+		PX4_INFO_RAW("=== %s %s%s============  dt: %.3f ms\n",
 			     control_state_name(_pos_ctrl_state),
-			     _isSpotTurning ? ": SPOT_TURNING " : "",
+			     _isSpotTurning ? ": SPOT_TURN " : "",
+			     _isTurningPids ? ": TURN_PIDS " : "",
 			     (double)(_dt * 1000.0f));
 	}
 
@@ -371,6 +372,9 @@ void LawnmowerControl::publishDebugData()
 
 	_dbg_array.data[i++] = _isSpotTurning ? 1.0f : 0.0f; // 1.0 if we are in spot turning state, 0.0 otherwise
 	_dbg_array.data[i++] = _isTurningPids ? 1.0f : 0.0f; // 1.0 if turning PID parameters were applied, 0.0 otherwise
+	_dbg_array.data[i++] = _bearings_good ? 1.0f : 0.0f; // 1.0 if bearings to the current waypoint are good, 0.0 otherwise
+
+	_dbg_array.data[i++] = _decel_dist;	// meters, distance to the waypoint at which we start decelerating
 
 	// TODO: more data here, polled or calculated by LawnmowerControl
 

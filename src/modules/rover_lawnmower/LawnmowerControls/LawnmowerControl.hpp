@@ -300,6 +300,7 @@ private:
 	Vector2f _curr_pos_ned{NAN, NAN};	// local projection of the current position in NED coordinates, meters
 
 	// Some values that we calculate locally to decide on throttling thrust near waypoints and state changes:
+	bool  _bearings_good{false};		// true if bearings to the current waypoint are good, i.e. we can use them for control
 	float _bearing_to_curr_wp{NAN};		// radians, bearing to the current waypoint, calculated by updateBearings() 0...2*PI, 0 is North
 	float _yaw_error{0.0f};			// radians, yaw error to the current waypoint, Positive - right turn, negative - left turn expected.
 	float _abbe_error{0.0f};		// meters, heading error at the target point
