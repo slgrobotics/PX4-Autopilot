@@ -164,12 +164,12 @@ void DifferentialPosControl::updateSubscriptions()
 		_vehicle_local_position_sub.copy(&vehicle_local_position);
 		_curr_pos_ned = Vector2f(vehicle_local_position.x, vehicle_local_position.y);
 
-		if(fabs(vehicle_local_position.ref_lat - _lat0) > 1e-9 || fabs(vehicle_local_position.ref_lon - _lon0) > 1e-9) {
+		if (fabs(vehicle_local_position.ref_lat - _lat0) > 1e-9 || fabs(vehicle_local_position.ref_lon - _lon0) > 1e-9) {
 			_lat0 = vehicle_local_position.ref_lat;
 			_lon0 = vehicle_local_position.ref_lon;
 
 			printf("\n********* NewProjection Ref: lat: %.7f, lon: %.7f ****\n",
-				 vehicle_local_position.ref_lat, vehicle_local_position.ref_lon);
+			       vehicle_local_position.ref_lat, vehicle_local_position.ref_lon);
 		}
 
 		if (vehicle_local_position.v_xy_valid) {
@@ -189,10 +189,10 @@ void DifferentialPosControl::updateSubscriptions()
 			 (double)_start_ned(0), (double)_start_ned(1),
 			 (double)_curr_pos_ned(0), (double)_curr_pos_ned(1));
 
-		if(!_start_ned.isAllFinite()) {
+		if (!_start_ned.isAllFinite()) {
 
 			PX4_WARN("\n=== !_start_ned.isAllFinite() - assigning current position as start: %f %f\n",
-				  (double)_curr_pos_ned(0), (double)_curr_pos_ned(1));
+				 (double)_curr_pos_ned(0), (double)_curr_pos_ned(1));
 
 			// if start_ned is not set, use current position as start:
 			_start_ned = _curr_pos_ned;

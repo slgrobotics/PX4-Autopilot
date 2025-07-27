@@ -62,7 +62,7 @@ void DifferentialAutoMode::autoControl()
 		    || (global_ned_proj_ref.getProjectionReferenceTimestamp() != vehicle_local_position.ref_timestamp)) {
 
 			printf("**************** MapProjection::initReference: lat_0: %.7f, lon_0: %.7f *************\n",
-				 vehicle_local_position.ref_lat, vehicle_local_position.ref_lon);
+			       vehicle_local_position.ref_lat, vehicle_local_position.ref_lon);
 
 			global_ned_proj_ref.initReference(vehicle_local_position.ref_lat, vehicle_local_position.ref_lon,
 							  vehicle_local_position.ref_timestamp);

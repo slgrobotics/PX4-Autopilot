@@ -206,7 +206,7 @@ void globalToLocalSetpointTriplet(Vector2f &curr_wp_ned, Vector2f &prev_wp_ned, 
 
 	} else {
 		printf("\nCurrent wp invalid, using current pos: %f %f\n",
-			 (double)curr_pos_ned(0), (double)curr_pos_ned(1));
+		       (double)curr_pos_ned(0), (double)curr_pos_ned(1));
 
 		curr_wp_ned = curr_pos_ned.isAllFinite() ? curr_pos_ned : Vector2f(NAN, NAN); // Fallback if current waypoint is invalid
 	}
@@ -218,7 +218,7 @@ void globalToLocalSetpointTriplet(Vector2f &curr_wp_ned, Vector2f &prev_wp_ned, 
 
 	} else {
 		printf("\nPrevious wp invalid, using current pos: %f %f\n",
-			 (double)curr_pos_ned(0), (double)curr_pos_ned(1));
+		       (double)curr_pos_ned(0), (double)curr_pos_ned(1));
 
 		prev_wp_ned = curr_pos_ned.isAllFinite() ? curr_pos_ned : Vector2f(NAN,
 				NAN); // Fallback if previous waypoint is invalid
