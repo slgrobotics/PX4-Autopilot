@@ -128,6 +128,12 @@ void LawnmowerControl::updateSubscriptions()
 		_rover_bearing_setpoint = _rover_velocity_setpoint.bearing;
 	}
 
+	if (_rover_position_setpoint_sub.updated()) {
+		rover_position_setpoint_s rover_position_setpoint{};
+		_rover_position_setpoint_sub.copy(&rover_position_setpoint);
+		_is_flyby_wp = rover_position_setpoint.arrival_speed > FLT_EPSILON;
+	}
+
 	if (_pure_pursuit_status_sub.updated()) {
 		_pure_pursuit_status_sub.copy(&_pure_pursuit_status);
 

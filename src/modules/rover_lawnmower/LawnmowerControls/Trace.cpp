@@ -113,8 +113,9 @@ void LawnmowerControl::debugPrintAuto()
 			     (double)math::degrees(_vehicle_yaw), (double)math::degrees(_sensor_gps_data.heading),
 			     (double)math::degrees(_sensor_gps_data.cog_rad));
 
-		PX4_INFO_RAW("--- WP: curr_dist: %.2f   prev_dist: %.2f   next_dist: %.2f\n",
-			     (double)_wp_current_dist, (double)_wp_previous_dist, (double)_wp_next_dist);
+		PX4_INFO_RAW("--- WP: curr_dist: %.2f   prev_dist: %.2f   next_dist: %.2f%s\n",
+			     (double)_wp_current_dist, (double)_wp_previous_dist, (double)_wp_next_dist,
+			     _is_flyby_wp ? " (flyby)" : "");
 
 		PX4_INFO_RAW("--- Speed: setpoint: %.2f    actual: %.2f    gps_vel: %.2f\n",
 			     (double)_rover_speed_setpoint, (double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s);
@@ -373,6 +374,7 @@ void LawnmowerControl::publishDebugData()
 	_dbg_array.data[i++] = _isSpotTurning ? 1.0f : 0.0f; // 1.0 if we are in spot turning state, 0.0 otherwise
 	_dbg_array.data[i++] = _isTurningPids ? 1.0f : 0.0f; // 1.0 if turning PID parameters were applied, 0.0 otherwise
 	_dbg_array.data[i++] = _bearings_good ? 1.0f : 0.0f; // 1.0 if bearings to the current waypoint are good, 0.0 otherwise
+	_dbg_array.data[i++] = _is_flyby_wp ? 1.0f : 0.0f; // 1.0 if we are not stopping at the waypoint, 0.0 otherwise
 
 	_dbg_array.data[i++] = _decel_dist;	// meters, distance to the waypoint at which we start decelerating
 

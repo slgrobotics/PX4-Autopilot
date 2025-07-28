@@ -40,16 +40,17 @@ void LawnmowerControl::workStateMachine()
 {
 	_stateHasChanged = false;
 
-	POS_CTRLSTATES pos_ctrl_state_prev = _pos_ctrl_state;
+	const POS_CTRLSTATES pos_ctrl_state_prev = _pos_ctrl_state;
 
 	// clear intermediate locally-computed variables:
+	_bearings_good = false;
 	_bearing_to_curr_wp = NAN;
 	_yaw_error = NAN;
 	_abbe_error = NAN;
 
 	// === Figure out which set of PID parameters to use: ===
 	const float turning_params_threshold = math::max(math::min(_param_lm_accel_dist.get(),
-					       _param_lm_decel_dist.get()) * 0.8f, 1.0f);
+					       _param_lm_decel_dist.get()) * 0.8f + _param_nav_acc_rad.get(), 1.0f);
 	const bool current_wp_is_close = PX4_ISFINITE(_wp_current_dist) && _wp_current_dist < turning_params_threshold;
 	const bool previous_wp_is_close = PX4_ISFINITE(_wp_previous_dist) && _wp_previous_dist < turning_params_threshold;
 	const bool isFlybyWaypoint = _location_metrics.ekf_x_vel > _param_ro_speed_lim.get() * 0.3f;
@@ -78,19 +79,22 @@ void LawnmowerControl::workStateMachine()
 
 	case STRAIGHT_RUN: {				// target waypoint is far away, we can use Pursuit and cruise speed
 
-			updateBearings();
+			_bearings_good = updateBearings();
 
-			bool is_arriving = PX4_ISFINITE(_wp_current_dist) ?
-					   _wp_current_dist < _decel_dist : // GND_DECEL_DIST or half leg
-					   false;
+			const bool is_close_to_wp = PX4_ISFINITE(_wp_current_dist)
+						    && PX4_ISFINITE(_wp_previous_dist)
+						    && _wp_current_dist < _decel_dist + _param_nav_acc_rad.get();
 
-			if (_rover_speed_setpoint > _location_metrics.ekf_x_vel * 0.3f) {
-				// this is a fly-by waypoint, we are not going to stop at it, just pass by:
-				is_arriving = false;
-			}
+			const bool is_arriving = is_close_to_wp && !_is_flyby_wp;
 
-			if (is_arriving) {
+			if (is_arriving || !_bearings_good) { // if something wrong, force transition to arriving state
 				// Close enough to destination waypoint, switch from Pursuit to direct heading:
+#ifdef DEBUG_MY_PRINT
+				PX4_INFO("OK: STRAIGHT_RUN got close %.2f, switching to WP_ARRIVING", (double)_wp_current_dist);
+				PX4_INFO("is_flyby_wp: %s close_to_wp %s  _rover_speed_setpoint: %.2f m/s",
+					 _is_flyby_wp ? "true" : "false", is_close_to_wp ? "true" : "false", (double)_rover_speed_setpoint);
+#endif // DEBUG_MY_PRINT
+
 				setStateMachineState(WP_ARRIVING);
 				cte_end();
 
@@ -105,13 +109,16 @@ void LawnmowerControl::workStateMachine()
 
 	case WP_ARRIVING:				// target waypoint is close, we need to slow down and head straight to it till stop
 
-		updateBearings();
+		_bearings_good = updateBearings();
 
-		if (_rover_speed_setpoint < FLT_EPSILON
-		    && PX4_ISFINITE(_wp_current_dist) && _wp_current_dist < _param_nav_acc_rad.get() * 1.2f) {
+		if (!_bearings_good || (_rover_speed_setpoint < FLT_EPSILON
+					&& PX4_ISFINITE(_wp_current_dist)
+					&& _wp_current_dist < _param_nav_acc_rad.get() * 1.2f)) {
 
 #ifdef DEBUG_MY_PRINT
-			PX4_INFO("OK: got close, switching to POS_STATE_STOPPING ===========================");
+			PX4_INFO("OK: WP_ARRIVING got close, switching to POS_STATE_STOPPING");
+			PX4_INFO("_wp_current_dist: %.2f <> %.2f m  _rover_speed_setpoint: %.2f m/s",
+				 (double)_wp_current_dist, (double)(_param_nav_acc_rad.get() * 1.2f), (double)_rover_speed_setpoint);
 #endif // DEBUG_MY_PRINT
 			// DifferentialVelControl has switched from DRIVING to SPOT_TURNING, we try mirroring that.
 			// We are also closer than NAV_ACC_RAD radius to waypoint (with 1.2x margin), begin stopping phase:
@@ -127,6 +134,8 @@ void LawnmowerControl::workStateMachine()
 
 	case POS_STATE_STOPPING:			// we hit the waypoint's bubble and need to stop
 
+		_bearings_good = updateBearings();
+
 		// we need to monitor velocity here, and if it is below a threshold, we can switch to WP_ARRIVED state:
 
 #ifdef DEBUG_MY_PRINT
@@ -134,7 +143,8 @@ void LawnmowerControl::workStateMachine()
 		// 	 (double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s, (double)_wp_current_dist);
 #endif // DEBUG_MY_PRINT
 
-		if (_isSpotTurning
+		if (!_bearings_good
+		    || _isSpotTurning
 		    || (PX4_ISFINITE(_wp_current_dist)
 			&& _wp_current_dist > _param_nav_acc_rad.get() * 1.3f) // we are already departing from the waypoint
 		    || abs(_location_metrics.ekf_x_vel) < 0.05f) {
@@ -145,10 +155,11 @@ void LawnmowerControl::workStateMachine()
 
 	case WP_ARRIVED:				// reached waypoint, stopped. Or already left it behind, departing
 
-		updateBearings();
+		_bearings_good = updateBearings();
 
 		// See if that was the last waypoint of the mission:
-		if (!_pos_sp_triplet.current.valid
+		if (!_bearings_good
+		    || !_pos_sp_triplet.current.valid
 		    || (_pos_sp_triplet.current.valid
 			&& _pos_sp_triplet.current.type == position_setpoint_s::SETPOINT_TYPE_LAND)) {
 			// We have arrived to the last waypoint of the mission, switch to end of mission
@@ -165,15 +176,22 @@ void LawnmowerControl::workStateMachine()
 	case WP_TURNING:				// we need to turn in place to the next waypoint
 
 		_accel_dist = _param_lm_accel_dist.get();	// LM_ACCEL_DIST (can be 0 to skip Departure phase)
-		_decel_dist = _param_lm_decel_dist.get();	// LM_DECEL_DIST
+		_decel_dist = _param_lm_decel_dist.get() + _param_nav_acc_rad.get();	// LM_DECEL_DIST + NAV_ACC_RAD
 
-		updateBearings();
+		_bearings_good = updateBearings();
 
 #ifdef DEBUG_MY_PRINT
 		// PX4_WARN("WP_TURNING : vel: %.2f / %.2f m/s  curr dist: %.2f m  yaw err: %.1f deg",
 		// 	 (double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s, (double)_wp_current_dist,
 		// 	 (double)math::degrees(_yaw_error));
 #endif // DEBUG_MY_PRINT
+
+		if (!_bearings_good) {
+			// Bearings are not good, we cannot turn to the next waypoint:
+			PX4_ERR("WP_TURNING: bearings not good, cannot turn to next waypoint");
+			setStateMachineState(POS_STATE_MISSION_END);
+			break;
+		}
 
 		if (!_isSpotTurning // _rover_speed_setpoint > FLT_EPSILON
 		    && fabsf(_yaw_error) < _param_rd_trans_trn_drv.get()
@@ -192,7 +210,14 @@ void LawnmowerControl::workStateMachine()
 
 		cte_begin(); // just invalidate _crosstrack_error_avg while departing to avoid confusion
 
-		updateBearings();
+		_bearings_good = updateBearings();
+
+		if (!_bearings_good) {
+			// Bearings are not good, we cannot depart:
+			PX4_ERR("WP_DEPARTING: bearings not good, cannot depart");
+			setStateMachineState(POS_STATE_MISSION_END);
+			break;
+		}
 
 		if (_wp_previous_dist < _accel_dist) {  // TODO: is_first_leg here?
 
@@ -286,7 +311,13 @@ bool LawnmowerControl::updateBearings()
 	// ~28.6 degrees deviation makes sense, NAN for more:
 	_abbe_error = abs(_yaw_error) < 0.5f ? _wp_current_dist * sin(_yaw_error) : NAN; // meters at target point
 
-	return PX4_ISFINITE(_yaw_error);
+	const bool ret = PX4_ISFINITE(_yaw_error);
+
+	if (!ret) {
+		PX4_WARN("updateBearings(): bearings no good");
+	}
+
+	return ret;
 }
 
 void LawnmowerControl::adjustRateParams(bool setSpotTurningPids)

@@ -55,6 +55,7 @@
 #include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/position_setpoint_triplet.h>
 #include <uORB/topics/rover_velocity_setpoint.h>
+#include <uORB/topics/rover_position_setpoint.h>
 #include <uORB/topics/pure_pursuit_status.h>
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/sensor_gps.h>
@@ -248,6 +249,7 @@ private:
 	uORB::Subscription _vehicle_local_position_sub{ORB_ID(vehicle_local_position)};
 	uORB::Subscription _position_setpoint_triplet_sub{ORB_ID(position_setpoint_triplet)};
 	uORB::Subscription _rover_velocity_setpoint_sub{ORB_ID(rover_velocity_setpoint)};
+	uORB::Subscription _rover_position_setpoint_sub{ORB_ID(rover_position_setpoint)};
 	uORB::Subscription _pure_pursuit_status_sub{ORB_ID(pure_pursuit_status)};
 	uORB::Subscription _manual_control_setpoint_sub{ORB_ID(manual_control_setpoint)}; /**< notification of manual control updates */
 	uORB::Subscription _sensor_gps_sub{ORB_ID(sensor_gps)};
@@ -308,6 +310,7 @@ private:
 	// from _rover_velocity_setpoint, published by DifferentialPosControl:
 	float _rover_speed_setpoint{NAN};	// meters per second, speed setpoint for the rover/lawnmower, comes from rover_velocity_setpoint_s
 	float _rover_bearing_setpoint{NAN};	// radians, bearing setpoint for the rover
+	bool _is_flyby_wp{false};		// from rover_position_setpoint_s.arrival_speed : true if we are not stopping at the waypoint.
 
 	// These come from PurePursuit:
 	float _crosstrack_error{NAN};		// meters, how far we are from the A-B line (A = previous, visited waypoint, B = current waypoint, target)
