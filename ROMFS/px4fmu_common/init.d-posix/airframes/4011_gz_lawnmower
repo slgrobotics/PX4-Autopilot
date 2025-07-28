@@ -50,7 +50,7 @@ param set-default RO_YAW_RATE_TH 0.0
 param set-default RO_YAW_RATE_I 0.15
 param set-default RO_YAW_RATE_P 0.45
 param set-default RO_YAW_RATE_LIM 40
-param set-default RO_YAW_P 4
+param set-default RO_YAW_P 2
 
 # Rewritable Rover Attitude (Turn) Control Parameters - actual overriding values:
 # -- Straight Run Parameters
