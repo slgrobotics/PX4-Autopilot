@@ -326,6 +326,7 @@ private:
 	Vector2d _prev_wp{NAN, NAN};
 	Vector2f _prev_wp_ned{NAN, NAN};
 	Vector2d _next_wp{NAN, NAN};
+	Vector2f _accel_start{NAN, NAN};	// where we started accelerating (departing) from.
 
 	// from position setpoint triplet:
 	float _wp_current_dist{NAN};  		// meters

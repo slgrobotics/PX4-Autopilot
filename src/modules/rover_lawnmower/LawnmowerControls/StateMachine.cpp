@@ -47,15 +47,15 @@ void LawnmowerControl::workStateMachine()
 	_bearing_to_curr_wp = NAN;
 	_yaw_error = NAN;
 	_abbe_error = NAN;
+	const float nav_acc_margin = 1.5f; // extra margin for braking before hitting the waypoint bubble
 
 	// === Figure out which set of PID parameters to use: ===
 	const float turning_params_threshold = math::max(math::min(_param_lm_accel_dist.get(),
 					       _param_lm_decel_dist.get()) * 0.8f + _param_nav_acc_rad.get(), 1.0f);
 	const bool current_wp_is_close = PX4_ISFINITE(_wp_current_dist) && _wp_current_dist < turning_params_threshold;
 	const bool previous_wp_is_close = PX4_ISFINITE(_wp_previous_dist) && _wp_previous_dist < turning_params_threshold;
-	const bool isFlybyWaypoint = _location_metrics.ekf_x_vel > _param_ro_speed_lim.get() * 0.3f;
 
-	if ((current_wp_is_close || previous_wp_is_close) && !isFlybyWaypoint) {
+	if ((current_wp_is_close || previous_wp_is_close) && !_is_flyby_wp) {
 
 		// Close to either current or previous waypoint, use spot turning PIDs parameters:
 		adjustRateParams(true);
@@ -83,7 +83,7 @@ void LawnmowerControl::workStateMachine()
 
 			const bool is_close_to_wp = PX4_ISFINITE(_wp_current_dist)
 						    && PX4_ISFINITE(_wp_previous_dist)
-						    && _wp_current_dist < _decel_dist + _param_nav_acc_rad.get();
+						    && _wp_current_dist < _decel_dist; // LM_DECEL_DIST + NAV_ACC_RAD
 
 			const bool is_arriving = is_close_to_wp && !_is_flyby_wp;
 
@@ -107,29 +107,33 @@ void LawnmowerControl::workStateMachine()
 
 		} break;
 
-	case WP_ARRIVING:				// target waypoint is close, we need to slow down and head straight to it till stop
+	case WP_ARRIVING: {				// target waypoint is close, we need to slow down and head straight to it till stop
 
-		_bearings_good = updateBearings();
+			_bearings_good = updateBearings();
 
-		if (!_bearings_good || (_rover_speed_setpoint < FLT_EPSILON
-					&& PX4_ISFINITE(_wp_current_dist)
-					&& _wp_current_dist < _param_nav_acc_rad.get() * 1.2f)) {
+			float stopping_start_dist = math::min(_param_nav_acc_rad.get() * nav_acc_margin,
+							      _param_nav_acc_rad.get() + 0.5f); // NAV_ACC_RAD
+
+			if (!_bearings_good || (!_is_flyby_wp
+						&& PX4_ISFINITE(_wp_current_dist)
+						&& _wp_current_dist < stopping_start_dist)) {
+				//&& _wp_current_dist < _param_nav_acc_rad.get() * nav_acc_margin)) {
 
 #ifdef DEBUG_MY_PRINT
-			PX4_INFO("OK: WP_ARRIVING got close, switching to POS_STATE_STOPPING");
-			PX4_INFO("_wp_current_dist: %.2f <> %.2f m  _rover_speed_setpoint: %.2f m/s",
-				 (double)_wp_current_dist, (double)(_param_nav_acc_rad.get() * 1.2f), (double)_rover_speed_setpoint);
+				PX4_INFO("OK: WP_ARRIVING got close, switching to POS_STATE_STOPPING");
+				PX4_INFO("_wp_current_dist: %.2f <> %.2f m  _rover_speed_setpoint: %.2f m/s",
+					 (double)_wp_current_dist, (double)stopping_start_dist, (double)_rover_speed_setpoint);
 #endif // DEBUG_MY_PRINT
-			// DifferentialVelControl has switched from DRIVING to SPOT_TURNING, we try mirroring that.
-			// We are also closer than NAV_ACC_RAD radius to waypoint (with 1.2x margin), begin stopping phase:
-			//adjustRateParams(true); // adjust yaw PIDs for spot turning
-			setStateMachineState(POS_STATE_STOPPING);
+				// DifferentialVelControl has switched from DRIVING to SPOT_TURNING, we try mirroring that.
+				// We are also closer than NAV_ACC_RAD radius to waypoint (with 1.2x margin), begin stopping phase:
+				//adjustRateParams(true); // adjust yaw PIDs for spot turning
+				setStateMachineState(POS_STATE_STOPPING);
+			}
+
+#ifdef DEBUG_MY_PRINT
+			debugPrintArriveDepart();
+#endif // DEBUG_MY_PRINT
 		}
-
-#ifdef DEBUG_MY_PRINT
-		debugPrintArriveDepart();
-#endif // DEBUG_MY_PRINT
-
 		break;
 
 	case POS_STATE_STOPPING:			// we hit the waypoint's bubble and need to stop
@@ -144,9 +148,9 @@ void LawnmowerControl::workStateMachine()
 #endif // DEBUG_MY_PRINT
 
 		if (!_bearings_good
-		    || _isSpotTurning
+		    || _isSpotTurning || _is_flyby_wp
 		    || (PX4_ISFINITE(_wp_current_dist)
-			&& _wp_current_dist > _param_nav_acc_rad.get() * 1.3f) // we are already departing from the waypoint
+			&& _wp_current_dist > _param_nav_acc_rad.get() * nav_acc_margin) // we are already departing from the waypoint
 		    || abs(_location_metrics.ekf_x_vel) < 0.05f) {
 			setStateMachineState(WP_ARRIVED);
 		}
@@ -197,42 +201,48 @@ void LawnmowerControl::workStateMachine()
 		    && fabsf(_yaw_error) < _param_rd_trans_trn_drv.get()
 		    && fabsf(_bearing_error) < _param_rd_trans_trn_drv.get()
 		   ) {
-
 			// DifferentialVelControl has switched from SPOT_TURNING to DRIVING, we try mirroring that.
-			// We also checked if we are close enough to the target waypoint bearing:
-			//adjustRateParams(false); // // adjust yaw PIDs for straight run
+
+			_accel_start = _curr_pos_ned; // remember where we started accelerating from.
+
 			setStateMachineState(_accel_dist > FLT_EPSILON ? WP_DEPARTING : STRAIGHT_RUN);
 		}
 
 		break;
 
-	case WP_DEPARTING:				// we turned to next waypoint and must start accelerating
+	case WP_DEPARTING: {				// we turned to next waypoint and must start accelerating
 
-		cte_begin(); // just invalidate _crosstrack_error_avg while departing to avoid confusion
+			cte_begin(); // just invalidate _crosstrack_error_avg while departing to avoid confusion
 
-		_bearings_good = updateBearings();
+			_bearings_good = updateBearings();
 
-		if (!_bearings_good) {
-			// Bearings are not good, we cannot depart:
-			PX4_ERR("WP_DEPARTING: bearings not good, cannot depart");
-			setStateMachineState(POS_STATE_MISSION_END);
-			break;
-		}
+			if (!_bearings_good) {
+				// Bearings are not good, we cannot depart:
+				PX4_ERR("WP_DEPARTING: bearings not good, cannot depart");
+				setStateMachineState(POS_STATE_MISSION_END);
+				break;
+			}
 
-		if (_wp_previous_dist < _accel_dist) {  // TODO: is_first_leg here?
+			float from_accel_start = (_curr_pos_ned -
+						  _accel_start).norm(); // meters, how far we are from the point we started accelerating from
 
-			// just turn on tools (cutting deck) - we are on the business part of the mission:
-			_cutter_setpoint = ACTUATOR_ON;
+			// PX4_INFO("WP_DEPARTING: from_accel_start: %.2f m  _accel_dist: %.2f m",
+			// 	 (double)from_accel_start, (double)_accel_dist);
 
-		} else {
-			// we are far enough from departure waypoint and not heading to the first waypoint, switch to Pursuit:
-			setStateMachineState(STRAIGHT_RUN);
-		}
+			if (from_accel_start < _accel_dist) {
+
+				// just turn on tools (cutting deck) - we are on the business part of the mission:
+				_cutter_setpoint = ACTUATOR_ON;
+
+			} else {
+				// we are far enough from departure waypoint and not heading to the first waypoint, switch to Pursuit:
+				setStateMachineState(STRAIGHT_RUN);
+			}
 
 #ifdef DEBUG_MY_PRINT
-		debugPrintArriveDepart();
+			debugPrintArriveDepart();
 #endif // DEBUG_MY_PRINT
-
+		}
 		break;
 
 	case POS_STATE_MISSION_START:			// turn on what we need for the mission (lights, gas engine throttle, blades)
@@ -340,10 +350,10 @@ void LawnmowerControl::adjustRateParams(bool setSpotTurningPids)
 			float new_yaw_rate_i = _param_lm_yaw_rate_t_i.get();
 			float new_yaw_rate_lim = _param_lm_yaw_rate_t_lim.get();
 			float new_yaw_p = _param_lm_yaw_t_p.get();
-
+#ifdef DEBUG_MY_PRINT
 			PX4_WARN("Turning PIDs: YAW_RATE: P: %.3f  I: %.4f  LIM: %.1f  YAW_P: %.3f",
 				 (double)new_yaw_rate_p, (double)new_yaw_rate_i, (double)new_yaw_rate_lim, (double)new_yaw_p);
-
+#endif // DEBUG_MY_PRINT
 			param_set(p_yaw_rate_p, &new_yaw_rate_p);
 			param_set(p_yaw_rate_i, &new_yaw_rate_i);
 			param_set(p_yaw_rate_lim, &new_yaw_rate_lim);
@@ -359,10 +369,10 @@ void LawnmowerControl::adjustRateParams(bool setSpotTurningPids)
 			float new_yaw_rate_i = _param_lm_yaw_rate_i.get();
 			float new_yaw_rate_lim = _param_lm_yaw_rate_lim.get();
 			float new_yaw_p = _param_lm_yaw_p.get();
-
+#ifdef DEBUG_MY_PRINT
 			PX4_WARN("Normal PIDs: YAW_RATE: P: %.3f  I: %.4f  LIM: %.1f  YAW_P: %.3f",
 				 (double)new_yaw_rate_p, (double)new_yaw_rate_i, (double)new_yaw_rate_lim, (double)new_yaw_p);
-
+#endif // DEBUG_MY_PRINT
 			param_set(p_yaw_rate_p, &new_yaw_rate_p);
 			param_set(p_yaw_rate_i, &new_yaw_rate_i);
 			param_set(p_yaw_rate_lim, &new_yaw_rate_lim);
