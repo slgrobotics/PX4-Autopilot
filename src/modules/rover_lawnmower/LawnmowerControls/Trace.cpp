@@ -98,8 +98,9 @@ void LawnmowerControl::debugPrintAuto()
 {
 	if (_tracing_lev > 0) {
 
-		PX4_INFO_RAW("=== %s %s%s============  dt: %.3f ms\n",
+		PX4_INFO_RAW("=== %s%s %s%s============  dt: %.3f ms\n",
 			     control_state_name(_pos_ctrl_state),
+			     _is_flyby_wp ? " (flyby)" : "",
 			     _isSpotTurning ? ": SPOT_TURN " : "",
 			     _isTurningPids ? ": TURN_PIDS " : "",
 			     (double)(_dt * 1000.0f));
@@ -113,9 +114,8 @@ void LawnmowerControl::debugPrintAuto()
 			     (double)math::degrees(_vehicle_yaw), (double)math::degrees(_sensor_gps_data.heading),
 			     (double)math::degrees(_sensor_gps_data.cog_rad));
 
-		PX4_INFO_RAW("--- WP: curr_dist: %.2f   prev_dist: %.2f   next_dist: %.2f%s\n",
-			     (double)_wp_current_dist, (double)_wp_previous_dist, (double)_wp_next_dist,
-			     _is_flyby_wp ? " (flyby)" : "");
+		PX4_INFO_RAW("--- WP: curr_dist: %.2f   prev_dist: %.2f   next_dist: %.2f\n",
+			     (double)_wp_current_dist, (double)_wp_previous_dist, (double)_wp_next_dist);
 
 		PX4_INFO_RAW("--- Speed: setpoint: %.2f    actual: %.2f    gps_vel: %.2f\n",
 			     (double)_rover_speed_setpoint, (double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s);

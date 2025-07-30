@@ -20,6 +20,8 @@ param set-default SIM_GZ_EN 1 # Gazebo bridge
 # We can arm and drive in manual mode when it slides and GPS check fails:
 param set-default COM_ARM_WO_GPS 1
 
+param set-default RD_WHEEL_TRACK 0.9
+
 # ====================================================================================
 # Differential Parameters
 # See https://docs.px4.io/main/en/config_rover/differential.html
