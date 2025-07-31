@@ -81,7 +81,7 @@ void LawnmowerControl::workStateMachine()
 
 			_bearings_good = updateBearings();
 
-			if(!_bearings_good || !PX4_ISFINITE(_wp_current_dist) || !PX4_ISFINITE(_wp_previous_dist)) {
+			if (!_bearings_good || !PX4_ISFINITE(_wp_current_dist) || !PX4_ISFINITE(_wp_previous_dist)) {
 				// Bearings or distances are not good, force transition to arriving state:
 				setStateMachineState(WP_ARRIVING);
 				cte_end();
@@ -105,8 +105,8 @@ void LawnmowerControl::workStateMachine()
 
 			} else {
 				// Normal straight run, line following.
-				if(_wp_current_dist > _param_lm_xtrack_dist.get()
-				   && _wp_previous_dist > _param_lm_xtrack_dist.get()) {
+				if (_wp_current_dist > _param_lm_xtrack_dist.get()
+				    && _wp_previous_dist > _param_lm_xtrack_dist.get()) {
 					// We are far from both waypoints, we can accumulate crosstrack error statistics:
 					cte_compute();
 				}
@@ -118,7 +118,7 @@ void LawnmowerControl::workStateMachine()
 
 			_bearings_good = updateBearings();
 
-			if(!_bearings_good || !PX4_ISFINITE(_wp_current_dist) || !PX4_ISFINITE(_wp_previous_dist)) {
+			if (!_bearings_good || !PX4_ISFINITE(_wp_current_dist) || !PX4_ISFINITE(_wp_previous_dist)) {
 				// Bearings or distances are not good, force transition to stopping state:
 				setStateMachineState(WP_STOPPING);
 				break;
@@ -150,13 +150,13 @@ void LawnmowerControl::workStateMachine()
 
 		_bearings_good = updateBearings();
 
-		if(!_bearings_good 
-			|| !PX4_ISFINITE(_wp_current_dist) // Bearings or target distance not good
-			|| _wp_current_dist > _param_nav_acc_rad.get() * nav_acc_margin // we are told to depart from the waypoint
-		 ) {
+		if (!_bearings_good
+		    || !PX4_ISFINITE(_wp_current_dist) // Bearings or target distance not good
+		    || _wp_current_dist > _param_nav_acc_rad.get() * nav_acc_margin // we are told to depart from the waypoint
+		   ) {
 #ifdef DEBUG_MY_PRINT
 			PX4_WARN("WP_STOPPING : force transition to arrived state: curr dist: %.2f m",
-			 (double)_wp_current_dist);
+				 (double)_wp_current_dist);
 #endif // DEBUG_MY_PRINT
 			// force transition to arrived state:
 			setStateMachineState(WP_ARRIVED);

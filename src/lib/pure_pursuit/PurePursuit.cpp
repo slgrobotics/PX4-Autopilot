@@ -99,15 +99,15 @@ float calcTargetBearing(pure_pursuit_status_s &pure_pursuit_status, const float 
 		float xtrack_factor = -atanf(xtrack_gain * crosstrack_error /
 					     (softening_factor + math::max(vehicle_speed, 0.0f)));
 
-		const float parallel_heading = wrap_pi(atan2f(prev_wp_to_curr_wp(1),
-						       prev_wp_to_curr_wp(0)));	// angle to North vector (X axis)
+		const float parallel_heading = matrix::wrap_pi(atan2f(prev_wp_to_curr_wp(1),
+					       prev_wp_to_curr_wp(0)));	// angle to North vector (X axis)
 
 		// printf("PH: %.2f deg   Xtrk: %.1f cm  speed: %.3f   XtFctr: %f rad  %f deg   bearing_to_C: %f deg\n",
 		// 	     (double)math::degrees(parallel_heading),
 		// 	     (double)(crosstrack_error * 100.0f), (double)vehicle_speed, (double)xtrack_factor,
 		// 	     (double)math::degrees(xtrack_factor), (double)math::degrees(bearing_to_curr_waypoint));
 
-		target_bearing = wrap_pi(parallel_heading + xtrack_factor);
+		target_bearing = matrix::wrap_pi(parallel_heading + xtrack_factor);
 
 	} else { // Regular pure pursuit
 		const float line_extension = sqrt(powf(lookahead_distance, 2.f) - powf(curr_pos_to_path.norm(),
