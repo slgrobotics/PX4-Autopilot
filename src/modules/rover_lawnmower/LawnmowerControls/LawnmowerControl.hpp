@@ -191,12 +191,12 @@ private:
 	enum POS_CTRLSTATES : int {
 		POS_STATE_NONE,			// undefined/invalid state, no need controlling anything
 		POS_STATE_IDLE,			// idle state, no need controlling anything
-		STRAIGHT_RUN,		// target waypoint is far away, we can use Pursuit logic and cruise speed
+		STRAIGHT_RUN,			// target waypoint is far away, we can use Pursuit logic and cruise speed
 		WP_ARRIVING,			// target waypoint is close, we need to slow down and head straight to it till stop
 		WP_ARRIVED,			// reached waypoint, completely stopped. Make sure mission knows about it
 		WP_TURNING,			// we need to turn in place to the next waypoint
 		WP_DEPARTING,			// we turned to next waypoint and must start accelerating
-		POS_STATE_STOPPING,		// we hit a waypoint and need to stop
+		WP_STOPPING,			// we hit a waypoint and need to stop
 		POS_STATE_MISSION_START,	// turn on what we need for the mission (lights, gas engine throttle, blades)
 		POS_STATE_MISSION_END		// turn off what we needed for the mission at the end or error
 	} _pos_ctrl_state {POS_STATE_NONE};	// Position control state machine
@@ -277,8 +277,8 @@ private:
 
 	bool _stateHasChanged{false};	// only good inside the loop
 
-	bool _isSpotTurning{false}; // true if we are in spot turning state, used to adjust the control logic
-	bool _isTurningPids{false}; // true if we are LM_YAW*T* parameters used for yaw control.
+	bool _isSpotTurning{false}; // true if Position Control is in spot turning state, used to adjust the control logic
+	bool _isTurningPids{false}; // true if LM_YAW*T* parameters are used for yaw control, LM_YAW* otherwise.
 
 	vehicle_attitude_s		_vehicle_attitude{};
 	vehicle_control_mode_s 		_vehicle_control_mode{};
@@ -448,6 +448,7 @@ private:
 		(ParamFloat<px4::params::LM_YAW_RATE_LIM>)  _param_lm_yaw_rate_lim, // rad/s, yaw rate limit in line following mode
 		(ParamFloat<px4::params::LM_YAW_P>)         _param_lm_yaw_p, // yaw rate P gain in line following mode
 
+		(ParamFloat<px4::params::LM_XTRACK_DIST>) _param_lm_xtrack_dist, // meters, cross-track statistics margin from waypoints
 		(ParamFloat<px4::params::LM_ACCEL_DIST>) _param_lm_accel_dist, // meters, distance to accelerate
 		(ParamFloat<px4::params::LM_DECEL_DIST>) _param_lm_decel_dist, // meters, distance to target wp to start decelerating
 		(ParamFloat<px4::params::NAV_ACC_RAD>) _param_nav_acc_rad, // meters, how close to waypoint we consider it reached

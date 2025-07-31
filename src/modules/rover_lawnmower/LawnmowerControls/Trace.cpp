@@ -229,8 +229,8 @@ const char *LawnmowerControl::control_state_name(const POS_CTRLSTATES state)
 	case WP_DEPARTING:				// we turned to next waypoint and must start accelerating
 		return "WP_DEPARTING";
 
-	case POS_STATE_STOPPING:			// we hit a waypoint and need to stop
-		return "POS_STATE_STOPPING";
+	case WP_STOPPING:				// we hit a waypoint and need to stop
+		return "WP_STOPPING";
 
 	case POS_STATE_MISSION_START:			// turn on what we need for the mission (lights, gas engine throttle, blades)
 		return "POS_STATE_MISSION_START";

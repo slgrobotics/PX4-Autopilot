@@ -26,6 +26,18 @@ parameters:
         min: 3
         max: 6
 
+      LM_XTRACK_DIST:
+        description:
+          short: Cross-track distance from both waypoints to accumulate crosstrack error statistics
+          long: If the distance is less than this value, the crosstrack error will not be accumulated for leg or mission metrics.
+        type: float
+        unit: m
+        min: 1
+        max: 200
+        increment: 0.1
+        decimal: 1
+        default: 2.0
+
       LM_ACCEL_DIST:
         description:
           short: Distance to accelerate from a waypoint

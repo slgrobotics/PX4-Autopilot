@@ -81,13 +81,18 @@ void LawnmowerControl::workStateMachine()
 
 			_bearings_good = updateBearings();
 
-			const bool is_close_to_wp = PX4_ISFINITE(_wp_current_dist)
-						    && PX4_ISFINITE(_wp_previous_dist)
-						    && _wp_current_dist < _decel_dist; // LM_DECEL_DIST + NAV_ACC_RAD
+			if(!_bearings_good || !PX4_ISFINITE(_wp_current_dist) || !PX4_ISFINITE(_wp_previous_dist)) {
+				// Bearings or distances are not good, force transition to arriving state:
+				setStateMachineState(WP_ARRIVING);
+				cte_end();
+				break;
+			}
+
+			const bool is_close_to_wp = _wp_current_dist < _decel_dist; // LM_DECEL_DIST + NAV_ACC_RAD
 
 			const bool is_arriving = is_close_to_wp && !_is_flyby_wp;
 
-			if (is_arriving || !_bearings_good) { // if something wrong, force transition to arriving state
+			if (is_arriving) {
 				// Close enough to destination waypoint, switch from Pursuit to direct heading:
 #ifdef DEBUG_MY_PRINT
 				PX4_INFO("OK: STRAIGHT_RUN got close %.2f, switching to WP_ARRIVING", (double)_wp_current_dist);
@@ -99,10 +104,12 @@ void LawnmowerControl::workStateMachine()
 				cte_end();
 
 			} else {
-				// Normal run.
-				// maybe, set desired speed?
-
-				cte_compute();
+				// Normal straight run, line following.
+				if(_wp_current_dist > _param_lm_xtrack_dist.get()
+				   && _wp_previous_dist > _param_lm_xtrack_dist.get()) {
+					// We are far from both waypoints, we can accumulate crosstrack error statistics:
+					cte_compute();
+				}
 			}
 
 		} break;
@@ -111,23 +118,26 @@ void LawnmowerControl::workStateMachine()
 
 			_bearings_good = updateBearings();
 
+			if(!_bearings_good || !PX4_ISFINITE(_wp_current_dist) || !PX4_ISFINITE(_wp_previous_dist)) {
+				// Bearings or distances are not good, force transition to stopping state:
+				setStateMachineState(WP_STOPPING);
+				break;
+			}
+
 			float stopping_start_dist = math::min(_param_nav_acc_rad.get() * nav_acc_margin,
 							      _param_nav_acc_rad.get() + 0.5f); // NAV_ACC_RAD
 
-			if (!_bearings_good || (!_is_flyby_wp
-						&& PX4_ISFINITE(_wp_current_dist)
-						&& _wp_current_dist < stopping_start_dist)) {
-				//&& _wp_current_dist < _param_nav_acc_rad.get() * nav_acc_margin)) {
+			if (!_is_flyby_wp && _wp_current_dist < stopping_start_dist) {
 
 #ifdef DEBUG_MY_PRINT
-				PX4_INFO("OK: WP_ARRIVING got close, switching to POS_STATE_STOPPING");
+				PX4_INFO("OK: WP_ARRIVING got close, switching to WP_STOPPING");
 				PX4_INFO("_wp_current_dist: %.2f <> %.2f m  _rover_speed_setpoint: %.2f m/s",
 					 (double)_wp_current_dist, (double)stopping_start_dist, (double)_rover_speed_setpoint);
 #endif // DEBUG_MY_PRINT
 				// DifferentialVelControl has switched from DRIVING to SPOT_TURNING, we try mirroring that.
 				// We are also closer than NAV_ACC_RAD radius to waypoint (with 1.2x margin), begin stopping phase:
 				//adjustRateParams(true); // adjust yaw PIDs for spot turning
-				setStateMachineState(POS_STATE_STOPPING);
+				setStateMachineState(WP_STOPPING);
 			}
 
 #ifdef DEBUG_MY_PRINT
@@ -136,22 +146,36 @@ void LawnmowerControl::workStateMachine()
 		}
 		break;
 
-	case POS_STATE_STOPPING:			// we hit the waypoint's bubble and need to stop
+	case WP_STOPPING:			// we hit the waypoint's bubble and need to stop
 
 		_bearings_good = updateBearings();
+
+		if(!_bearings_good 
+			|| !PX4_ISFINITE(_wp_current_dist) // Bearings or target distance not good
+			|| _wp_current_dist > _param_nav_acc_rad.get() * nav_acc_margin // we are told to depart from the waypoint
+		 ) {
+#ifdef DEBUG_MY_PRINT
+			PX4_WARN("WP_STOPPING : force transition to arrived state: curr dist: %.2f m",
+			 (double)_wp_current_dist);
+#endif // DEBUG_MY_PRINT
+			// force transition to arrived state:
+			setStateMachineState(WP_ARRIVED);
+			break;
+		}
 
 		// we need to monitor velocity here, and if it is below a threshold, we can switch to WP_ARRIVED state:
 
 #ifdef DEBUG_MY_PRINT
-		// PX4_WARN("POS_STATE_STOPPING : vel: ekf: %.2f  gps: %.2f m/s  curr dist: %.2f m",
-		// 	 (double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s, (double)_wp_current_dist);
+		PX4_WARN("WP_STOPPING : vel: ekf: %.2f  gps: %.2f m/s  curr dist: %.2f m",
+			 (double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s, (double)_wp_current_dist);
 #endif // DEBUG_MY_PRINT
 
-		if (!_bearings_good
-		    || _isSpotTurning || _is_flyby_wp
-		    || (PX4_ISFINITE(_wp_current_dist)
-			&& _wp_current_dist > _param_nav_acc_rad.get() * nav_acc_margin) // we are already departing from the waypoint
+		if (_is_flyby_wp
 		    || abs(_location_metrics.ekf_x_vel) < 0.05f) {
+#ifdef DEBUG_MY_PRINT
+			PX4_WARN("WP_STOPPING : ARRIVED : is_flyby_wp: %s  isSpotTurning: %s`",
+				 _is_flyby_wp ? "true" : "false", _isSpotTurning ? "true" : "false");
+#endif // DEBUG_MY_PRINT
 			setStateMachineState(WP_ARRIVED);
 		}
 
@@ -164,8 +188,7 @@ void LawnmowerControl::workStateMachine()
 		// See if that was the last waypoint of the mission:
 		if (!_bearings_good
 		    || !_pos_sp_triplet.current.valid
-		    || (_pos_sp_triplet.current.valid
-			&& _pos_sp_triplet.current.type == position_setpoint_s::SETPOINT_TYPE_LAND)) {
+		    || _pos_sp_triplet.current.type == position_setpoint_s::SETPOINT_TYPE_LAND) {
 			// We have arrived to the last waypoint of the mission, switch to end of mission
 			setStateMachineState(POS_STATE_MISSION_END);
 
@@ -197,7 +220,7 @@ void LawnmowerControl::workStateMachine()
 			break;
 		}
 
-		if (!_isSpotTurning // _rover_speed_setpoint > FLT_EPSILON
+		if (!_isSpotTurning
 		    && fabsf(_yaw_error) < _param_rd_trans_trn_drv.get()
 		    && fabsf(_bearing_error) < _param_rd_trans_trn_drv.get()
 		   ) {
@@ -428,7 +451,7 @@ void LawnmowerControl::adjustActuatorSetpoints()
 
 		break;
 
-	case POS_STATE_STOPPING: 		// we hit a waypoint and need to stop before we declare "we arrived"
+	case WP_STOPPING: 		// we hit a waypoint and need to stop before we declare "we arrived"
 
 		_ice_throttle_setpoint = _param_ice_throttle_idle.get();	// LM_ICE_IDLE *0.0
 

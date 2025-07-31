@@ -56,7 +56,7 @@ void LawnmowerControl::updateParams()
  * and publish auxiliary actuators. It also handles ADS-B transponder report publishing if enabled.
  *
  * @param vehicle_control_mode The current vehicle control mode.
- * @param isSpotTurning True if we are in spot turning state, used to adjust the control logic.
+ * @param isSpotTurning True if Position Control is in spot turning state, used to adjust the control logic.
  */
 void LawnmowerControl::updateLawnmowerControl(vehicle_control_mode_s vehicle_control_mode, bool isSpotTurning)
 {
