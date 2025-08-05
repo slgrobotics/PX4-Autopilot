@@ -122,6 +122,7 @@ private:
 	float _speed_setpoint{0.f};
 	double _lat0{0.0};
 	double _lon0{0.0};
+	float _turn_bias{0.0};
 
 	DEFINE_PARAMETERS(
 		(ParamFloat<px4::params::NAV_ACC_RAD>)      _param_nav_acc_rad,

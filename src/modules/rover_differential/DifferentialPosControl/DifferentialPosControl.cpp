@@ -68,12 +68,36 @@ void DifferentialPosControl::updatePosControl()
 		if (isArrivalFast || distance_to_target > _param_nav_acc_rad.get()) {
 
 			// apply PurePursuit - figure out desired yaw to closely follow the line from previous waypoint to current one:
-			const float yaw_setpoint = PurePursuit::calcTargetBearing(pure_pursuit_status, _param_pp_lookahd_gain.get(),
-						   _param_pp_lookahd_max.get(), _param_pp_lookahd_min.get(), target_waypoint_ned,
-						   _start_ned, _curr_pos_ned,
-						   fabsf(PX4_ISFINITE(_ground_speed_abs) ? _ground_speed_abs : 0.f));  // _speed_setpoint from last cycle can be used here
+			float yaw_setpoint = PurePursuit::calcTargetBearing(pure_pursuit_status, _param_pp_lookahd_gain.get(),
+					     _param_pp_lookahd_max.get(), _param_pp_lookahd_min.get(), target_waypoint_ned,
+					     _start_ned, _curr_pos_ned,
+					     fabsf(PX4_ISFINITE(_ground_speed_abs) ? _ground_speed_abs : 0.f));  // _speed_setpoint from last cycle can be used here
 
-			const float heading_error = matrix::wrap_pi(yaw_setpoint - _vehicle_yaw);
+			float heading_error = matrix::wrap_pi(yaw_setpoint - _vehicle_yaw);
+
+			// if (fabsf(matrix::wrap_pi(heading_error - M_PI_F)) < 0.1f) {
+
+			// 	if (fabsf(_turn_bias) < FLT_EPSILON) {
+			// 		_turn_bias = sign(heading_error) * 0.5f; // remember where we started turning
+			// 		printf("++++++++++ Pos : turning bias: %.2f deg\n", (double)math::degrees(_turn_bias));
+			// 	}
+
+			// 	// A ~180 degrees turn. Escape the oscillations trap.
+			// 	printf("========== Pos : pursuit yaw_setpoint: %.2f deg,  heading err: %.2f bias: %.2f\n",
+			// 	       (double)math::degrees(yaw_setpoint),
+			// 	       (double)math::degrees(heading_error),
+			// 	       (double)math::degrees(_turn_bias));
+
+			// 	heading_error = _turn_bias;
+			// 	yaw_setpoint = matrix::wrap_pi(_vehicle_yaw + heading_error); // use a turn direction bias instead
+
+			// 	printf("========== Pos : using %.2f deg instead,  heading err: %.2f\n", (double)math::degrees(yaw_setpoint),
+			// 	       (double)math::degrees(heading_error));
+
+			// } else if (fabsf(_turn_bias) > FLT_EPSILON) {
+			// 	printf("+=+=+=+=+= Pos : reset turning bias: heading_error: %.2f\n", (double)math::degrees(heading_error));
+			// 	_turn_bias = 0.0; // reset the turn direction
+			// }
 
 			// if out yaw is not aligned well with the target waypoint, we need to turn on the spot:
 			if (_current_state == DrivingState::DRIVING && fabsf(heading_error) > _param_rd_trans_drv_trn.get()) {

@@ -68,9 +68,12 @@ float calcTargetBearing(pure_pursuit_status_s &pure_pursuit_status, const float 
 
 	bool useStanleyPursuit = true;
 
-	if (curr_pos_to_curr_wp.norm() < lookahead_distance
-	    || prev_wp_to_curr_wp.norm() <
-	    FLT_EPSILON) { // Target current waypoint if closer to it than lookahead or waypoints overlap
+	// when vehicle_speed is low, lookahead_distance = PP_LOOKAHD_MIN
+
+	if (curr_pos_to_curr_wp.norm() < lookahead_distance             // pretty close to the current waypoint
+	    || prev_wp_to_curr_pos.norm() < lookahead_distance * 0.5f	// still not far from the previous waypoint
+	    || position_along_path.norm() > prev_wp_to_curr_wp.norm()   // overshot -current position is beyond the current wp
+	    || prev_wp_to_curr_wp.norm() < lookahead_distance * 0.1f) { // overlapping waypoints
 		target_bearing = bearing_to_curr_waypoint;
 
 	} else if (fabsf(crosstrack_error) >
