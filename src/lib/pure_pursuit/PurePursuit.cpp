@@ -66,14 +66,18 @@ float calcTargetBearing(pure_pursuit_status_s &pure_pursuit_status, const float 
 	// printf("P_to_C.length() %.2f m   V to C bearing: %f rad = %.1f deg\n", (double)prev_wp_to_curr_wp.length(),
 	// 		(double)bearing_to_curr_waypoint, (double)math::degrees(bearing_to_curr_waypoint));
 
-	bool useStanleyPursuit = true;
+	bool useStanleyPursuit = abs(lookahead_max - lookahead_min) < 0.2f; // Use Stanley pursuit if lookahead distance is constant
+	//useStanleyPursuit = true;
 
 	// when vehicle_speed is low, lookahead_distance = PP_LOOKAHD_MIN
 
-	if (curr_pos_to_curr_wp.norm() < lookahead_distance             // pretty close to the current waypoint
-	    || prev_wp_to_curr_pos.norm() < lookahead_distance * 0.5f	// still not far from the previous waypoint
-	    || position_along_path.norm() > prev_wp_to_curr_wp.norm()   // overshot -current position is beyond the current wp
-	    || prev_wp_to_curr_wp.norm() < lookahead_distance * 0.1f) { // overlapping waypoints
+	if (curr_pos_to_curr_wp.norm() < lookahead_distance // Target current waypoint if closer to it than lookahead
+	    || prev_wp_to_curr_wp.norm() < 1.0f) { // waypoints almost overlap
+
+	// if (curr_pos_to_curr_wp.norm() < lookahead_distance             // pretty close to the current waypoint
+	//     || prev_wp_to_curr_pos.norm() < lookahead_distance * 0.5f   // still not far from the previous waypoint
+	//     || position_along_path.norm() > prev_wp_to_curr_wp.norm()   // overshot -current position is beyond the current wp
+	//     || prev_wp_to_curr_wp.norm() < lookahead_distance * 0.1f) { // overlapping waypoints
 		target_bearing = bearing_to_curr_waypoint;
 
 	} else if (fabsf(crosstrack_error) >
@@ -96,7 +100,7 @@ float calcTargetBearing(pure_pursuit_status_s &pure_pursuit_status, const float 
 
 	} else if (useStanleyPursuit) { // Stanley pursuit
 
-		const float xtrack_gain = 18.0f; // Gain for crosstrack error (1.7 to pass "CurrAndPrevSameNorthCoordinate" test)
+		const float xtrack_gain = lookahead_gain * 1.7f; //18.0f; // Gain for crosstrack error (1.7 to pass "CurrAndPrevSameNorthCoordinate" test)
 		const float softening_factor = 1.0f; // Softening factor (not zero)
 
 		float xtrack_factor = -atanf(xtrack_gain * crosstrack_error /

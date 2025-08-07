@@ -138,6 +138,10 @@ void LawnmowerControl::workStateMachine()
 				// We are also closer than NAV_ACC_RAD radius to waypoint (with 1.2x margin), begin stopping phase:
 				//adjustRateParams(true); // adjust yaw PIDs for spot turning
 				setStateMachineState(WP_STOPPING);
+#ifdef DEBUG_MY_PRINT
+				PX4_WARN("WP_STOPPING : vel: ekf: %.2f  gps: %.2f m/s  curr dist: %.2f m",
+					(double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s, (double)_wp_current_dist);
+#endif // DEBUG_MY_PRINT
 			}
 
 #ifdef DEBUG_MY_PRINT
@@ -166,13 +170,15 @@ void LawnmowerControl::workStateMachine()
 		// we need to monitor velocity here, and if it is below a threshold, we can switch to WP_ARRIVED state:
 
 #ifdef DEBUG_MY_PRINT
-		PX4_WARN("WP_STOPPING : vel: ekf: %.2f  gps: %.2f m/s  curr dist: %.2f m",
-			 (double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s, (double)_wp_current_dist);
+		// PX4_WARN("WP_STOPPING : vel: ekf: %.2f  gps: %.2f m/s  curr dist: %.2f m",
+		// 	 (double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s, (double)_wp_current_dist);
 #endif // DEBUG_MY_PRINT
 
 		if (_is_flyby_wp
 		    || abs(_location_metrics.ekf_x_vel) < 0.05f) {
 #ifdef DEBUG_MY_PRINT
+			PX4_WARN("WP_STOPPING : vel: ekf: %.2f  gps: %.2f m/s  curr dist: %.2f m",
+				(double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s, (double)_wp_current_dist);
 			PX4_WARN("WP_STOPPING : ARRIVED : is_flyby_wp: %s  isSpotTurning: %s`",
 				 _is_flyby_wp ? "true" : "false", _isSpotTurning ? "true" : "false");
 #endif // DEBUG_MY_PRINT
@@ -291,6 +297,8 @@ void LawnmowerControl::workStateMachine()
 		//if (_isTurningPids) {
 		//	adjustRateParams(false); // reset to straight run PIDs
 		//}
+
+		debugPrintCrosstrackStats();
 
 		setStateMachineState(POS_STATE_NONE); // just rest at the end of the mission
 

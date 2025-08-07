@@ -116,6 +116,7 @@ param set-default LM_GPS_MINFIX 6
 param set-default LM_HD_MEAS_MODE 0
 param set-default LM_SP_MEAS_MODE 0
 param set-default LM_TRACING_LEV 5
+param set-default LM_XTRACK_DIST 2
 
 # Internal Combustion Engine parameters in different phases of operation:
 param set-default LM_ICE_ARRIVE 0.8
@@ -131,21 +132,21 @@ param set-default RO_YAW_RATE_CORR 1.0
 param set-default RO_YAW_RATE_TH 0.0
 
 # Rewritable Rover Attitude (Turn) Control Parameters, just initial settings:
-param set-default RO_YAW_RATE_I 0.15
+param set-default RO_YAW_RATE_I 0.04
 param set-default RO_YAW_RATE_P 0.45
-param set-default RO_YAW_RATE_LIM 40
-param set-default RO_YAW_P 2
+param set-default RO_YAW_RATE_LIM 45
+param set-default RO_YAW_P 2.5
 
 # Rewritable Rover Attitude (Turn) Control Parameters - actual overriding values:
 # -- Straight Run Parameters
 param set-default LM_YAW_P 3
 param set-default LM_YAW_RATE_I 0.05
-param set-default LM_YAW_RATE_P 1.0
-param set-default LM_YAW_RATE_LIM 200
+param set-default LM_YAW_RATE_P 0.5
+param set-default LM_YAW_RATE_LIM 60
 # -- Spot Turn Parameters
-param set-default LM_YAW_T_P 6
-param set-default LM_YAW_RATE_T_I 0.01
-param set-default LM_YAW_RATE_T_P 2.0
+param set-default LM_YAW_T_P 3
+param set-default LM_YAW_RATE_T_I 0.05
+param set-default LM_YAW_RATE_T_P 0.3
 param set-default LM_YAW_RATE_TLIM 30
 
 # Turn accuracy parameters - heading errors to transition from DRIVE to TURN:
@@ -170,13 +171,14 @@ param set-default RO_SPEED_P 0.1
 param set-default RO_SPEED_RED 1.0
 param set-default RO_SPEED_TH 0.1
 
-# Pure pursuit parameters
-param set-default PP_LOOKAHD_GAIN 1
-param set-default PP_LOOKAHD_MAX 10
+# Pure / Stanley pursuit parameters:
+param set-default PP_LOOKAHD_GAIN 2
+param set-default PP_LOOKAHD_MAX 1.01
 param set-default PP_LOOKAHD_MIN 1
 
 # Rover R/C Stick dead zone for turns
-param set-default RO_YAW_STICK_DZ 0.1
+param set-default RO_YAW_STICK_DZ 0.05
+param set-default RO_YAW_STIK_GAIN 0.5
 
 # ====================================================================================
 
