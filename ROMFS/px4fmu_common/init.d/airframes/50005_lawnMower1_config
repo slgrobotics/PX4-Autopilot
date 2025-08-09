@@ -231,8 +231,9 @@ else
 	# To disable GPS Velocity fusing set this to 3 (default 7). For dual RTK GPS heading set it to 15:
 	#param set EKF2_GPS_CTRL 7
 	param set EKF2_GPS_CTRL 15
+	param set EKF2_REQ_FIX 5
 
-	# only consider heading from magnetometer (1) or use all three axisi (2):
+	# only consider heading from magnetometer (1) or use all three axes (2):
 	#	0: Automatic (heading on ground, 3D in-flight)
 	#	1: Magnetic heading (2D)
 	#	2: 3-axis (3D)
