@@ -320,7 +320,7 @@ param set COM_ARM_MAG_STR 2
 # Set some device parameters:
 param set IMU_GYRO_RATEMAX 800
 param set IMU_INTEG_RATE 250
-param set LND_FLIGHT_T_HI 63
+#param set LND_FLIGHT_T_HI 63
 param set LND_FLIGHT_T_LO 1916514503
 
 # Control Allocation (a.k.a. Mixers) for wheels:

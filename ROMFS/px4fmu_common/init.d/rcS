@@ -109,12 +109,6 @@ then
 			echo "ERROR [init] format failed"
 		fi
 	fi
-else
-	# Is there a device mounted for storage
-	if mft query -q -k MTD -s MTD_PARAMETERS -v /mnt/microsd
-	then
-		set STORAGE_AVAILABLE yes
-	fi
 fi
 
 if [ $STORAGE_AVAILABLE = yes ]
@@ -165,12 +159,6 @@ else
 	#
 	# Load parameters.
 	#
-	# if the board has a storage for (factory) calibration data
-	if mft query -q -k MTD -s MTD_CALDATA -v /fs/mtd_caldata
-	then
-		param load /fs/mtd_caldata
-	fi
-
 	echo "FYI: PARAM_FILE: $PARAM_FILE"
 	param select $PARAM_FILE
 	if ! param import
@@ -209,11 +197,6 @@ else
 	then
 		echo "FYI: PARAM_BACKUP_FILE: $PARAM_BACKUP_FILE"
 		param select-backup $PARAM_BACKUP_FILE
-	fi
-
-	if mft query -q -k MFT -s MFT_ETHERNET -v 1
-	then
-		netman update -i eth0
 	fi
 
 	#
@@ -423,7 +406,7 @@ else
 	#
 	if px4io supported
 	then
-		# Check if PX4IO present and update firmware if needed.
+	# Check if PX4IO present and update firmware if needed.
 		echo "IP: Checking if PX4IO present and update firmware if needed..."
 		if [ -f $IOFW ]
 		then
