@@ -116,7 +116,7 @@ param set-default LM_GPS_MINFIX 6
 param set-default LM_HD_MEAS_MODE 0
 param set-default LM_SP_MEAS_MODE 0
 param set-default LM_TRACING_LEV 5
-param set-default LM_XTRACK_DIST 2
+param set-default LM_STATS_DIST 2
 
 # Internal Combustion Engine parameters in different phases of operation:
 param set-default LM_ICE_ARRIVE 0.8
@@ -139,8 +139,8 @@ param set-default RO_YAW_P 2.5
 
 # Rewritable Rover Attitude (Turn) Control Parameters - actual overriding values:
 # -- Straight Run Parameters
-param set-default LM_YAW_P 3
-param set-default LM_YAW_RATE_I 0.05
+param set-default LM_YAW_P 5
+param set-default LM_YAW_RATE_I 0.07
 param set-default LM_YAW_RATE_P 0.5
 param set-default LM_YAW_RATE_LIM 60
 # -- Spot Turn Parameters
@@ -172,7 +172,7 @@ param set-default RO_SPEED_RED 1.0
 param set-default RO_SPEED_TH 0.1
 
 # Pure / Stanley pursuit parameters:
-param set-default PP_LOOKAHD_GAIN 1.1
+param set-default PP_LOOKAHD_GAIN 1.2
 param set-default PP_LOOKAHD_MAX 1.51
 param set-default PP_LOOKAHD_MIN 1.5
 

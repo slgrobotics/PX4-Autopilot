@@ -26,10 +26,10 @@ parameters:
         min: 3
         max: 6
 
-      LM_XTRACK_DIST:
+      LM_STATS_DIST:
         description:
-          short: Cross-track distance from both waypoints to accumulate crosstrack error statistics
-          long: If the distance is less than this value, the crosstrack error will not be accumulated for leg or mission metrics.
+          short: Distance from both waypoints when accumulate crosstrack error statistics is enabled
+          long: If the distance is less than this value, the crosstrack error statistics will not be accumulated for leg or mission metrics.
         type: float
         unit: m
         min: 1

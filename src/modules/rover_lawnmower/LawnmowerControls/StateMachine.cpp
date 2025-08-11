@@ -105,8 +105,8 @@ void LawnmowerControl::workStateMachine()
 
 			} else {
 				// Normal straight run, line following.
-				if (_wp_current_dist > _param_lm_xtrack_dist.get()
-				    && _wp_previous_dist > _param_lm_xtrack_dist.get()) {
+				if (_wp_current_dist > _param_lm_stats_dist.get()
+				    && _wp_previous_dist > _param_lm_stats_dist.get()) {
 					// We are far from both waypoints, we can accumulate crosstrack error statistics:
 					cte_compute();
 				}

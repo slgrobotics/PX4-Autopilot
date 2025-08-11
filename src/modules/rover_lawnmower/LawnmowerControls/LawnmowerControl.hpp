@@ -448,7 +448,7 @@ private:
 		(ParamFloat<px4::params::LM_YAW_RATE_LIM>)  _param_lm_yaw_rate_lim, // rad/s, yaw rate limit in line following mode
 		(ParamFloat<px4::params::LM_YAW_P>)         _param_lm_yaw_p, // yaw rate P gain in line following mode
 
-		(ParamFloat<px4::params::LM_XTRACK_DIST>) _param_lm_xtrack_dist, // meters, cross-track statistics margin from waypoints
+		(ParamFloat<px4::params::LM_STATS_DIST>) _param_lm_stats_dist, // meters, cross-track statistics margin from waypoints
 		(ParamFloat<px4::params::LM_ACCEL_DIST>) _param_lm_accel_dist, // meters, distance to accelerate
 		(ParamFloat<px4::params::LM_DECEL_DIST>) _param_lm_decel_dist, // meters, distance to target wp to start decelerating
 		(ParamFloat<px4::params::NAV_ACC_RAD>) _param_nav_acc_rad, // meters, how close to waypoint we consider it reached
