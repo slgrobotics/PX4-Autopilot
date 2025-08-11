@@ -12,8 +12,12 @@ fi
 
 set -x
 
+rm -rf px4
+rm -rf px4wrk
+
 rm /fs/mtd_params
-rm -rf /fs/microsd/log
+rm -rf /fs/microsd/*
+rm -rf /fs/mtd_caldata
 
 set +x
 

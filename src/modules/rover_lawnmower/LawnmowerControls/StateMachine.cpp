@@ -140,7 +140,7 @@ void LawnmowerControl::workStateMachine()
 				setStateMachineState(WP_STOPPING);
 #ifdef DEBUG_MY_PRINT
 				PX4_WARN("WP_STOPPING : vel: ekf: %.2f  gps: %.2f m/s  curr dist: %.2f m",
-					(double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s, (double)_wp_current_dist);
+					 (double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s, (double)_wp_current_dist);
 #endif // DEBUG_MY_PRINT
 			}
 
@@ -178,7 +178,7 @@ void LawnmowerControl::workStateMachine()
 		    || abs(_location_metrics.ekf_x_vel) < 0.05f) {
 #ifdef DEBUG_MY_PRINT
 			PX4_WARN("WP_STOPPING : vel: ekf: %.2f  gps: %.2f m/s  curr dist: %.2f m",
-				(double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s, (double)_wp_current_dist);
+				 (double)_location_metrics.ekf_x_vel, (double)_location_metrics.gps_vel_m_s, (double)_wp_current_dist);
 			PX4_WARN("WP_STOPPING : ARRIVED : is_flyby_wp: %s  isSpotTurning: %s`",
 				 _is_flyby_wp ? "true" : "false", _isSpotTurning ? "true" : "false");
 #endif // DEBUG_MY_PRINT
@@ -237,6 +237,13 @@ void LawnmowerControl::workStateMachine()
 			setStateMachineState(_accel_dist > FLT_EPSILON ? WP_DEPARTING : STRAIGHT_RUN);
 		}
 
+		if (_wp_previous_dist > _accel_dist) {
+			// we are stuck in the TURNING state, force transition to DEPARTING:
+			_accel_start = _prev_wp_ned; // guess where we started accelerating from.
+
+			setStateMachineState(_accel_dist > FLT_EPSILON ? WP_DEPARTING : STRAIGHT_RUN);
+		}
+
 		break;
 
 	case WP_DEPARTING: {				// we turned to next waypoint and must start accelerating
@@ -258,12 +265,10 @@ void LawnmowerControl::workStateMachine()
 			// PX4_INFO("WP_DEPARTING: from_accel_start: %.2f m  _accel_dist: %.2f m",
 			// 	 (double)from_accel_start, (double)_accel_dist);
 
-			if (from_accel_start < _accel_dist) {
+			// turn on tools (cutting deck) - we are on the business part of the mission:
+			_cutter_setpoint = ACTUATOR_ON;
 
-				// just turn on tools (cutting deck) - we are on the business part of the mission:
-				_cutter_setpoint = ACTUATOR_ON;
-
-			} else {
+			if (from_accel_start > _accel_dist) {
 				// we are far enough from departure waypoint and not heading to the first waypoint, switch to Pursuit:
 				setStateMachineState(STRAIGHT_RUN);
 			}

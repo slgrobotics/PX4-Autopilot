@@ -172,9 +172,9 @@ param set-default RO_SPEED_RED 1.0
 param set-default RO_SPEED_TH 0.1
 
 # Pure / Stanley pursuit parameters:
-param set-default PP_LOOKAHD_GAIN 2
-param set-default PP_LOOKAHD_MAX 1.01
-param set-default PP_LOOKAHD_MIN 1
+param set-default PP_LOOKAHD_GAIN 1.1
+param set-default PP_LOOKAHD_MAX 1.51
+param set-default PP_LOOKAHD_MIN 1.5
 
 # Rover R/C Stick dead zone for turns
 param set-default RO_YAW_STICK_DZ 0.05
