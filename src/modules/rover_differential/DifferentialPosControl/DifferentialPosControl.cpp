@@ -38,7 +38,8 @@ using namespace time_literals;
 DifferentialPosControl::DifferentialPosControl(ModuleParams *parent) : ModuleParams(parent)
 {
 	_pure_pursuit_status_pub.advertise();
-	_rover_velocity_setpoint_pub.advertise();
+	_rover_speed_setpoint_pub.advertise();
+	_rover_attitude_setpoint_pub.advertise();
 
 	updateParams();
 }
@@ -152,7 +153,7 @@ void DifferentialPosControl::updatePosControl()
 			rover_velocity_setpoint.speed = _speed_setpoint;
 			rover_velocity_setpoint.bearing = _speed_setpoint > -FLT_EPSILON ? yaw_setpoint : matrix::wrap_pi(
 					yaw_setpoint + M_PI_F);
-			_rover_velocity_setpoint_pub.publish(rover_velocity_setpoint);
+			_rover_attitude_setpoint_pub.publish(rover_attitude_setpoint);
 
 		}  else {
 
