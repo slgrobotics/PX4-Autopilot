@@ -142,7 +142,7 @@ void RoverLawnmower::updateControllers()
 	}
 
 	if (_vehicle_control_mode.flag_control_velocity_enabled) {
-		_differential_vel_control.updateVelControl();
+		_differential_vel_control.updateSpeedControl();
 	}
 
 	if (_vehicle_control_mode.flag_control_attitude_enabled) {

@@ -54,7 +54,7 @@
 #include <uORB/topics/vehicle_global_position.h>
 #include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/position_setpoint_triplet.h>
-#include <uORB/topics/rover_velocity_setpoint.h>
+#include <uORB/topics/rover_speed_setpoint.h>
 #include <uORB/topics/rover_position_setpoint.h>
 #include <uORB/topics/pure_pursuit_status.h>
 #include <uORB/topics/manual_control_setpoint.h>
@@ -248,7 +248,7 @@ private:
 	uORB::Subscription _global_position_sub{ORB_ID(vehicle_global_position)};
 	uORB::Subscription _vehicle_local_position_sub{ORB_ID(vehicle_local_position)};
 	uORB::Subscription _position_setpoint_triplet_sub{ORB_ID(position_setpoint_triplet)};
-	uORB::Subscription _rover_velocity_setpoint_sub{ORB_ID(rover_velocity_setpoint)};
+	uORB::Subscription _rover_speed_setpoint_sub{ORB_ID(rover_speed_setpoint)};
 	uORB::Subscription _rover_position_setpoint_sub{ORB_ID(rover_position_setpoint)};
 	uORB::Subscription _pure_pursuit_status_sub{ORB_ID(pure_pursuit_status)};
 	uORB::Subscription _manual_control_setpoint_sub{ORB_ID(manual_control_setpoint)}; /**< notification of manual control updates */
@@ -285,7 +285,7 @@ private:
 	vehicle_global_position_s	_global_pos{};			/**< global vehicle position */
 	vehicle_local_position_s	_vehicle_local_position{};
 	position_setpoint_triplet_s	_pos_sp_triplet{};		/**< triplet of mission items */
-	rover_velocity_setpoint_s 	_rover_velocity_setpoint{};	/**< rover velocity setpoint, bearing and speed */
+	rover_speed_setpoint_s 		_rover_speed_setpoint{};	/**< rover speed setpoint, for speed X and Y components */
 	pure_pursuit_status_s 		_pure_pursuit_status{};
 	manual_control_setpoint_s	_manual_control_setpoint{};	/**< r/c channel data */
 	sensor_gps_s			_sensor_gps_data{};		/**< raw gps data */
@@ -307,9 +307,11 @@ private:
 	float _yaw_error{0.0f};			// radians, yaw error to the current waypoint, Positive - right turn, negative - left turn expected.
 	float _abbe_error{0.0f};		// meters, heading error at the target point
 
-	// from _rover_velocity_setpoint, published by DifferentialPosControl:
-	float _rover_speed_setpoint{NAN};	// meters per second, speed setpoint for the rover/lawnmower, comes from rover_velocity_setpoint_s
-	float _rover_bearing_setpoint{NAN};	// radians, bearing setpoint for the rover
+	// from _rover_speed_setpoint, published by DifferentialPosControl:
+	float _rover_speed_setpoint_x{NAN};	// meters per second, speed setpoint for the rover/lawnmower, comes from rover_speed_setpoint_s
+	float _rover_speed_setpoint_y{NAN};
+	float _rover_speed_setpoint_abs{NAN};	// meters per second, speed setpoint calculated from X and Y above
+	float _rover_bearing_setpoint{NAN};	// radians, bearing setpoint for the rover. calculated from the above
 	bool _is_flyby_wp{false};		// from rover_position_setpoint_s.arrival_speed : true if we are not stopping at the waypoint.
 
 	// These come from PurePursuit:

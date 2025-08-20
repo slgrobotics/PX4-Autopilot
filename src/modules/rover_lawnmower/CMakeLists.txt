@@ -43,7 +43,7 @@ px4_add_module(
 		DifferentialActControl
 		DifferentialRateControl
 		DifferentialAttControl
-		DifferentialVelControl
+		DifferentialSpeedControl
 		DifferentialPosControl
 		DifferentialAutoMode
 		DifferentialManualMode

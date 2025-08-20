@@ -52,7 +52,7 @@
 #include "../rover_differential/DifferentialActControl/DifferentialActControl.hpp"
 #include "../rover_differential/DifferentialRateControl/DifferentialRateControl.hpp"
 #include "../rover_differential/DifferentialAttControl/DifferentialAttControl.hpp"
-#include "../rover_differential/DifferentialVelControl/DifferentialVelControl.hpp"
+#include "../rover_differential/DifferentialSpeedControl/DifferentialSpeedControl.hpp"
 #include "../rover_differential/DifferentialPosControl/DifferentialPosControl.hpp"
 #include "../rover_differential/DifferentialDriveModes/DifferentialAutoMode/DifferentialAutoMode.hpp"
 #include "../rover_differential/DifferentialDriveModes/DifferentialManualMode/DifferentialManualMode.hpp"
@@ -152,7 +152,7 @@ private:
 	//EnhancedActControl       _differential_act_control{this};
 	DifferentialRateControl  _differential_rate_control{this};
 	DifferentialAttControl   _differential_att_control{this};
-	DifferentialVelControl   _differential_vel_control{this};
+	DifferentialSpeedControl   _differential_vel_control{this};
 	DifferentialPosControl   _differential_pos_control{this};
 	DifferentialAutoMode	 _auto_mode{this};
 	DifferentialManualMode 	 _manual_mode{this};

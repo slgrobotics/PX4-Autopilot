@@ -121,11 +121,18 @@ void LawnmowerControl::updateSubscriptions()
 
 	}
 
-	if (_rover_velocity_setpoint_sub.updated()) {
-		_rover_velocity_setpoint_sub.copy(&_rover_velocity_setpoint);
+	if (_rover_speed_setpoint_sub.updated()) {
+		_rover_speed_setpoint_sub.copy(&_rover_speed_setpoint);
 
-		_rover_speed_setpoint = _rover_velocity_setpoint.speed;
-		_rover_bearing_setpoint = _rover_velocity_setpoint.bearing;
+		_rover_speed_setpoint_x = _rover_speed_setpoint.speed_body_x;
+		_rover_speed_setpoint_y = _rover_speed_setpoint.speed_body_y;
+
+		_rover_speed_setpoint_abs = sqrtf(_rover_speed_setpoint_x * _rover_speed_setpoint_x +
+						  _rover_speed_setpoint_y * _rover_speed_setpoint_y);
+
+		// Calculate bearing setpoint from speed setpoint vector (body frame, x-forward, y-right)
+		_rover_bearing_setpoint = atan2f(_rover_speed_setpoint_y, _rover_speed_setpoint_x); // atan2 is already in -pi..pi range
+
 	}
 
 	if (_rover_position_setpoint_sub.updated()) {

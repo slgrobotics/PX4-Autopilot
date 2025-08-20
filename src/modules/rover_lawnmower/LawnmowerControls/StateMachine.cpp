@@ -96,8 +96,8 @@ void LawnmowerControl::workStateMachine()
 				// Close enough to destination waypoint, switch from Pursuit to direct heading:
 #ifdef DEBUG_MY_PRINT
 				PX4_INFO("OK: STRAIGHT_RUN got close %.2f, switching to WP_ARRIVING", (double)_wp_current_dist);
-				PX4_INFO("is_flyby_wp: %s close_to_wp %s  _rover_speed_setpoint: %.2f m/s",
-					 _is_flyby_wp ? "true" : "false", is_close_to_wp ? "true" : "false", (double)_rover_speed_setpoint);
+				PX4_INFO("is_flyby_wp: %s close_to_wp %s  _rover_speed_setpoint_abs: %.2f m/s",
+					 _is_flyby_wp ? "true" : "false", is_close_to_wp ? "true" : "false", (double)_rover_speed_setpoint_abs);
 #endif // DEBUG_MY_PRINT
 
 				setStateMachineState(WP_ARRIVING);
@@ -131,10 +131,10 @@ void LawnmowerControl::workStateMachine()
 
 #ifdef DEBUG_MY_PRINT
 				PX4_INFO("OK: WP_ARRIVING got close, switching to WP_STOPPING");
-				PX4_INFO("_wp_current_dist: %.2f <> %.2f m  _rover_speed_setpoint: %.2f m/s",
-					 (double)_wp_current_dist, (double)stopping_start_dist, (double)_rover_speed_setpoint);
+				PX4_INFO("_wp_current_dist: %.2f <> %.2f m  _rover_speed_setpoint_abs: %.2f m/s",
+					 (double)_wp_current_dist, (double)stopping_start_dist, (double)_rover_speed_setpoint_abs);
 #endif // DEBUG_MY_PRINT
-				// DifferentialVelControl has switched from DRIVING to SPOT_TURNING, we try mirroring that.
+				// DifferentialSpeedControl has switched from DRIVING to SPOT_TURNING, we try mirroring that.
 				// We are also closer than NAV_ACC_RAD radius to waypoint (with 1.2x margin), begin stopping phase:
 				//adjustRateParams(true); // adjust yaw PIDs for spot turning
 				setStateMachineState(WP_STOPPING);
@@ -230,7 +230,7 @@ void LawnmowerControl::workStateMachine()
 		    && fabsf(_yaw_error) < _param_rd_trans_trn_drv.get()
 		    && fabsf(_bearing_error) < _param_rd_trans_trn_drv.get()
 		   ) {
-			// DifferentialVelControl has switched from SPOT_TURNING to DRIVING, we try mirroring that.
+			// DifferentialSpeedControl has switched from SPOT_TURNING to DRIVING, we try mirroring that.
 
 			_accel_start = _curr_pos_ned; // remember where we started accelerating from.
 

@@ -38,7 +38,7 @@ namespace rover_lawnmower
 
 void LawnmowerControl::advertisePublishers()
 {
-	//_rover_velocity_setpoint_pub.advertise();
+	//_rover_speed_setpoint_pub.advertise();
 
 #ifdef DEBUG_MY_DATA
 	// advertise debug array:

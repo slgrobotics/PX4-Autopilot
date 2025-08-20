@@ -148,12 +148,13 @@ void DifferentialPosControl::updatePosControl()
 
 			_pure_pursuit_status_pub.publish(pure_pursuit_status);
 
-			rover_velocity_setpoint_s rover_velocity_setpoint{};
-			rover_velocity_setpoint.timestamp = timestamp;
-			rover_velocity_setpoint.speed = _speed_setpoint;
-			rover_velocity_setpoint.bearing = _speed_setpoint > -FLT_EPSILON ? yaw_setpoint : matrix::wrap_pi(
-					yaw_setpoint + M_PI_F);
-			_rover_attitude_setpoint_pub.publish(rover_attitude_setpoint);
+			rover_speed_setpoint_s rover_speed_setpoint{};
+			rover_speed_setpoint.timestamp = timestamp;
+			rover_speed_setpoint.speed_body_x = _speed_setpoint;
+			rover_speed_setpoint.speed_body_y = 0.f;
+			// rover_speed_setpoint.bearing = _speed_setpoint > -FLT_EPSILON ? yaw_setpoint : matrix::wrap_pi(
+			// 		yaw_setpoint + M_PI_F);
+			_rover_speed_setpoint_pub.publish(rover_speed_setpoint);
 
 		}  else {
 
@@ -164,12 +165,13 @@ void DifferentialPosControl::updatePosControl()
 			pure_pursuit_status.bearing_to_waypoint = NAN;
 			_pure_pursuit_status_pub.publish(pure_pursuit_status);
 
-			rover_velocity_setpoint_s rover_velocity_setpoint{};
-			rover_velocity_setpoint.timestamp = timestamp;
-			rover_velocity_setpoint.speed = 0.f;
-			rover_velocity_setpoint.bearing = _vehicle_yaw;
-			//rover_velocity_setpoint.state = (int)_current_state; // would be nice to have this field published
-			_rover_velocity_setpoint_pub.publish(rover_velocity_setpoint);
+			rover_speed_setpoint_s rover_speed_setpoint{};
+			rover_speed_setpoint.timestamp = timestamp;
+			rover_speed_setpoint.speed_body_x = 0.f;
+			rover_speed_setpoint.speed_body_y = 0.f;
+			//rover_speed_setpoint.bearing = _vehicle_yaw;
+			//rover_speed_setpoint.state = (int)_current_state; // would be nice to have this field published
+			_rover_speed_setpoint_pub.publish(rover_speed_setpoint);
 		}
 	}
 
