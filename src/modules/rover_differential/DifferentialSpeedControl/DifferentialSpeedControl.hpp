@@ -50,6 +50,7 @@
 #include <uORB/topics/rover_throttle_setpoint.h>
 #include <uORB/topics/rover_speed_status.h>
 #include <uORB/topics/rover_speed_setpoint.h>
+#include <uORB/topics/rover_attitude_setpoint.h>
 #include <uORB/topics/rover_steering_setpoint.h>
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/vehicle_local_position.h>
@@ -83,7 +84,7 @@ public:
 	/**
 	 * @brief Reset speed controller.
 	 */
-	void reset() {_pid_speed.resetIntegral(); _speed_setpoint = NAN; _adjusted_speed_setpoint.setForcedValue(0.f);};
+	void reset() {_pid_speed.resetIntegral(); _speed_setpoint = NAN; _bearing_setpoint = NAN; _adjusted_speed_setpoint.setForcedValue(0.f);};
 
 protected:
 	/**
@@ -107,6 +108,7 @@ private:
 	uORB::Subscription _vehicle_attitude_sub{ORB_ID(vehicle_attitude)};
 	uORB::Subscription _vehicle_local_position_sub{ORB_ID(vehicle_local_position)};
 	uORB::Subscription _rover_speed_setpoint_sub{ORB_ID(rover_speed_setpoint)};
+	uORB::Subscription _rover_attitude_setpoint_sub{ORB_ID(rover_attitude_setpoint)};
 	uORB::Subscription _rover_steering_setpoint_sub{ORB_ID(rover_steering_setpoint)};
 
 	// uORB publications
@@ -118,8 +120,8 @@ private:
 	Quatf _vehicle_attitude_quaternion{};
 	float _vehicle_speed{0.f}; // [m/s] Positiv: Forwards, Negativ: Backwards
 	float _vehicle_yaw{0.f};
-	float _speed_setpoint{NAN};	// marching orders from DifferentialPosControl
-	float _bearing_setpoint{NAN};	// marching orders from DifferentialPosControl
+	float _speed_setpoint{NAN};	// marching orders from DifferentialPosControl, via rover_speed_setpoint
+	float _bearing_setpoint{NAN};	// marching orders from DifferentialPosControl, via rover_attitude_setpoint
 	float _normalized_speed_diff{NAN};
 
 	// Controllers
@@ -134,6 +136,7 @@ private:
 		(ParamFloat<px4::params::RO_DECEL_LIM>)     _param_ro_decel_limit,
 		(ParamFloat<px4::params::RO_JERK_LIM>)      _param_ro_jerk_limit,
 		(ParamFloat<px4::params::RO_SPEED_LIM>)     _param_ro_speed_limit,
-		(ParamFloat<px4::params::RO_SPEED_TH>)      _param_ro_speed_th
+		(ParamFloat<px4::params::RO_SPEED_TH>)      _param_ro_speed_th,
+		(ParamFloat<px4::params::RO_SPEED_RED>)     _param_ro_speed_red
 	)
 };

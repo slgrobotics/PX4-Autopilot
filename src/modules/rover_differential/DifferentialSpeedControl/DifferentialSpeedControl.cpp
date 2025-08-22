@@ -95,6 +95,7 @@ void DifferentialSpeedControl::updateSubscriptions()
 		vehicle_attitude_s vehicle_attitude{};
 		_vehicle_attitude_sub.copy(&vehicle_attitude);
 		_vehicle_attitude_quaternion = matrix::Quatf(vehicle_attitude.q);
+		_vehicle_yaw = matrix::Eulerf(_vehicle_attitude_quaternion).psi();
 	}
 
 	if (_vehicle_local_position_sub.updated()) {
@@ -112,11 +113,26 @@ void DifferentialSpeedControl::updateSubscriptions()
 		_speed_setpoint = rover_speed_setpoint.speed_body_x;
 	}
 
+	if (_rover_attitude_setpoint_sub.updated()) {
+		rover_attitude_setpoint_s rover_attitude_setpoint{};
+		_rover_attitude_setpoint_sub.copy(&rover_attitude_setpoint);
+		_bearing_setpoint = rover_attitude_setpoint.yaw_setpoint;
+	}
+
 }
 
 float DifferentialSpeedControl::calcSpeedSetpoint()
 {
-	float speed_setpoint = math::constrain(_speed_setpoint, -_param_ro_speed_limit.get(), _param_ro_speed_limit.get());
+	float max_speed = _param_ro_speed_limit.get();
+
+	if (_param_ro_speed_red.get() > FLT_EPSILON) {
+		const float course_error = fabsf(matrix::wrap_pi(_bearing_setpoint - _vehicle_yaw));
+		const float speed_reduction = math::constrain(_param_ro_speed_red.get() * math::interpolate(course_error,
+						0.f, M_PI_F, 0.f, 1.f), 0.f, 1.f);
+		max_speed = math::constrain(_param_ro_max_thr_speed.get() * (1.f - speed_reduction), 0.f, max_speed);
+	}
+
+	float speed_setpoint = math::constrain(_speed_setpoint, -max_speed, max_speed);
 
 	const float speed_setpoint_normalized = math::interpolate<float>(speed_setpoint,
 						-_param_ro_max_thr_speed.get(), _param_ro_max_thr_speed.get(), -1.f, 1.f);

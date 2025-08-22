@@ -152,9 +152,13 @@ void DifferentialPosControl::updatePosControl()
 			rover_speed_setpoint.timestamp = timestamp;
 			rover_speed_setpoint.speed_body_x = _speed_setpoint;
 			rover_speed_setpoint.speed_body_y = 0.f;
-			// rover_speed_setpoint.bearing = _speed_setpoint > -FLT_EPSILON ? yaw_setpoint : matrix::wrap_pi(
-			// 		yaw_setpoint + M_PI_F);
 			_rover_speed_setpoint_pub.publish(rover_speed_setpoint);
+
+			rover_attitude_setpoint_s rover_attitude_setpoint{};
+			rover_attitude_setpoint.timestamp = timestamp;
+			rover_attitude_setpoint.yaw_setpoint = _speed_setpoint > -FLT_EPSILON ? yaw_setpoint : matrix::wrap_pi(
+					yaw_setpoint + M_PI_F);
+			_rover_attitude_setpoint_pub.publish(rover_attitude_setpoint);
 
 		}  else {
 
@@ -169,9 +173,13 @@ void DifferentialPosControl::updatePosControl()
 			rover_speed_setpoint.timestamp = timestamp;
 			rover_speed_setpoint.speed_body_x = 0.f;
 			rover_speed_setpoint.speed_body_y = 0.f;
-			//rover_speed_setpoint.bearing = _vehicle_yaw;
 			//rover_speed_setpoint.state = (int)_current_state; // would be nice to have this field published
 			_rover_speed_setpoint_pub.publish(rover_speed_setpoint);
+
+			rover_attitude_setpoint_s rover_attitude_setpoint{};
+			rover_attitude_setpoint.timestamp = timestamp;
+			rover_attitude_setpoint.yaw_setpoint = _vehicle_yaw;
+			_rover_attitude_setpoint_pub.publish(rover_attitude_setpoint);
 		}
 	}
 
