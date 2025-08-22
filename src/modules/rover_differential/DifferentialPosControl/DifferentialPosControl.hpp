@@ -38,7 +38,6 @@
 #include <px4_platform_common/events.h>
 
 // Libraries
-#include <lib/rover_control/RoverControl.hpp>
 #include <matrix/matrix/math.hpp>
 #include <lib/pure_pursuit/PurePursuit.hpp>
 #include <math.h>
@@ -89,6 +88,11 @@ public:
 	 */
 	bool runSanityChecks();
 
+	/**
+	 * @brief Reset position controller.
+	 */
+	void reset() {_start_ned = Vector2f{NAN, NAN}; _target_waypoint_ned = Vector2f{NAN, NAN}; _arrival_speed = 0.f; _cruising_speed = _param_ro_speed_limit.get(); _stopped = false;};
+
 protected:
 	/**
 	 * @brief Update the parameters of the module.
@@ -105,7 +109,6 @@ private:
 	uORB::Subscription _vehicle_attitude_sub{ORB_ID(vehicle_attitude)};
 	uORB::Subscription _vehicle_local_position_sub{ORB_ID(vehicle_local_position)};
 	uORB::Subscription _rover_position_setpoint_sub{ORB_ID(rover_position_setpoint)};
-	rover_position_setpoint_s _rover_position_setpoint{};
 
 	// uORB publications
 	uORB::Publication<rover_speed_setpoint_s> _rover_speed_setpoint_pub{ORB_ID(rover_speed_setpoint)};
@@ -113,13 +116,14 @@ private:
 	uORB::Publication<rover_attitude_setpoint_s> _rover_attitude_setpoint_pub{ORB_ID(rover_attitude_setpoint)};
 
 	// Variables
+	Quatf _vehicle_attitude_quaternion{};
 	Vector2f _curr_pos_ned{};
 	Vector2f _start_ned{};
 	Vector2f _stopped_ned{}; // Position where the rover stopped last time. Needed for speed trapezoid planning.
 	float _arrival_speed{NAN};
-	float _cruising_speed{NAN};
 	float _vehicle_yaw{0.f};
 	float _ground_speed_abs{0.f};
+	float _cruising_speed{NAN};
 	DrivingState _current_state{DrivingState::DRIVING};
 	float _speed_setpoint{0.f};
 	double _lat0{0.0};

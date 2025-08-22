@@ -55,7 +55,6 @@ void DifferentialPosControl::updatePosControl()
 
 	hrt_abstime timestamp = hrt_absolute_time();
 
-	const Vector2f target_waypoint_ned(_rover_position_setpoint.position_ned[0], _rover_position_setpoint.position_ned[1]);
 
 	if (target_waypoint_ned.isAllFinite()) {
 		float distance_to_target = (target_waypoint_ned - _curr_pos_ned).norm();
@@ -180,6 +179,16 @@ void DifferentialPosControl::updatePosControl()
 			rover_attitude_setpoint.timestamp = timestamp;
 			rover_attitude_setpoint.yaw_setpoint = _vehicle_yaw;
 			_rover_attitude_setpoint_pub.publish(rover_attitude_setpoint);
+
+			if (!_stopped && fabsf(_vehicle_speed) < FLT_EPSILON) {
+				_stopped = true;
+				_target_waypoint_ned = _curr_pos_ned;
+			}
+
+			if (_stopped && _updated_reset_counter != _reset_counter) {
+				_target_waypoint_ned = _curr_pos_ned;
+				_reset_counter = _updated_reset_counter;
+			}
 		}
 	}
 
@@ -190,13 +199,15 @@ void DifferentialPosControl::updateSubscriptions()
 	if (_vehicle_attitude_sub.updated()) {
 		vehicle_attitude_s vehicle_attitude{};
 		_vehicle_attitude_sub.copy(&vehicle_attitude);
-		matrix::Quatf vehicle_attitude_quaternion = matrix::Quatf(vehicle_attitude.q);
-		_vehicle_yaw = matrix::Eulerf(vehicle_attitude_quaternion).psi();
+		_vehicle_attitude_quaternion = matrix::Quatf(vehicle_attitude.q);
+		_vehicle_yaw = matrix::Eulerf(_vehicle_attitude_quaternion).psi();
 	}
 
 	if (_vehicle_local_position_sub.updated()) {
 		vehicle_local_position_s vehicle_local_position{};
 		_vehicle_local_position_sub.copy(&vehicle_local_position);
+		_updated_reset_counter = vehicle_local_position.xy_reset_counter;
+
 		_curr_pos_ned = Vector2f(vehicle_local_position.x, vehicle_local_position.y);
 
 		if (fabs(vehicle_local_position.ref_lat - _lat0) > 1e-9 || fabs(vehicle_local_position.ref_lon - _lon0) > 1e-9) {
