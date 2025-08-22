@@ -119,20 +119,22 @@ private:
 	Quatf _vehicle_attitude_quaternion{};
 	Vector2f _curr_pos_ned{};
 	Vector2f _start_ned{};
+	Vector2f _target_waypoint_ned{};
 	Vector2f _stopped_ned{}; // Position where the rover stopped last time. Needed for speed trapezoid planning.
 	float _arrival_speed{NAN};
 	float _vehicle_yaw{0.f};
-	float _ground_speed_abs{0.f};
+	float _vehicle_speed{0.f};
 	float _cruising_speed{NAN};
-	DrivingState _current_state{DrivingState::DRIVING};
 	float _speed_setpoint{0.f};
 	double _lat0{0.0};
 	double _lon0{0.0};
 	float _turn_bias{0.0};
+	bool _stopped{false};
+	uint8_t _reset_counter{0}; /**< counter for estimator resets in xy-direction */
+	uint8_t _updated_reset_counter{0}; /**< counter for estimator resets in xy-direction */
+	DrivingState _current_state{DrivingState::DRIVING};
 
 	DEFINE_PARAMETERS(
-		(ParamFloat<px4::params::NAV_ACC_RAD>)      _param_nav_acc_rad,
-		(ParamFloat<px4::params::RD_ACC_RAD_MARGN>) _param_rd_acc_rad_margin,
 		(ParamFloat<px4::params::RD_TRANS_TRN_DRV>) _param_rd_trans_trn_drv,
 		(ParamFloat<px4::params::RD_TRANS_DRV_TRN>) _param_rd_trans_drv_trn,
 		(ParamFloat<px4::params::RO_ACCEL_LIM>)     _param_ro_accel_limit,
@@ -141,6 +143,9 @@ private:
 		(ParamFloat<px4::params::RO_SPEED_LIM>)     _param_ro_speed_limit,
 		(ParamFloat<px4::params::PP_LOOKAHD_GAIN>)  _param_pp_lookahd_gain,
 		(ParamFloat<px4::params::PP_LOOKAHD_MAX>)   _param_pp_lookahd_max,
-		(ParamFloat<px4::params::PP_LOOKAHD_MIN>)   _param_pp_lookahd_min
+		(ParamFloat<px4::params::PP_LOOKAHD_MIN>)   _param_pp_lookahd_min,
+		(ParamFloat<px4::params::NAV_ACC_RAD>)      _param_nav_acc_rad,
+		(ParamFloat<px4::params::RO_SPEED_TH>)      _param_ro_speed_th,
+		(ParamFloat<px4::params::RD_ACC_RAD_MARGN>) _param_rd_acc_rad_margin
 	)
 };
