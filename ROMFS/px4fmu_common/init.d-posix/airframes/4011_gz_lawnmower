@@ -15,8 +15,8 @@ param set SDLOG_MODE 0
 #param set SDLOG_PROFILE 255
 param set SDLOG_PROFILE 123
 
-param set-default SIM_GZ_EN 1 # Gazebo bridge
-param set-default SIM_GPS_USED 1
+param set-default SIM_GZ_EN 1     # Enable Gazebo bridge
+param set-default SIM_GPS_USED 15 # Simulated GPS number of satellites used.
 
 # individual "optional" sensors in Gazebo bridge - all enabled by default:
 param set-default SIM_GZ_EN_LIDAR 0
