@@ -178,9 +178,9 @@ param set-default PP_LOOKAHD_MIN 1.5
 
 # Rover R/C Stick feel adjustments and dead zone for turns:
 param set-default RO_YAW_STICK_DZ 0.05
-param set-default RD_YAW_STK_GAIN 0.5
+param set-default RD_YAW_STK_GAIN 0.7
 param set-default RO_YAW_EXPO 0.0
-param set-default RO_YAW_SUPEXPO 0.0
+param set-default RO_YAW_SUPEXPO 0.5
 
 # ====================================================================================
 

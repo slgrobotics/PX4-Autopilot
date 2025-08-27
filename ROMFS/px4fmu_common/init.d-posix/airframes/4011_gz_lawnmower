@@ -16,6 +16,15 @@ param set SDLOG_MODE 0
 param set SDLOG_PROFILE 123
 
 param set-default SIM_GZ_EN 1 # Gazebo bridge
+param set-default SIM_GPS_USED 1
+
+# individual "optional" sensors in Gazebo bridge - all enabled by default:
+param set-default SIM_GZ_EN_LIDAR 0
+param set-default SIM_GZ_EN_FLOW 0
+param set-default SIM_GZ_EN_ASPD 0  # airspeed
+param set-default SIM_GZ_EN_BARO 1
+param set-default SIM_GZ_EN_ODOM 0
+param set-default SIM_GZ_EN_GPS 1
 
 # We can arm and drive in manual mode when it slides and GPS check fails:
 param set-default COM_ARM_WO_GPS 1
@@ -96,9 +105,9 @@ param set-default PP_LOOKAHD_MIN 1.5
 
 # Rover R/C Stick feel adjustments and dead zone for turns:
 param set-default RO_YAW_STICK_DZ 0.05
-param set-default RD_YAW_STK_GAIN 0.5
+param set-default RD_YAW_STK_GAIN 0.7
 param set-default RO_YAW_EXPO 0.0
-param set-default RO_YAW_SUPEXPO 0.0
+param set-default RO_YAW_SUPEXPO 0.5
 
 # ====================================================================================
 
