@@ -31,6 +31,12 @@
  *
  ****************************************************************************/
 
+/**
+ * @brief LawnmowerControl class - helper methods for tracing
+ *
+ * @author Sergei Grichine <slg@quakemap.com>
+ */
+
 #include "LawnmowerControl.hpp"
 
 namespace rover_lawnmower

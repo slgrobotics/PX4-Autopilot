@@ -30,6 +30,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
+	
+/**
+ * @brief RoverLawnmower module
+ *
+ * This module controls a zero-turn lawnmower rover
+ * Code here is a copy of RoverDifferential.cpp with minor modifications.
+ *
+ * @author Sergei Grichine <slg@quakemap.com>
+ */
 
 #include "RoverLawnmower.hpp"
 

@@ -31,6 +31,15 @@
  *
  ****************************************************************************/
 
+/**
+ * @brief LawnmowerControl class - vehicleControl() method
+ *
+ * To control a zero-turn lawnmower rover
+ * Works or unwinds StateMachine in Manual and Auto mode.
+ *
+ * @author Sergei Grichine <slg@quakemap.com>
+ */
+
 #include "LawnmowerControl.hpp"
 
 namespace rover_lawnmower

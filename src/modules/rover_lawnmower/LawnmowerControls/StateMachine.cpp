@@ -31,6 +31,16 @@
  *
  ****************************************************************************/
 
+/**
+ * @brief LawnmowerControl class - workStateMachine() and helper methods
+ *
+ * To control a zero-turn lawnmower rover
+ * StateMachine monitors vehicle state as DifferentialPosControl controls the vehicle's movement.
+ * It controls Lawnmower-specific actuators and changes PID parameters as needed for tighter line following.
+ *
+ * @author Sergei Grichine <slg@quakemap.com>
+ */
+
 #include "LawnmowerControl.hpp"
 
 namespace rover_lawnmower

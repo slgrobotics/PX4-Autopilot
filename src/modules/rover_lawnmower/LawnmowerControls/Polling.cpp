@@ -31,6 +31,15 @@
  *
  ****************************************************************************/
 
+/**
+ * @brief LawnmowerControl class - updateSubscriptions() method
+ *
+ * To control a zero-turn lawnmower rover
+ * Updates local state with sensor and other data.
+ *
+ * @author Sergei Grichine <slg@quakemap.com>
+ */
+
 #include "LawnmowerControl.hpp"
 
 namespace rover_lawnmower

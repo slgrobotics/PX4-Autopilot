@@ -31,6 +31,15 @@
  *
  ****************************************************************************/
 
+/**
+ * @brief LawnmowerControl class - publish... () methods
+ *
+ * To control a zero-turn lawnmower rover
+ * Publishes actuator commands and other data.
+ *
+ * @author Sergei Grichine <slg@quakemap.com>
+ */
+
 #include "LawnmowerControl.hpp"
 
 namespace rover_lawnmower

@@ -31,6 +31,14 @@
  *
  ****************************************************************************/
 
+/**
+ * @brief LawnmowerControl class - main methods
+ *
+ * To control a zero-turn lawnmower rover
+ *
+ * @author Sergei Grichine <slg@quakemap.com>
+ */
+
 #include "LawnmowerControl.hpp"
 
 
