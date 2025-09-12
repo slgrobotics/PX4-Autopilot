@@ -194,7 +194,7 @@ then
 
 	// Dragger max speed is 0.5 m/s as measired on R/C
 	param set RO_MAX_THR_SPEED 0.55
-	param set RO_SPEED_LIM 0.45
+	param set RO_SPEED_LIM 0.3
 
 	# Dragger, having non-RTK GPS, needs Mag and vertical reference - Baro sim.
 	param set SYS_HAS_BARO 1
@@ -446,9 +446,10 @@ if [ $PX4_ROBOT_NAME = DRAGGER ]
 then
 	# start BN-880 (UBLOX M8N) GPS. It was configured for 5Hz using u-center on Windows:
 	#gps start -d /dev/ttyUSB0 -b 115200 -p ubx
+        gps start -d /dev/ttyS0 -b 115200 -p nmea
 
 	# for lab debugging, use fake GPS (mid Florida location):
-	fake_gps start
+	#fake_gps start
 
 	# start BN-880 GPS compass on I2C bus, address 0x1e:
 	#hmc5883 -X -R 0 start
