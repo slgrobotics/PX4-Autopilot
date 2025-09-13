@@ -193,8 +193,25 @@ then
 	param set RD_WHEEL_TRACK 0.58
 
 	// Dragger max speed is 0.5 m/s as measired on R/C
+	param set RO_ACCEL_LIM 0.1
+	param set RO_DECEL_LIM 0.1
+	param set RO_JERK_LIM 2
 	param set RO_MAX_THR_SPEED 0.55
-	param set RO_SPEED_LIM 0.3
+	param set RO_SPEED_LIM 0.5
+
+	# -- Straight Run Parameters
+	param set LM_YAW_P 0.8
+	param set LM_YAW_RATE_I 0.01
+	param set LM_YAW_RATE_P 0.2
+	param set LM_YAW_RATE_LIM 60
+	# -- Spot Turn Parameters
+	param set LM_YAW_T_P 0.8
+	param set LM_YAW_RATE_T_I 0.01
+	param set LM_YAW_RATE_T_P 0.2
+	param set LM_YAW_RATE_TLIM 30
+
+	# Pure / Stanley pursuit parameters:
+	param set PP_LOOKAHD_GAIN 8
 
 	# Dragger, having non-RTK GPS, needs Mag and vertical reference - Baro sim.
 	param set SYS_HAS_BARO 1
@@ -207,15 +224,18 @@ then
 	param set EKF2_HGT_REF 0
 
 	# To disable GPS Altitute fusing set this to 5 (default 7). For dual RTK GPS heading set it to 15:
-	param set EKF2_GPS_CTRL 5
-	param set LM_GPS_MINFIX 3
+	param set EKF2_GPS_CTRL 15
+	param set LM_GPS_MINFIX 5
+
+	# For dual RTK GPS heading - 0 when Moving Base antenna is behind the Rover GPS antenna:
+	param set GPS_YAW_OFFSET 0
 
 	# For a non-RTK GPS:
 	param set LM_HD_MEAS_MODE 0
 	param set LM_SP_MEAS_MODE 0
 
+	# Option 2: we have one IMU with mag on mpu9250 with -M:
 	param set EKF2_MULTI_IMU 1
-	param set EKF2_MULTI_MAG 1
 	param set EKF2_MULTI_MAG 1
 
 else
@@ -248,6 +268,9 @@ else
 	param set EKF2_GPS_V_NOISE 0.1
 	#param set EKF2_HEAD_NOISE 0.01 - this goes to mag fusing, not GPS
 
+	# For dual RTK GPS heading - 180 when Moving Base antenna is in front of the Rover GPS antenna:
+	param set GPS_YAW_OFFSET 180
+
 	# Adjust other GPS related parameters for better EKF2 operation:
 	#param set EKF2_GPS_DELAY 110
 	#param set EKF2_GPS_POS_X 0
@@ -269,8 +292,6 @@ param set GPS_2_GNSS 19
 #param set GPS_1_GNSS 0
 #param set GPS_2_GNSS 0
 
-# For dual RTK GPS heading - 180 when Moving Base antenna is in front of the Rover GPS antenna:
-param set GPS_YAW_OFFSET 180
 # Secondary GPS (Moving Base) is connected to telemetry radio for RTCM feed, the radio baud rate is 57600.
 # This also affects UART2 on the Rover GPS, but this is OK.
 param set GPS_UBX_MODE 1
@@ -446,7 +467,11 @@ if [ $PX4_ROBOT_NAME = DRAGGER ]
 then
 	# start BN-880 (UBLOX M8N) GPS. It was configured for 5Hz using u-center on Windows:
 	#gps start -d /dev/ttyUSB0 -b 115200 -p ubx
-        gps start -d /dev/ttyS0 -b 115200 -p nmea
+        #gps start -d /dev/ttyS0 -b 115200 -p nmea
+
+	# start u-blox ZED-F9P - dual GPS for heading (originally at /dev/ttyACM1 ACM0):
+	# follow https://github.com/slgrobotics/robots_bringup/tree/main/Docs/Dragger to assign links:
+	gps start -d /dev/ttyGPS_MAIN -b 460800 -e /dev/ttyGPS_SEC -g 460800
 
 	# for lab debugging, use fake GPS (mid Florida location):
 	#fake_gps start
