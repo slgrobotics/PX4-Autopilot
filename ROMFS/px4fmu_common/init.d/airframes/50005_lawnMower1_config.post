@@ -33,13 +33,13 @@ then
 	param set CAL_MAG0_ROT 0
 
 	# Accel offsets (Roll and Pitch) are set by "sensors level" in QGroundControl:
-	#param set SENS_BOARD_X_OFF -2.0360
-	#param set SENS_BOARD_Y_OFF -2.3447
+	#param set SENS_BOARD_X_OFF -0.6
+	#param set SENS_BOARD_Y_OFF 0.4
 
 	# Gyro calibration on lawn mower:
 	#param set CAL_GYRO0_XOFF -0.007
-	#param set CAL_GYRO0_YOFF 0.015
-	#param set CAL_GYRO0_ZOFF 0.008
+	#param set CAL_GYRO0_YOFF 0.009
+	#param set CAL_GYRO0_ZOFF 0.007
 else
 	echo "Warning: configuring magnetometer for default robot"
 	# calibration for RM3100, rotation=0 (none). DO NOT calibrate mag. Setting CAL_MAG0_ID is enough:

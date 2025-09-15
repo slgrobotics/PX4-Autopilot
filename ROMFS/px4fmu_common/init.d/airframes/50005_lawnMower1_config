@@ -32,12 +32,12 @@ echo "FYI: param SYS_AUTOSTART: " `param show -q SYS_AUTOSTART`
 
 echo "IP: AUTOCNF = yes  - setting all platform default parameters"
 
-# Lead acid 12.6V battery looks like a 3S LiIon/LiPO, but wit 5V/cell Charged voltage:
+# LiFePO4 13.46V battery:
 param set BAT1_A_PER_V 15.3910
-param set BAT1_N_CELLS 3
-param set BAT1_V_CHARGED 5.0
+param set BAT1_N_CELLS 4
+param set BAT1_V_CHARGED 3.3650
+param set BAT1_V_EMPTY 3.2125
 param set BAT1_V_DIV 4.6730
-param set BAT1_V_EMPTY 3.3000
 
 # Disable Airspeed check circuit breaker because Rovers don't have airspeed sensor:
 param set CBRK_SUPPLY_CHK 894281
@@ -189,20 +189,23 @@ echo "IP: configuring parameters for " $PX4_ROBOT_NAME
 # AHRS must have baro input, unless this is set to 0:
 if [ $PX4_ROBOT_NAME = DRAGGER ]
 then
+	# Adjust to fit actual battery voltage:
+	param set BAT1_V_DIV 4.5380
+
 	# Set Differential Drive Kinematics Library parameters:
 	param set RD_WHEEL_TRACK 0.58
 
 	// Dragger max speed is 0.5 m/s as measired on R/C
-	param set RO_ACCEL_LIM 0.1
-	param set RO_DECEL_LIM 0.1
-	param set RO_JERK_LIM 2
-	param set RO_MAX_THR_SPEED 0.55
-	param set RO_SPEED_LIM 0.5
+	param set RO_ACCEL_LIM 0.05
+	param set RO_DECEL_LIM 0.05
+	param set RO_JERK_LIM 1
+	param set RO_MAX_THR_SPEED 1.1
+	param set RO_SPEED_LIM 0.7
 
 	# -- Straight Run Parameters
 	param set LM_YAW_P 0.8
 	param set LM_YAW_RATE_I 0.01
-	param set LM_YAW_RATE_P 0.2
+	param set LM_YAW_RATE_P 0.15
 	param set LM_YAW_RATE_LIM 60
 	# -- Spot Turn Parameters
 	param set LM_YAW_T_P 0.8
@@ -211,7 +214,7 @@ then
 	param set LM_YAW_RATE_TLIM 30
 
 	# Pure / Stanley pursuit parameters:
-	param set PP_LOOKAHD_GAIN 8
+	param set PP_LOOKAHD_GAIN 4
 
 	# Dragger, having non-RTK GPS, needs Mag and vertical reference - Baro sim.
 	param set SYS_HAS_BARO 1
