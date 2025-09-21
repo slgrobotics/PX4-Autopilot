@@ -59,6 +59,7 @@ void LawnmowerControl::workStateMachine()
 	_abbe_error = NAN;
 	const float nav_acc_margin = 1.5f; // extra margin for braking before hitting the waypoint bubble
 
+#ifdef DO_ADJUST_YAW
 	// === Figure out which set of PID parameters to use: ===
 	const float turning_params_threshold = math::max(math::min(_param_lm_accel_dist.get(),
 					       _param_lm_decel_dist.get()) * 0.8f + _param_nav_acc_rad.get(), 1.0f);
@@ -74,6 +75,7 @@ void LawnmowerControl::workStateMachine()
 		// Far from both waypoints, we can use normal driving PIDs:
 		adjustRateParams(false);
 	}
+#endif // DO_ADJUST_YAW
 
 	// =========================================================
 
@@ -146,7 +148,9 @@ void LawnmowerControl::workStateMachine()
 #endif // DEBUG_MY_PRINT
 				// DifferentialSpeedControl has switched from DRIVING to SPOT_TURNING, we try mirroring that.
 				// We are also closer than NAV_ACC_RAD radius to waypoint (with 1.2x margin), begin stopping phase:
+#ifdef DO_ADJUST_YAW
 				//adjustRateParams(true); // adjust yaw PIDs for spot turning
+#endif // DO_ADJUST_YAW
 				setStateMachineState(WP_STOPPING);
 #ifdef DEBUG_MY_PRINT
 				PX4_WARN("WP_STOPPING : vel: ekf: %.2f  gps: %.2f m/s  curr dist: %.2f m",
@@ -275,8 +279,10 @@ void LawnmowerControl::workStateMachine()
 			// PX4_INFO("WP_DEPARTING: from_accel_start: %.2f m  _accel_dist: %.2f m",
 			// 	 (double)from_accel_start, (double)_accel_dist);
 
+#ifdef HAS_CUTTER_CLUTCH
 			// turn on tools (cutting deck) - we are on the business part of the mission:
 			_cutter_setpoint = ACTUATOR_ON;
+#endif // HAS_CUTTER_CLUTCH
 
 			if (from_accel_start > _accel_dist) {
 				// we are far enough from departure waypoint and not heading to the first waypoint, switch to Pursuit:
@@ -296,7 +302,9 @@ void LawnmowerControl::workStateMachine()
 #endif // DEBUG_MY_PRINT
 
 		// First waypoint of the mission has arrived, go to it. First we need to turn towards it:
+#ifdef DO_ADJUST_YAW
 		//adjustRateParams(true); //  // adjust yaw PIDs for spot turning
+#endif // DO_ADJUST_YAW
 		setStateMachineState(WP_TURNING);
 
 		cte_begin_mission();
@@ -309,9 +317,11 @@ void LawnmowerControl::workStateMachine()
 		PX4_INFO("Mission ended - turning off what we needed for the mission");
 #endif // DEBUG_MY_PRINT
 
+#ifdef DO_ADJUST_YAW
 		//if (_isTurningPids) {
 		//	adjustRateParams(false); // reset to straight run PIDs
 		//}
+#endif // DO_ADJUST_YAW
 
 		debugPrintCrosstrackStats();
 
@@ -376,6 +386,7 @@ bool LawnmowerControl::updateBearings()
 	return ret;
 }
 
+#ifdef DO_ADJUST_YAW
 void LawnmowerControl::adjustRateParams(bool setSpotTurningPids)
 {
 	if (setSpotTurningPids == _isTurningPids) {
@@ -430,6 +441,7 @@ void LawnmowerControl::adjustRateParams(bool setSpotTurningPids)
 
 	//param_notify_changes();
 }
+#endif // DO_ADJUST_YAW
 
 void LawnmowerControl::adjustActuatorSetpoints()
 {
@@ -437,12 +449,17 @@ void LawnmowerControl::adjustActuatorSetpoints()
 	case POS_STATE_NONE:	// undefined/invalid state, no need to control anything
 	case POS_STATE_IDLE:	// idle state, just make sure we stay put.
 
+#ifdef HAS_ICE_THROTTLE
 		_ice_throttle_setpoint = _param_ice_throttle_idle.get();	// LM_ICE_IDLE *0.0
+#endif // HAS_ICE_THROTTLE
+#ifdef HAS_CUTTER_CLUTCH
 		_cutter_setpoint = ACTUATOR_OFF;
+#endif // HAS_CUTTER_CLUTCH
 		_alarm_dev_level = ACTUATOR_OFF;
 
 		break;
 
+#ifdef HAS_ICE_THROTTLE
 	case WP_ARRIVING:		// target waypoint is close, we need to slow down and head straight to it till stop
 
 		_ice_throttle_setpoint = _param_ice_throttle_arriving.get();	// LM_ICE_ARRIVE *0.8
@@ -479,19 +496,28 @@ void LawnmowerControl::adjustActuatorSetpoints()
 		_ice_throttle_setpoint = _param_ice_throttle_idle.get();	// LM_ICE_IDLE *0.0
 
 		break;
+#endif // HAS_ICE_THROTTLE
 
 	case POS_STATE_MISSION_START:	// turn on what we need for the mission (lights, gas engine throttle, blades)
 
+#ifdef HAS_ICE_THROTTLE
 		_ice_throttle_setpoint = _param_ice_throttle_idle.get();	// LM_ICE_IDLE *0.0
+#endif // HAS_ICE_THROTTLE
+#ifdef HAS_CUTTER_CLUTCH
 		_cutter_setpoint = ACTUATOR_OFF;			// keep the tools off until we start departing from the first waypoint of the mission
+#endif // HAS_CUTTER_CLUTCH
 		_alarm_dev_level = ACTUATOR_OFF;
 
 		break;
 
 	case POS_STATE_MISSION_END:		// turn off what we needed for the mission at the end or error
 
+#ifdef HAS_ICE_THROTTLE
 		_ice_throttle_setpoint = _param_ice_throttle_idle.get();	// LM_ICE_IDLE *0.0
+#endif // HAS_ICE_THROTTLE
+#ifdef HAS_CUTTER_CLUTCH
 		_cutter_setpoint = ACTUATOR_OFF;
+#endif // HAS_CUTTER_CLUTCH
 		_alarm_dev_level = ACTUATOR_OFF;
 
 		break;

@@ -36,6 +36,9 @@
 #define DEBUG_MY_PRINT
 #define DEBUG_MY_DATA
 #define PUBLISH_ADSB
+//#define DO_ADJUST_YAW
+//#define HAS_ICE_THROTTLE
+//#define HAS_CUTTER_CLUTCH
 
 // PX4 includes
 #include <px4_platform_common/module_params.h>
@@ -345,8 +348,12 @@ private:
 	bool _manual_drive_straight{false};
 
 	// Tools actuators setpoints as produced by State machine:
+#ifdef HAS_ICE_THROTTLE
 	float _ice_throttle_setpoint{NAN};	// 0...1 - using PCA9685 channel 4
+#endif // HAS_ICE_THROTTLE
+#ifdef HAS_CUTTER_CLUTCH
 	float _cutter_setpoint{NAN};		// -1...1 - tool like lawnmower blades etc. Using PCA9685 channel 3
+#endif // HAS_CUTTER_CLUTCH
 	float _alarm_dev_level{-1.0f};		// horn or other alarm device - using PCA9685 channel 6
 
 	// Tools actuators (servos) actual positions, as polled from actuator_outputs:
@@ -440,6 +447,7 @@ private:
 		(ParamFloat<px4::params::RO_YAW_RATE_I>)    _param_ro_yaw_rate_i,
 		(ParamFloat<px4::params::RO_SPEED_LIM>)     _param_ro_speed_lim,
 
+#ifdef DO_ADJUST_YAW
 		(ParamFloat<px4::params::LM_YAW_RATE_T_P>)  _param_lm_yaw_rate_t_p, // yaw rate P gain in spot turn mode
 		(ParamFloat<px4::params::LM_YAW_RATE_T_I>)  _param_lm_yaw_rate_t_i,
 		(ParamFloat<px4::params::LM_YAW_RATE_TLIM>) _param_lm_yaw_rate_t_lim, // rad/s, yaw rate limit in spot turn mode
@@ -449,6 +457,16 @@ private:
 		(ParamFloat<px4::params::LM_YAW_RATE_I>)    _param_lm_yaw_rate_i,
 		(ParamFloat<px4::params::LM_YAW_RATE_LIM>)  _param_lm_yaw_rate_lim, // rad/s, yaw rate limit in line following mode
 		(ParamFloat<px4::params::LM_YAW_P>)         _param_lm_yaw_p, // yaw rate P gain in line following mode
+#endif // DO_ADJUST_YAW
+
+#ifdef HAS_ICE_THROTTLE
+		// Gas engine throttle in different states:
+		(ParamFloat<px4::params::LM_ICE_IDLE>) _param_ice_throttle_idle,
+		(ParamFloat<px4::params::LM_ICE_DEPART>) _param_ice_throttle_departing,
+		(ParamFloat<px4::params::LM_ICE_TURN>) _param_ice_throttle_turning,
+		(ParamFloat<px4::params::LM_ICE_ARRIVE>) _param_ice_throttle_arriving,
+		(ParamFloat<px4::params::LM_ICE_STRAIGHT>) _param_ice_throttle_straight,
+#endif // HAS_ICE_THROTTLE
 
 		(ParamFloat<px4::params::LM_STATS_DIST>) _param_lm_stats_dist, // meters, cross-track statistics margin from waypoints
 		(ParamFloat<px4::params::LM_ACCEL_DIST>) _param_lm_accel_dist, // meters, distance to accelerate
@@ -458,14 +476,7 @@ private:
 		// Measurement modes - from EKF2 or RTK GPS:
 		(ParamInt<px4::params::LM_HD_MEAS_MODE>) _param_lm_hd_meas_mode,
 		(ParamInt<px4::params::LM_SP_MEAS_MODE>) _param_lm_sp_meas_mode,
-		(ParamInt<px4::params::LM_EKF_OVERRIDE>) _param_lm_ekf_override_by_gps,
-
-		// Gas engine throttle in different states:
-		(ParamFloat<px4::params::LM_ICE_IDLE>) _param_ice_throttle_idle,
-		(ParamFloat<px4::params::LM_ICE_DEPART>) _param_ice_throttle_departing,
-		(ParamFloat<px4::params::LM_ICE_TURN>) _param_ice_throttle_turning,
-		(ParamFloat<px4::params::LM_ICE_ARRIVE>) _param_ice_throttle_arriving,
-		(ParamFloat<px4::params::LM_ICE_STRAIGHT>) _param_ice_throttle_straight
+		(ParamInt<px4::params::LM_EKF_OVERRIDE>) _param_lm_ekf_override_by_gps
 	)
 };
 

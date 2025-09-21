@@ -101,8 +101,16 @@ void LawnmowerControl::publishAuxActuators()
 	bool horn_on = !_vehicle_control_mode.flag_control_manual_enabled &&
 		       (_sensor_gps_data.fix_type < _param_lm_gps_minfix.get() || !PX4_ISFINITE(_sensor_gps_data.heading));
 
+#ifdef HAS_CUTTER_CLUTCH
 	actuator_servos.control[2] = _cutter_setpoint;		 // PCA9685 channel 3
+#else
+	actuator_servos.control[2] = 0.0f;			 // PCA9685 channel 3 - spare
+#endif // HAS_CUTTER_CLUTCH
+#ifdef HAS_ICE_THROTTLE
 	actuator_servos.control[3] = _ice_throttle_setpoint;	 // PCA9685 channel 4
+#else
+	actuator_servos.control[3] = 0.0f; 			 // PCA9685 channel 4 - spare
+#endif // HAS_ICE_THROTTLE
 	actuator_servos.control[4] = strobe_on ? ACTUATOR_ON : ACTUATOR_OFF; // PCA9685 channel 5 - Strobe
 	actuator_servos.control[5] = horn_on ? ACTUATOR_ON : ACTUATOR_OFF;   // PCA9685 channel 6 - Horn
 	actuator_servos.control[6] = _alarm_dev_level;		 // PCA9685 channel 7 - duplicate R/C ch 6, right knob

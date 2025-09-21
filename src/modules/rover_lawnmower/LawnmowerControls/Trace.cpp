@@ -134,8 +134,12 @@ void LawnmowerControl::debugPrintAuto()
 			     (double)math::degrees(_bearing_error),
 			     (double)(_pure_pursuit_status.distance_to_waypoint));
 
+#if defined HAS_ICE_THROTTLE && defined HAS_CUTTER_CLUTCH
 		PX4_INFO_RAW("--- Setpoints: engine: %.4f    cutter: %.4f    alarm: %.4f\n",
 			     (double)_ice_throttle_setpoint, (double)_cutter_setpoint, (double)_alarm_dev_level);
+#else
+		PX4_INFO_RAW("--- Setpoints: alarm: %.4f\n", (double)_alarm_dev_level);
+#endif // HAS_ICE_THROTTLE AND HAS_CUTTER_CLUTCH
 
 //#ifdef __x86_64
 #if !defined(CONFIG_ARCH_BOARD_PX4_SITL)
@@ -335,8 +339,17 @@ void LawnmowerControl::publishDebugData()
 	_dbg_array.data[i++] = _wp_previous_dist;	// meters, distance to the previous waypoint
 	_dbg_array.data[i++] = _wp_next_dist;		// meters, distance to the next waypoint
 
+#ifdef HAS_CUTTER_CLUTCH
 	_dbg_array.data[i++] = _cutter_setpoint;	// -1..1, cutter setpoint, published to PCA9685 channel 3
+#else
+	_dbg_array.data[i++] = NAN;
+#endif // HAS_CUTTER_CLUTCH
+
+#ifdef HAS_ICE_THROTTLE
 	_dbg_array.data[i++] = _ice_throttle_setpoint;	// 0..1, gas engine throttle setpoint, published to PCA9685 channel 4
+#else
+	_dbg_array.data[i++] = NAN;
+#endif // HAS_ICE_THROTTLE
 	_dbg_array.data[i++] = _alarm_dev_level;	// 0..1, alarm device level setpoint, published to PCA9685 channel 6
 
 #if defined(CONFIG_ARCH_BOARD_PX4_SITL)

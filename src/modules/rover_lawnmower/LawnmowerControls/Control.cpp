@@ -61,14 +61,18 @@ void LawnmowerControl::vehicleControl()
 
 		if (_vehicle_control_mode.flag_armed) {
 
+#ifdef HAS_ICE_THROTTLE
 			_ice_throttle_setpoint = _gas_throttle_manual;	// Left knob on R/C transmitter
+#endif // HAS_ICE_THROTTLE
 			_alarm_dev_level = _alarm_dev_level_manual;	// Horn - right knob on R/C transmitter
 
+#ifdef HAS_CUTTER_CLUTCH
 			// for cutter deck clutch we have direct R/C to servo setting, no need to use _cutter_setpoint_manual
 			//_cutter_setpoint = _cutter_setpoint_manual;	// Cutter - right switch on R/C transmitter
+#endif // HAS_CUTTER_CLUTCH
 
-			//} else {
-			//PX4_WARN("Manual control enabled, but vehicle is not armed");
+		//} else {
+		//	PX4_WARN("Manual control enabled, but vehicle is not armed");
 		}
 
 	} else if (_vehicle_control_mode.flag_control_auto_enabled) {
