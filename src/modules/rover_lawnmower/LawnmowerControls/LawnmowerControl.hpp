@@ -349,12 +349,12 @@ private:
 
 	// Tools actuators setpoints as produced by State machine:
 #ifdef HAS_ICE_THROTTLE
-	float _ice_throttle_setpoint{NAN};	// 0...1 - using PCA9685 channel 4
+	float _ice_throttle_setpoint {NAN};	// 0...1 - using PCA9685 channel 4
 #endif // HAS_ICE_THROTTLE
 #ifdef HAS_CUTTER_CLUTCH
-	float _cutter_setpoint{NAN};		// -1...1 - tool like lawnmower blades etc. Using PCA9685 channel 3
+	float _cutter_setpoint {NAN};		// -1...1 - tool like lawnmower blades etc. Using PCA9685 channel 3
 #endif // HAS_CUTTER_CLUTCH
-	float _alarm_dev_level{-1.0f};		// horn or other alarm device - using PCA9685 channel 6
+	float _alarm_dev_level {-1.0f};		// horn or other alarm device - using PCA9685 channel 6
 
 	// Tools actuators (servos) actual positions, as polled from actuator_outputs:
 	float _ice_throttle_servo_position{NAN}; // gas engine throttle servo position, 800...2200us - after mixers

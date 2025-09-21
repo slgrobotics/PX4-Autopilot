@@ -75,6 +75,7 @@ void LawnmowerControl::workStateMachine()
 		// Far from both waypoints, we can use normal driving PIDs:
 		adjustRateParams(false);
 	}
+
 #endif // DO_ADJUST_YAW
 
 	// =========================================================
@@ -460,6 +461,7 @@ void LawnmowerControl::adjustActuatorSetpoints()
 		break;
 
 #ifdef HAS_ICE_THROTTLE
+
 	case WP_ARRIVING:		// target waypoint is close, we need to slow down and head straight to it till stop
 
 		_ice_throttle_setpoint = _param_ice_throttle_arriving.get();	// LM_ICE_ARRIVE *0.8

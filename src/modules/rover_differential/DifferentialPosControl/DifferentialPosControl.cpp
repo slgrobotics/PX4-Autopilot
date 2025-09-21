@@ -249,7 +249,8 @@ void DifferentialPosControl::updateSubscriptions()
 		_stopped_ned = _start_ned; // reset stopped position to start position (a.k.a. previous waypoint)
 
 		_arrival_speed = PX4_ISFINITE(rover_position_setpoint.arrival_speed) ? rover_position_setpoint.arrival_speed : 0.f;
-		_cruising_speed = PX4_ISFINITE(rover_position_setpoint.cruising_speed) ? rover_position_setpoint.cruising_speed : _param_ro_speed_limit.get();
+		_cruising_speed = PX4_ISFINITE(rover_position_setpoint.cruising_speed) ? rover_position_setpoint.cruising_speed :
+				  _param_ro_speed_limit.get();
 		_target_waypoint_ned = Vector2f(rover_position_setpoint.position_ned[0], rover_position_setpoint.position_ned[1]);
 		_stopped = false;
 

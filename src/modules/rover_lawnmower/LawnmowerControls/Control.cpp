@@ -71,8 +71,8 @@ void LawnmowerControl::vehicleControl()
 			//_cutter_setpoint = _cutter_setpoint_manual;	// Cutter - right switch on R/C transmitter
 #endif // HAS_CUTTER_CLUTCH
 
-		//} else {
-		//	PX4_WARN("Manual control enabled, but vehicle is not armed");
+			//} else {
+			//	PX4_WARN("Manual control enabled, but vehicle is not armed");
 		}
 
 	} else if (_vehicle_control_mode.flag_control_auto_enabled) {
