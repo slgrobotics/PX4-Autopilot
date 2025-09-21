@@ -59,10 +59,10 @@ param set-default RO_YAW_RATE_CORR 1.0
 param set-default RO_YAW_RATE_TH 0.0
 
 # Rewritable Rover Attitude (Turn) Control Parameters, just initial settings:
-param set-default RO_YAW_RATE_I 0.04
-param set-default RO_YAW_RATE_P 0.45
-param set-default RO_YAW_RATE_LIM 45
-param set-default RO_YAW_P 2.5
+param set-default RO_YAW_P 3
+param set-default RO_YAW_RATE_I 0.07
+param set-default RO_YAW_RATE_P 0.5
+param set-default RO_YAW_RATE_LIM 40
 
 # Rewritable Rover Attitude (Turn) Control Parameters - actual overriding values:
 # -- Straight Run Parameters
@@ -99,7 +99,7 @@ param set-default RO_SPEED_RED 1.0
 param set-default RO_SPEED_TH 0.1
 
 # Pure / Stanley pursuit parameters:
-param set-default PP_LOOKAHD_GAIN 1.2
+param set-default PP_LOOKAHD_GAIN 4
 param set-default PP_LOOKAHD_MAX 1.51
 param set-default PP_LOOKAHD_MIN 1.5
 

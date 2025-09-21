@@ -108,6 +108,15 @@ float calcTargetBearing(pure_pursuit_status_s &pure_pursuit_status, const float 
 		float xtrack_factor = -atanf(xtrack_gain * crosstrack_error /
 					     (softening_factor + math::max(vehicle_speed, 0.0f)));
 
+		const float xtrack_factor_limit = math::radians(40.0f); // Adjustment limit for parallel_heading
+
+		if (abs(xtrack_factor) > xtrack_factor_limit) {
+			// printf("Xtrk: %.1f cm  speed: %.3f   XtFctr: %f rad  %f deg\n",
+			// 	(double)(crosstrack_error * 100.0f), (double)vehicle_speed, (double)xtrack_factor,
+			// 	(double)math::degrees(xtrack_factor));
+			xtrack_factor = sign(xtrack_factor) * xtrack_factor_limit;
+		}
+
 		const float parallel_heading = matrix::wrap_pi(atan2f(prev_wp_to_curr_wp(1),
 					       prev_wp_to_curr_wp(0)));	// angle to North vector (X axis)
 
