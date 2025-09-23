@@ -101,8 +101,9 @@ public:
 	Vector2f ekfGpsDeviation{NAN, NAN};
 
 	// RTK GPS raw values from _sensor_gps:
+	hrt_abstime gps_data_timestamp{0};
 	bool gps_data_valid{false};	// true if GPS data is valid (i.e GPS has at least 3D fix)
-	int fix_type{0};		// GPS fix type, 0,1=No fix, 2=2D, 3=3D, 4=DGPS, 5=RTK Float, 6=RTK Fixed see msg/SensorGps.msg
+	int gps_fix_type{0};		// GPS fix type, 0,1=No fix, 2=2D, 3=3D, 4=DGPS, 5=RTK Float, 6=RTK Fixed see msg/SensorGps.msg
 	double gps_lat{0.0};		// latitude in degrees
 	double gps_lon{0.0};		// longitude in degrees
 	float gps_alt{0.0f};		// altitude in meters above WGS
@@ -291,7 +292,6 @@ private:
 	rover_speed_setpoint_s 		_rover_speed_setpoint{};	/**< rover speed setpoint, for speed X and Y components */
 	pure_pursuit_status_s 		_pure_pursuit_status{};
 	manual_control_setpoint_s	_manual_control_setpoint{};	/**< r/c channel data */
-	sensor_gps_s			_sensor_gps_data{};		/**< raw gps data */
 #if (defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA)) && !defined(CONFIG_ARCH_BOARD_PX4_SITL)
 	actuator_outputs_s		_actuator_outputs {};		/**< actuator outputs */
 #endif // (defined(DEBUG_MY_PRINT) || defined(DEBUG_MY_DATA)) && !defined(CONFIG_ARCH_BOARD_PX4_SITL)

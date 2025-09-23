@@ -99,7 +99,11 @@ void LawnmowerControl::publishAuxActuators()
 
 	//bool horn_on = _alarm_dev_level > SIGMA;
 	bool horn_on = !_vehicle_control_mode.flag_control_manual_enabled &&
-		       (_sensor_gps_data.fix_type < _param_lm_gps_minfix.get() || !PX4_ISFINITE(_sensor_gps_data.heading));
+		       (_location_metrics.gps_fix_type < _param_lm_gps_minfix.get()
+			|| !PX4_ISFINITE(_location_metrics.gps_yaw)
+			|| _location_metrics.gps_data_timestamp == 0
+			|| hrt_elapsed_time(&_location_metrics.gps_data_timestamp) > 2_s
+		       );
 
 #ifdef HAS_CUTTER_CLUTCH
 	actuator_servos.control[2] = _cutter_setpoint;		 // PCA9685 channel 3

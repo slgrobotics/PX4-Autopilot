@@ -117,8 +117,8 @@ void LawnmowerControl::debugPrintAuto()
 		PX4_INFO_RAW("--- EKF off: %.1f cm %.0f deg   --- YAW: EKF: %.1f GPS: %.1f  cog: %.1f deg\n",
 			     (double)(_location_metrics.ekfGpsDeviation(0) * 100.0f),
 			     (double)math::degrees(_location_metrics.ekfGpsDeviation(1)),
-			     (double)math::degrees(_vehicle_yaw), (double)math::degrees(_sensor_gps_data.heading),
-			     (double)math::degrees(_sensor_gps_data.cog_rad));
+			     (double)math::degrees(_vehicle_yaw), (double)math::degrees(_location_metrics.gps_yaw),
+			     (double)math::degrees(_location_metrics.gps_cog_rad));
 
 		PX4_INFO_RAW("--- WP: curr_dist: %.2f   prev_dist: %.2f   next_dist: %.2f\n",
 			     (double)_wp_current_dist, (double)_wp_previous_dist, (double)_wp_next_dist);
@@ -189,8 +189,8 @@ void LawnmowerControl::debugPrintManual()
 			     control_state_name(_pos_ctrl_state), (double)(_dt * 1000.0f),
 			     (double)(_location_metrics.ekfGpsDeviation(0) * 100.0f),
 			     (double)math::degrees(_location_metrics.ekfGpsDeviation(1)),
-			     (double)math::degrees(_vehicle_yaw), (double)math::degrees(_sensor_gps_data.heading),
-			     (double)math::degrees(_sensor_gps_data.cog_rad));
+			     (double)math::degrees(_vehicle_yaw), (double)math::degrees(_location_metrics.gps_yaw),
+			     (double)math::degrees(_location_metrics.gps_cog_rad));
 	}
 
 	if (_tracing_lev > 1) {
@@ -321,7 +321,7 @@ void LawnmowerControl::publishDebugData()
 
 	_dbg_array.data[i++] = _location_metrics.gps_data_valid;	// 0 or 1, GPS data valid
 	_dbg_array.data[i++] =
-		_location_metrics.fix_type;		// 0: no GPS, 1: no fix, 2: 2D fix, 3: 3D fix, 4: 3D DGPS, 5: RTK float, 6: RTK fixed
+		_location_metrics.gps_fix_type;		// 0: no GPS, 1: no fix, 2: 2D fix, 3: 3D fix, 4: 3D DGPS, 5: RTK float, 6: RTK fixed
 	_dbg_array.data[i++] = _location_metrics.gps_vel_m_s;		// meters per second, GPS velocity magnitude
 	_dbg_array.data[i++] = math::degrees(_location_metrics.gps_cog_rad);	// degrees, GPS course over ground -PI.. PI
 	_dbg_array.data[i++] = math::degrees(_location_metrics.gps_yaw); 	// degrees, RTK dual antenna GPS "heading" -PI.. PI
