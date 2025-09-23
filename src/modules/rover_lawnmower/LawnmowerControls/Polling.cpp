@@ -398,7 +398,8 @@ void LawnmowerControl::updateSubscriptions()
 
 		_cutter_servo_position = _actuator_outputs.output[2];			// PCA9685 Channel 3 - cutter
 		_ice_throttle_servo_position = _actuator_outputs.output[3];		// PCA9685 Channel 4
-		_alarm_servo_position = _actuator_outputs.output[5];			// PCA9685 Channel 6 - alarm
+		_alarm_servo_position = _actuator_outputs.output[4];			// PCA9685 Channel 5 - alarm
+		_horn_servo_position = _actuator_outputs.output[5];			// PCA9685 Channel 6 - horn
 
 	}
 

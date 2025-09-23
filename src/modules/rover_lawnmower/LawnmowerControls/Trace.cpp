@@ -366,7 +366,7 @@ void LawnmowerControl::publishDebugData()
 	_dbg_array.data[i++] = _cutter_servo_position;		// 0..1, cutter servo position, polled from PCA9685 channel 3
 	_dbg_array.data[i++] =
 		_ice_throttle_servo_position;	// 0..1, gas engine throttle servo position, polled from PCA9685 channel 4
-	_dbg_array.data[i++] = _alarm_servo_position;		// 0..1, alarm servo position, polled from PCA9685 channel 6
+	_dbg_array.data[i++] = _alarm_servo_position;		// 0..1, alarm servo position, polled from PCA9685 channel 5
 #endif // defined(CONFIG_ARCH_BOARD_PX4_SITL)
 
 	_dbg_array.data[i++] = _crosstrack_error_avg;	// meters, average cross track error for the straight run ("leg")
@@ -396,6 +396,7 @@ void LawnmowerControl::publishDebugData()
 	_dbg_array.data[i++] = _is_flyby_wp ? 1.0f : 0.0f; // 1.0 if we are not stopping at the waypoint, 0.0 otherwise
 
 	_dbg_array.data[i++] = _decel_dist;	// meters, distance to the waypoint at which we start decelerating
+	_dbg_array.data[i++] = _horn_servo_position; // 0..1, horn servo position, polled from PCA9685 channel 6
 
 	// TODO: more data here, polled or calculated by LawnmowerControl
 

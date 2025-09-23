@@ -360,6 +360,7 @@ private:
 	float _ice_throttle_servo_position{NAN}; // gas engine throttle servo position, 800...2200us - after mixers
 	float _cutter_servo_position{NAN};	// cutter servo position, 800...2200us - after mixers
 	float _alarm_servo_position{NAN};	// second tool servo position, 800...2200us - after mixers
+	float _horn_servo_position{NAN};	// horn servo position, 800...2200us - after mixers
 
 	// Wheels "servos" actual values for logging:
 	float _wheel_left_servo_position{NAN};	 // left wheel servo position, 800...2200us - after mixers
