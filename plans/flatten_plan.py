@@ -9,6 +9,8 @@ Usage examples:
   python3 flatten_plan.py input.plan --inplace --backup
   python3 flatten_plan.py input.plan --dry-run
 
+  python3 flatten_plan.py front-east.plan --mode clean -o front-east.flattened.plan
+
 The script will replace any item that contains a `TransectStyleComplexItem` (or
 ComplexItem of type 'survey') with that complex item's inner `Items` list,
 preserving order. By default it will renumber `doJumpId` sequentially.
@@ -44,7 +46,7 @@ def extract_inner_items(item: Dict[str, Any]) -> List[Dict[str, Any]]:
     return [copy.deepcopy(i) for i in inner]
 
 
-def flatten_plan(data: Dict[str, Any], renumber: bool = True) -> Tuple[Dict[str, Any], Dict[str, int]]:
+def flatten_plan(data: Dict[str, Any], renumber: bool = True, drop_command_206: bool = False) -> Tuple[Dict[str, Any], Dict[str, int]]:
     """Return a copy of `data` with survey complex items flattened.
 
     Also returns a small stats dict with counts of removed/added items.
@@ -57,15 +59,27 @@ def flatten_plan(data: Dict[str, Any], renumber: bool = True) -> Tuple[Dict[str,
     items: List[Dict[str, Any]] = mission['items']
     new_items: List[Dict[str, Any]] = []
     removed = 0
+    removed_command_206 = 0
     added = 0
 
     for item in items:
         if is_survey_complex_item(item):
             inner = extract_inner_items(item)
             removed += 1
-            added += len(inner)
-            new_items.extend(inner)
+            # filter out items with command == 206 if requested
+            filtered = []
+            for it in inner:
+                if drop_command_206 and it.get('command') == 206:
+                    removed_command_206 += 1
+                    continue
+                filtered.append(it)
+            added += len(filtered)
+            new_items.extend(filtered)
         else:
+            # optionally drop any top-level items with command == 206
+            if drop_command_206 and item.get('command') == 206:
+                removed_command_206 += 1
+                continue
             new_items.append(item)
 
     # Optionally renumber doJumpId sequentially (1-based). This avoids id collisions
@@ -81,7 +95,12 @@ def flatten_plan(data: Dict[str, Any], renumber: bool = True) -> Tuple[Dict[str,
                 next_id += 1
 
     out['mission']['items'] = new_items
-    stats = {'removed_complex_items': removed, 'added_items': added, 'final_item_count': len(new_items)}
+    stats = {
+        'removed_complex_items': removed,
+        'removed_command_206': removed_command_206,
+        'added_items': added,
+        'final_item_count': len(new_items),
+    }
     return out, stats
 
 
@@ -99,6 +118,8 @@ def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description='Flatten Survey (TransectStyleComplexItem) in QGroundControl .plan files')
     parser.add_argument('input', help='Path to input .plan JSON file')
     parser.add_argument('-o', '--output', help='Path to write output file. If omitted and --inplace not given, writes to stdout')
+    parser.add_argument('--drop-206', action='store_true', help='Remove mission items where command == 206')
+    parser.add_argument('--mode', choices=['default', 'clean'], default='default', help="Shorthand modes; 'clean' is equivalent to --drop-206")
     parser.add_argument('--inplace', action='store_true', help='Modify the input file in place')
     parser.add_argument('--backup', action='store_true', help='When used with --inplace, create a .bak backup of the original')
     parser.add_argument('--no-renumber', dest='renumber', action='store_false', help='Do not renumber doJumpId values')
@@ -112,8 +133,11 @@ def main(argv: List[str] | None = None) -> int:
         print(f'Error reading {args.input}: {e}', file=sys.stderr)
         return 2
 
+    # mode 'clean' is shorthand for drop-206
+    drop_206 = args.drop_206 or (args.mode == 'clean')
+
     try:
-        out, stats = flatten_plan(data, renumber=args.renumber)
+        out, stats = flatten_plan(data, renumber=args.renumber, drop_command_206=drop_206)
     except Exception as e:
         print(f'Error processing plan: {e}', file=sys.stderr)
         return 3
