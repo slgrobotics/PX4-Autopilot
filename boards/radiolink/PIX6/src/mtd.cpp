@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2017 PX4 Development Team. All rights reserved.
+ *   Copyright (C) 2020 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,33 +30,49 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
+//TODO:Prepare for NxtDual
 
-/**
- * Lightware SF1xx/SF20/LW20 laser rangefinder (i2c)
- *
- * @reboot_required true
- * @min 0
- * @max 7
- * @group Sensors
- * @value 0 Disabled
- * @value 1 SF10/a
- * @value 2 SF10/b
- * @value 3 SF10/c
- * @value 4 SF11/c
- * @value 5 SF/LW20/b
- * @value 6 SF/LW20/c
- * @value 7 SF/LW30/d
- */
-PARAM_DEFINE_INT32(SENS_EN_SF1XX, 0);
+#include <nuttx/spi/spi.h>
+#include <px4_platform_common/px4_manifest.h>
+//                                                              KiB BS    nB
+static const px4_mft_device_t spi2 = {             // FM25V02A on FMUM native: 32K X 8, emulated as (1024 Blocks of 32)
+	.bus_type = px4_mft_device_t::SPI,
+	.devid    = SPIDEV_FLASH(0)
+};
 
-/**
- * Lightware SF1xx/SF20/LW20 Operation Mode
- *
- * @value 0 Disabled
- * @value 1 Enabled
- * @value 2 Enabled in VTOL MC mode, listen to request from system in FW mode
- *
- * @min 0
- * @max 2
- */
-PARAM_DEFINE_INT32(SF1XX_MODE, 1);
+static const px4_mtd_entry_t fmum_fram = {
+	.device = &spi2,
+	.npart = 1,
+	.partd = {
+		{
+			.type = MTD_PARAMETERS,
+			.path = "/fs/mtd_params",
+			.nblocks = 1024
+		}
+	},
+};
+
+
+static const px4_mtd_manifest_t board_mtd_config = {
+	.nconfigs   = 1,
+	.entries = {
+		&fmum_fram
+	}
+};
+
+static const px4_mft_entry_s mtd_mft = {
+	.type = MTD,
+	.pmft = (void *) &board_mtd_config,
+};
+
+static const px4_mft_s mft = {
+	.nmft = 1,
+	.mfts = {
+		&mtd_mft
+	}
+};
+
+const px4_mft_s *board_get_manifest(void)
+{
+	return &mft;
+}

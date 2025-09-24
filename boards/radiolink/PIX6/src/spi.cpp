@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2017 PX4 Development Team. All rights reserved.
+ *   Copyright (C) 2019-2022 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,32 +31,24 @@
  *
  ****************************************************************************/
 
-/**
- * Lightware SF1xx/SF20/LW20 laser rangefinder (i2c)
- *
- * @reboot_required true
- * @min 0
- * @max 7
- * @group Sensors
- * @value 0 Disabled
- * @value 1 SF10/a
- * @value 2 SF10/b
- * @value 3 SF10/c
- * @value 4 SF11/c
- * @value 5 SF/LW20/b
- * @value 6 SF/LW20/c
- * @value 7 SF/LW30/d
- */
-PARAM_DEFINE_INT32(SENS_EN_SF1XX, 0);
+#include <px4_arch/spi_hw_description.h>
+#include <drivers/drv_sensor.h>
+#include <nuttx/spi/spi.h>
 
-/**
- * Lightware SF1xx/SF20/LW20 Operation Mode
- *
- * @value 0 Disabled
- * @value 1 Enabled
- * @value 2 Enabled in VTOL MC mode, listen to request from system in FW mode
- *
- * @min 0
- * @max 2
- */
-PARAM_DEFINE_INT32(SF1XX_MODE, 1);
+constexpr px4_spi_bus_t px4_spi_buses[SPI_BUS_MAX_BUS_ITEMS] = {
+	initSPIBus(SPI::Bus::SPI1, {
+		initSPIDevice(DRV_ACC_DEVTYPE_BMI088, SPI::CS{GPIO::PortB, GPIO::Pin12}),
+		initSPIDevice(DRV_GYR_DEVTYPE_BMI088, SPI::CS{GPIO::PortE, GPIO::Pin12}),
+		initSPIDevice(DRV_IMU_DEVTYPE_ICM42688P, SPI::CS{GPIO::PortB, GPIO::Pin4}),
+	}),
+	initSPIBus(SPI::Bus::SPI2, {
+		initSPIDevice(SPIDEV_FLASH(0), SPI::CS{GPIO::PortD, GPIO::Pin10}),
+		initSPIDevice(DRV_OSD_DEVTYPE_ATXXXX, SPI::CS{GPIO::PortA, GPIO::Pin8}),
+	}),
+	initSPIBusExternal(SPI::Bus::SPI4, {
+		initSPIConfigExternal(SPI::CS{GPIO::PortC, GPIO::Pin14}, SPI::DRDY{GPIO::PortD, GPIO::Pin15}),
+		initSPIConfigExternal(SPI::CS{GPIO::PortC, GPIO::Pin15}),
+	}),
+};
+
+static constexpr bool unused = validateSPIConfig(px4_spi_buses);

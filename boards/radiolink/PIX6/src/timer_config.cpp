@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2017 PX4 Development Team. All rights reserved.
+ *   Copyright (C) 2012 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,32 +31,24 @@
  *
  ****************************************************************************/
 
-/**
- * Lightware SF1xx/SF20/LW20 laser rangefinder (i2c)
- *
- * @reboot_required true
- * @min 0
- * @max 7
- * @group Sensors
- * @value 0 Disabled
- * @value 1 SF10/a
- * @value 2 SF10/b
- * @value 3 SF10/c
- * @value 4 SF11/c
- * @value 5 SF/LW20/b
- * @value 6 SF/LW20/c
- * @value 7 SF/LW30/d
- */
-PARAM_DEFINE_INT32(SENS_EN_SF1XX, 0);
+#include <px4_arch/io_timer_hw_description.h>
 
-/**
- * Lightware SF1xx/SF20/LW20 Operation Mode
- *
- * @value 0 Disabled
- * @value 1 Enabled
- * @value 2 Enabled in VTOL MC mode, listen to request from system in FW mode
- *
- * @min 0
- * @max 2
- */
-PARAM_DEFINE_INT32(SF1XX_MODE, 1);
+constexpr io_timers_t io_timers[MAX_IO_TIMERS] = {
+	initIOTimer(Timer::Timer1, DMA{DMA::Index2, DMA::Stream5, DMA::Channel6}),
+	initIOTimer(Timer::Timer2, DMA{DMA::Index1, DMA::Stream7, DMA::Channel3}),
+	initIOTimer(Timer::Timer3, DMA{DMA::Index1, DMA::Stream2, DMA::Channel5}),
+};
+
+constexpr timer_io_channels_t timer_io_channels[MAX_TIMER_IO_CHANNELS] = {
+	initIOTimerChannel(io_timers, {Timer::Timer1, Timer::Channel4}, {GPIO::PortE, GPIO::Pin14}),
+	initIOTimerChannel(io_timers, {Timer::Timer1, Timer::Channel3}, {GPIO::PortA, GPIO::Pin10}),
+	initIOTimerChannel(io_timers, {Timer::Timer1, Timer::Channel2}, {GPIO::PortE, GPIO::Pin11}),
+	initIOTimerChannel(io_timers, {Timer::Timer1, Timer::Channel1}, {GPIO::PortE, GPIO::Pin9}),
+	initIOTimerChannel(io_timers, {Timer::Timer2, Timer::Channel1}, {GPIO::PortA, GPIO::Pin15}),
+	initIOTimerChannel(io_timers, {Timer::Timer2, Timer::Channel4}, {GPIO::PortA, GPIO::Pin3}),
+	initIOTimerChannel(io_timers, {Timer::Timer3, Timer::Channel2}, {GPIO::PortA, GPIO::Pin7}),
+	initIOTimerChannel(io_timers, {Timer::Timer3, Timer::Channel1}, {GPIO::PortC, GPIO::Pin6}),
+};
+
+constexpr io_timers_channel_mapping_t io_timers_channel_mapping =
+	initIOTimerChannelMapping(io_timers, timer_io_channels);
