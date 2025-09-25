@@ -130,7 +130,7 @@ void LawnmowerControl::debugPrintAuto()
 			     (double)math::degrees(_bearing_to_curr_wp), (double)math::degrees(_yaw_error), (double)_abbe_error);
 
 		PX4_INFO_RAW("--- PP: crosstrack error: %.1f cm   bearing error: %.3f degrees   distance_to_waypoint: %.2f m\n",
-			     (double)(_pure_pursuit_status.crosstrack_error * 100.0f),
+			     (double)(_crosstrack_error * 100.0f),
 			     (double)math::degrees(_bearing_error),
 			     (double)(_pure_pursuit_status.distance_to_waypoint));
 
@@ -378,7 +378,7 @@ void LawnmowerControl::publishDebugData()
 
 	// calculated by Pursuit controller, and are present as members of _gnd_control:
 	_dbg_array.data[i++] = math::degrees(_vehicle_yaw);
-	_dbg_array.data[i++] = _crosstrack_error;		// meters
+	_dbg_array.data[i++] = cte_is_loggable() ? _crosstrack_error : NAN;	// meters
 	_dbg_array.data[i++] = math::degrees(_bearing_error);	// degrees, bearing error from the target waypoint, 0..360 degrees
 	_dbg_array.data[i++] = _pure_pursuit_status.distance_to_waypoint;	// meters, distance to the target waypoint
 	_dbg_array.data[i++] =

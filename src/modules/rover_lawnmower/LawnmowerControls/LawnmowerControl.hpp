@@ -402,10 +402,18 @@ private:
 		_crosstrack_error_avg = NAN; _crosstrack_error_max = 0.0f;
 	};
 
+
+	inline bool cte_is_loggable()
+	{
+		// only log crosstrack error if we are far enough from both waypoints:
+		const float dist_threshold = _param_lm_stats_dist.get();
+		return _wp_current_dist > dist_threshold && _wp_previous_dist > dist_threshold;
+	}
+
 	inline void cte_compute()
 	{
 		if (PX4_ISFINITE(_crosstrack_error) && hrt_elapsed_time(&_cte_lf_started) > 5_s) {
-			float cte_abs = abs(_crosstrack_error);
+			const float cte_abs = abs(_crosstrack_error);
 
 			_crosstrack_error_max = math::max(_crosstrack_error_max, cte_abs);
 			_cte_accum += cte_abs;
