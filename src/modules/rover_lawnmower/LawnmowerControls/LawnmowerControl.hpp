@@ -472,12 +472,7 @@ private:
 		(ParamFloat<px4::params::LM_STATS_DIST>) _param_lm_stats_dist, // meters, cross-track statistics margin from waypoints
 		(ParamFloat<px4::params::LM_ACCEL_DIST>) _param_lm_accel_dist, // meters, distance to accelerate
 		(ParamFloat<px4::params::LM_DECEL_DIST>) _param_lm_decel_dist, // meters, distance to target wp to start decelerating
-		(ParamFloat<px4::params::NAV_ACC_RAD>) _param_nav_acc_rad, // meters, how close to waypoint we consider it reached
-
-		// Measurement modes - from EKF2 or RTK GPS:
-		(ParamInt<px4::params::LM_HD_MEAS_MODE>) _param_lm_hd_meas_mode,
-		(ParamInt<px4::params::LM_SP_MEAS_MODE>) _param_lm_sp_meas_mode,
-		(ParamInt<px4::params::LM_EKF_OVERRIDE>) _param_lm_ekf_override_by_gps
+		(ParamFloat<px4::params::NAV_ACC_RAD>) _param_nav_acc_rad      // meters, how close to waypoint we consider it reached
 	)
 };
 

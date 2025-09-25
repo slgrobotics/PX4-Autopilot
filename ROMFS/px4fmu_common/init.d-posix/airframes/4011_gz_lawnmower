@@ -38,10 +38,7 @@ param set-default RD_WHEEL_TRACK 0.9
 # Lawnmower specific parameters:
 param set-default LM_ACCEL_DIST 1.5
 param set-default LM_DECEL_DIST 1.5
-param set-default LM_EKF_OVERRIDE 0
 param set-default LM_GPS_MINFIX 6
-param set-default LM_HD_MEAS_MODE 0
-param set-default LM_SP_MEAS_MODE 0
 param set-default LM_TRACING_LEV 5
 param set-default LM_STATS_DIST 2
 
