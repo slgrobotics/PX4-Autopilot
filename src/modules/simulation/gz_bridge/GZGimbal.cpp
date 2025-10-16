@@ -233,7 +233,7 @@ void GZGimbal::publishJointCommand(gz::transport::Node::Publisher &publisher, co
 	float new_stp = computeJointSetpoint(att_stp, rate_stp, last_stp, dt);
 	new_stp = math::constrain(new_stp, min_stp, max_stp);
 	last_stp = new_stp;
-	msg.set_data(new_stp);
+	msg.set_data((double)new_stp);
 
 	publisher.Publish(msg);
 }
