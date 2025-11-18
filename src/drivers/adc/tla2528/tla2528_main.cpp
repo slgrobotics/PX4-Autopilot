@@ -30,71 +30,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
+#include <px4_platform_common/getopt.h>
+#include <px4_platform_common/module.h>
+#include "tla2528.h"
 
-/**
- * @file PpsTimeSync.cpp
- *
- * PPS-based time synchronization implementation
- */
-
-#include "PpsTimeSync.hpp"
-#include <px4_platform_common/log.h>
-#include <mathlib/mathlib.h>
-
-void PpsTimeSync::process_pps(const pps_capture_s &pps)
+void TLA2528::print_usage()
 {
-	if (pps.timestamp == 0 || pps.rtc_timestamp == 0) {
-		return;
-	}
-
-	_pps_hrt_timestamp = pps.timestamp;
-	_pps_rtc_timestamp = pps.rtc_timestamp;
-	_time_offset = (int64_t)pps.rtc_timestamp - (int64_t)pps.timestamp;
-	_initialized = true;
-	_updated = true;
+	PRINT_MODULE_USAGE_NAME("TLA2528", "driver");
+	PRINT_MODULE_USAGE_SUBCATEGORY("adc");
+	PRINT_MODULE_USAGE_COMMAND("start");
+	PRINT_MODULE_USAGE_PARAMS_I2C_SPI_DRIVER(true, false);
+	PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
 }
 
-uint64_t PpsTimeSync::correct_gps_timestamp(uint64_t gps_fc_timestamp, uint64_t gps_utc_timestamp)
+extern "C" int tla2528_main(int argc, char *argv[])
 {
-	if (!is_valid()) {
-		return gps_fc_timestamp;
+	using ThisDriver = TLA2528;
+	BusCLIArguments cli{true, false};
+
+	cli.default_i2c_frequency = 400000;
+	cli.i2c_address = 0x10;
+	const char *name = MODULE_NAME;
+	const char *verb = cli.parseDefaultArguments(argc, argv);
+
+	if (!verb) {
+		ThisDriver::print_usage();
+		return -1;
 	}
 
-	const int64_t corrected_fc_timestamp = (int64_t)gps_utc_timestamp - _time_offset;
+	BusInstanceIterator iterator(name, cli, DRV_ADC_DEVTYPE_TLA2528);
 
-	if (_updated) {
-		const int64_t correction_amount = corrected_fc_timestamp - (int64_t)gps_fc_timestamp;
-
-		if (math::abs_t(correction_amount) > kPpsMaxCorrectionUs) {
-			PX4_DEBUG("PPS: Correction too large: %" PRId64 " us (%.1f ms), rejecting",
-				  correction_amount, (double)correction_amount / 1000.0);
-			return gps_fc_timestamp;
-		}
-
-		// Additional sanity check: corrected timestamp should not be too far in the future (0.1s)
-		const uint64_t now = hrt_absolute_time();
-
-		if ((uint64_t)corrected_fc_timestamp > now + 100000) {
-			return gps_fc_timestamp;
-		}
-
-		_updated = false;
+	if (!strcmp(verb, "start")) {
+		return ThisDriver::module_start(cli, iterator);
 	}
 
-	return (uint64_t)corrected_fc_timestamp;
-}
-
-bool PpsTimeSync::is_valid() const
-{
-	if (!_initialized) {
-		return false;
+	if (!strcmp(verb, "stop")) {
+		return ThisDriver::module_stop(iterator);
 	}
 
-	uint64_t now = hrt_absolute_time();
-
-	if (now < _pps_hrt_timestamp) {
-		now = UINT64_MAX;
+	if (!strcmp(verb, "status")) {
+		return ThisDriver::module_status(iterator);
 	}
 
-	return now - _pps_hrt_timestamp < kPpsStaleTimeoutUs;
+	ThisDriver::print_usage();
+	return -1;
 }

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2025 PX4 Development Team. All rights reserved.
+ *   Copyright (C) 2025 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,71 +30,56 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
+#pragma once
 
-/**
- * @file PpsTimeSync.cpp
- *
- * PPS-based time synchronization implementation
- */
+#include <stdint.h>
+#include <drivers/drv_hrt.h>
+#include <px4_platform_common/i2c_spi_buses.h>
+#include <lib/drivers/device/i2c.h>
+#include <uORB/topics/adc_report.h>
+#include <uORB/PublicationMulti.hpp>
+#include <px4_platform_common/module_params.h>
 
-#include "PpsTimeSync.hpp"
-#include <px4_platform_common/log.h>
-#include <mathlib/mathlib.h>
+using namespace time_literals;
 
-void PpsTimeSync::process_pps(const pps_capture_s &pps)
+class TLA2528 : public device::I2C, public I2CSPIDriver<TLA2528>, public ModuleParams
 {
-	if (pps.timestamp == 0 || pps.rtc_timestamp == 0) {
-		return;
-	}
+public:
+	TLA2528(const I2CSPIDriverConfig &config);
+	~TLA2528() override;
 
-	_pps_hrt_timestamp = pps.timestamp;
-	_pps_rtc_timestamp = pps.rtc_timestamp;
-	_time_offset = (int64_t)pps.rtc_timestamp - (int64_t)pps.timestamp;
-	_initialized = true;
-	_updated = true;
-}
+	static void print_usage();
+	int init() override;
+	void RunImpl();
+	int probe() override;
 
-uint64_t PpsTimeSync::correct_gps_timestamp(uint64_t gps_fc_timestamp, uint64_t gps_utc_timestamp)
-{
-	if (!is_valid()) {
-		return gps_fc_timestamp;
-	}
+private:
+	static const hrt_abstime SAMPLE_INTERVAL{10_ms};
+	static constexpr int NUM_CHANNELS = 8;
 
-	const int64_t corrected_fc_timestamp = (int64_t)gps_utc_timestamp - _time_offset;
+	perf_counter_t _cycle_perf;
+	perf_counter_t _comms_errors;
 
-	if (_updated) {
-		const int64_t correction_amount = corrected_fc_timestamp - (int64_t)gps_fc_timestamp;
+	uORB::PublicationMulti<adc_report_s> _adc_report_pub{ORB_ID(adc_report)};
+	adc_report_s _adc_report{};
 
-		if (math::abs_t(correction_amount) > kPpsMaxCorrectionUs) {
-			PX4_DEBUG("PPS: Correction too large: %" PRId64 " us (%.1f ms), rejecting",
-				  correction_amount, (double)correction_amount / 1000.0);
-			return gps_fc_timestamp;
-		}
+	DEFINE_PARAMETERS(
+		(ParamFloat<px4::params::ADC_TLA2528_REFV>) _adc_tla2528_refv
+	)
 
-		// Additional sanity check: corrected timestamp should not be too far in the future (0.1s)
-		const uint64_t now = hrt_absolute_time();
+	int init_reset();
+	int poll_reset();
+	int configure();
+	int init_calibrate();
+	int poll_calibrate();
+	void adc_get();
+	void exit_and_cleanup() override;
 
-		if ((uint64_t)corrected_fc_timestamp > now + 100000) {
-			return gps_fc_timestamp;
-		}
-
-		_updated = false;
-	}
-
-	return (uint64_t)corrected_fc_timestamp;
-}
-
-bool PpsTimeSync::is_valid() const
-{
-	if (!_initialized) {
-		return false;
-	}
-
-	uint64_t now = hrt_absolute_time();
-
-	if (now < _pps_hrt_timestamp) {
-		now = UINT64_MAX;
-	}
-
-	return now - _pps_hrt_timestamp < kPpsStaleTimeoutUs;
-}
+	enum class STATE : uint8_t {
+		RESET,
+		CONFIGURE,
+		CALIBRATE,
+		WORK
+	};
+	STATE _state{STATE::RESET};
+};
