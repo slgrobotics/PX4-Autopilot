@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2018 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2025 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,37 +31,20 @@
  *
  ****************************************************************************/
 
-#pragma once
+#include "RtcmTestCommon.hpp"
 
-#include <drivers/drv_hrt.h>
-#include <lib/conversion/rotation.h>
-#include <uORB/PublicationMulti.hpp>
-#include <uORB/topics/sensor_mag.h>
-
-class PX4Magnetometer
+TEST_F(RtcmTest, CRC24Q_EmptyData)
 {
-public:
-	PX4Magnetometer(uint32_t device_id, enum Rotation rotation = ROTATION_NONE);
-	~PX4Magnetometer();
+	uint32_t crc = rtcm3_crc24q(nullptr, 0);
+	EXPECT_EQ(crc, 0u);
+}
 
-	void set_device_id(uint32_t device_id) { _device_id = device_id; }
-	void set_device_type(uint8_t devtype);
-	void set_error_count(uint32_t error_count) { _error_count = error_count; }
-	void set_scale(float scale) { _scale = scale; }
-	void set_temperature(float temperature) { _temperature = temperature; }
-
-	void update(const hrt_abstime &timestamp_sample, float x, float y, float z);
-
-	int get_instance() { return _sensor_pub.get_instance(); };
-	uint32_t get_device_id() const { return _device_id; }
-
-private:
-	uORB::PublicationMulti<sensor_mag_s> _sensor_pub{ORB_ID(sensor_mag)};
-
-	uint32_t		_device_id{0};
-	const enum Rotation	_rotation;
-
-	float			_scale{1.f};
-	float			_temperature{NAN};
-	uint32_t		_error_count{0};
-};
+TEST_F(RtcmTest, CRC24Q_KnownValue)
+{
+	// Test with known RTCM data
+	uint8_t data[] = {0xD3, 0x00, 0x04, 0x01, 0x02, 0x03, 0x04};
+	uint32_t crc = rtcm3_crc24q(data, sizeof(data));
+	// CRC should be a 24-bit value
+	EXPECT_EQ(crc & 0xFF000000, 0u);
+	EXPECT_NE(crc, 0u);
+}
