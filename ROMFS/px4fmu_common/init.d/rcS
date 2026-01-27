@@ -507,6 +507,19 @@ else
 	fi
 
 	#
+	# Optional UAVCAN/DroneCAN or Cyphal
+	#
+	if param greater -s UAVCAN_ENABLE 0
+	then
+		uavcan start
+	else
+		if param greater -s CYPHAL_ENABLE 0
+		then
+			cyphal start
+		fi
+	fi
+
+	#
 	# Configure vehicle type specific parameters.
 	# Note: rc.vehicle_setup is the entry point for all vehicle type specific setup.
 	. ${R}etc/init.d/rc.vehicle_setup
@@ -540,6 +553,14 @@ else
 		# Must be started after the serial config is read
 		rc_input start $RC_INPUT_ARGS
 	fi
+
+	if param greater -s ZENOH_ENABLE 0
+	then
+		zenoh start
+	fi
+
+	# Must be started after the serial config is read
+	rc_input start $RC_INPUT_ARGS
 
 	# Manages USB interface
 	if param greater -s SYS_USB_AUTO -1
@@ -644,6 +665,16 @@ else
 	unset RC_LOGGING
 
 	#
+	# Start the VTX services.
+	#
+	set RC_VTXTABLE ${R}etc/init.d/rc.vtxtable
+	if [ -f ${RC_VTXTABLE} ]
+	then
+		. ${RC_VTXTABLE}
+	fi
+	unset RC_VTXTABLE
+
+	#
 	# Set additional parameters and env variables for selected AUTOSTART.
 	#
 	echo "FYI: SYS_AUTOSTART $(param show -q SYS_AUTOSTART)"
@@ -659,27 +690,6 @@ else
 		sh $BOARD_BOOTLOADER_UPGRADE
 	fi
 	unset BOARD_BOOTLOADER_UPGRADE
-
-	#
-	# Check if UAVCAN is enabled, default to it for ESCs.
-	#
-	if param greater -s UAVCAN_ENABLE 0
-	then
-		# Start core UAVCAN module.
-		if ! uavcan start
-		then
-			tune_control play error
-		fi
-	else
-		if param greater -s CYPHAL_ENABLE 0
-		then
-			cyphal start
-		fi
-	fi
-	if param greater -s ZENOH_ENABLE 0
-	then
-		zenoh start
-	fi
 
 #
 # End of autostart.
