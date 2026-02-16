@@ -110,3 +110,6 @@ src/systemcmds/topic_listener/listener_generated.cpp
 log/
 keys/
 .vscode/
+
+# metadata
+_emscripten_sdk/
