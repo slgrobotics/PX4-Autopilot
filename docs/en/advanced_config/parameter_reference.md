@@ -19596,6 +19596,18 @@ Launch is detected when acceleration in body forward direction is above FW_LAUN_
 | ------ | -------- | -------- | --------- | ------- | ----- |
 | &nbsp; | 0        |          | 0.5       | 30.0    | m/s^2 |
 
+### FW_LAUN_CS_LK_DY (`FLOAT`) {#FW_LAUN_CS_LK_DY}
+
+Control surface launch delay.
+
+Locks control surfaces during pre-launch (armed) and until this time since launch has passed.
+Only affects control surfaces that have corresponding flag set, and not active for runway takeoff.
+Set to 0 to disable any surface locking after arming.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 0.0      |          | 0.1       | 0.      | s    |
+
 ### FW_LAUN_DETCN_ON (`INT32`) {#FW_LAUN_DETCN_ON}
 
 Fixed-wing launch detection.
@@ -21324,6 +21336,27 @@ Some are generic, while others are specifically fit to a certain vehicle with a 
 | Reboot | minValue | maxValue | increment | default | unit |
 | ------ | -------- | -------- | --------- | ------- | ---- |
 | &nbsp; |          |          |           | 0       |
+
+### CA_CS_LAUN_LK (`INT32`) {#CA_CS_LAUN_LK}
+
+Control surface launch lock enabled.
+
+If actuator launch lock is enabled, this surface is kept at the disarmed value.
+
+**Bitmask:**
+
+- `0`: Control Surface 1
+- `1`: Control Surface 2
+- `2`: Control Surface 3
+- `3`: Control Surface 4
+- `4`: Control Surface 5
+- `5`: Control Surface 6
+- `6`: Control Surface 7
+- `7`: Control Surface 8
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 0        | 255      |           | 0       |
 
 ### CA_FAILURE_MODE (`INT32`) {#CA_FAILURE_MODE}
 
@@ -33078,6 +33111,44 @@ Use SENS_MAG_SIDES instead
 | ------ | -------- | -------- | --------- | ------- | ---- |
 | &nbsp; |          |          |           | 63      |
 
+### GRF_RATE_CFG (`INT32`) {#GRF_RATE_CFG}
+
+Lightware GRF lidar update rate.
+
+The Lightware GRF distance sensor can increase the update rate to enable greater resolution.
+
+**Values:**
+
+- `1`: 1 Hz
+- `2`: 2 Hz
+- `3`: 4 Hz
+- `4`: 5 Hz
+- `5`: 10 Hz
+- `6`: 20 Hz
+- `7`: 30 Hz
+- `8`: 40 Hz
+- `9`: 50 Hz
+
+| Reboot  | minValue | maxValue | increment | default | unit |
+| ------- | -------- | -------- | --------- | ------- | ---- |
+| &check; |          |          |           | 4       |
+
+### GRF_SENS_MODEL (`INT32`) {#GRF_SENS_MODEL}
+
+GRF Sensor model.
+
+GRF Sensor Model used to distinush between the GRF250 and GRF500 since both have different max distance range.
+
+**Values:**
+
+- `0`: disable
+- `1`: GRF250
+- `2`: GRF500
+
+| Reboot  | minValue | maxValue | increment | default | unit |
+| ------- | -------- | -------- | --------- | ------- | ---- |
+| &check; |          |          |           | 0       |
+
 ### ILABS_MODE (`INT32`) {#ILABS_MODE}
 
 InertialLabs INS sensor mode configuration.
@@ -34285,6 +34356,31 @@ Enable simulated GPS sinstance.
 | Reboot  | minValue | maxValue | increment | default | unit |
 | ------- | -------- | -------- | --------- | ------- | ---- |
 | &check; | 0        | 1        |           | 0       |
+
+### SENS_EN_GRF_CFG (`INT32`) {#SENS_EN_GRF_CFG}
+
+Serial Configuration for Lightware GRF Rangefinder (serial).
+
+Configure on which serial port to run Lightware GRF Rangefinder (serial).
+
+**Values:**
+
+- `0`: Disabled
+- `6`: UART 6
+- `101`: TELEM 1
+- `102`: TELEM 2
+- `103`: TELEM 3
+- `104`: TELEM/SERIAL 4
+- `201`: GPS 1
+- `202`: GPS 2
+- `203`: GPS 3
+- `300`: Radio Controller
+- `301`: Wifi Port
+- `401`: EXT2
+
+| Reboot  | minValue | maxValue | increment | default | unit |
+| ------- | -------- | -------- | --------- | ------- | ---- |
+| &check; |          |          |           | 0       |
 
 ### SENS_EN_INA220 (`INT32`) {#SENS_EN_INA220}
 
