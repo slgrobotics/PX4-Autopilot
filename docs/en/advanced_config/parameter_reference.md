@@ -15405,6 +15405,18 @@ A value of -1 means to use the board default.
 | ------- | -------- | -------- | --------- | ------- | ---- |
 | &check; |          |          |           | -1      |
 
+### BAT1_I_FILT (`FLOAT`) {#BAT1_I_FILT}
+
+Battery 1 current filter time constant.
+
+Low-pass filter time constant for the battery current ADC reading (in seconds).
+A higher value results in more smoothing and less noise, but slower response.
+A value of 0 disables the filter.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 0.0      | 5.0      |           | 0.0     | s    |
+
 ### BAT1_I_OVERWRITE (`FLOAT`) {#BAT1_I_OVERWRITE}
 
 Battery 1 idle current overwrite.
@@ -15537,6 +15549,18 @@ it drops off to a voltage level damaging the cells.
 | ------- | -------- | -------- | --------- | ------- | ---- |
 | &check; |          |          | 0.01      | 3.6     | V    |
 
+### BAT1_V_FILT (`FLOAT`) {#BAT1_V_FILT}
+
+Battery 1 voltage filter time constant.
+
+Low-pass filter time constant for the battery voltage ADC reading (in seconds).
+A higher value results in more smoothing and less noise, but slower response.
+A value of 0 disables the filter.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 0.0      | 5.0      |           | 0.0     | s    |
+
 ### BAT2_A_PER_V (`FLOAT`) {#BAT2_A_PER_V}
 
 Battery 2 current per volt (A/V).
@@ -15569,6 +15593,18 @@ A value of -1 means to use the board default.
 | Reboot  | minValue | maxValue | increment | default | unit |
 | ------- | -------- | -------- | --------- | ------- | ---- |
 | &check; |          |          |           | -1      |
+
+### BAT2_I_FILT (`FLOAT`) {#BAT2_I_FILT}
+
+Battery 2 current filter time constant.
+
+Low-pass filter time constant for the battery current ADC reading (in seconds).
+A higher value results in more smoothing and less noise, but slower response.
+A value of 0 disables the filter.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 0.0      | 5.0      |           | 0.0     | s    |
 
 ### BAT2_I_OVERWRITE (`FLOAT`) {#BAT2_I_OVERWRITE}
 
@@ -15701,6 +15737,18 @@ it drops off to a voltage level damaging the cells.
 | Reboot  | minValue | maxValue | increment | default | unit |
 | ------- | -------- | -------- | --------- | ------- | ---- |
 | &check; |          |          | 0.01      | 3.6     | V    |
+
+### BAT2_V_FILT (`FLOAT`) {#BAT2_V_FILT}
+
+Battery 2 voltage filter time constant.
+
+Low-pass filter time constant for the battery voltage ADC reading (in seconds).
+A higher value results in more smoothing and less noise, but slower response.
+A value of 0 disables the filter.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 0.0      | 5.0      |           | 0.0     | s    |
 
 ### BAT3_CAPACITY (`FLOAT`) {#BAT3_CAPACITY}
 
@@ -16364,6 +16412,25 @@ Arm switch is a momentary button.
 | Reboot | minValue | maxValue | increment | default      | unit |
 | ------ | -------- | -------- | --------- | ------------ | ---- |
 | &nbsp; |          |          |           | Disabled (0) |
+
+### COM_ARM_TRAFF (`INT32`) {#COM_ARM_TRAFF}
+
+Enable Traffic Avoidance system detection check.
+
+This check detects if a traffic avoidance system (ADSB/FLARM transponder)
+is missing. Depending on the value of the parameter, the check can be
+disabled, warn only, or deny arming.
+
+**Values:**
+
+- `0`: Disabled
+- `1`: Warning only
+- `2`: Enforce for all modes
+- `3`: Enforce for mission modes only
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; |          |          |           | 0       |
 
 ### COM_ARM_WO_GPS (`INT32`) {#COM_ARM_WO_GPS}
 
@@ -34607,7 +34674,7 @@ Lightware Laser Rangefinder hardware model (serial).
 
 ### SENS_EN_SF1XX (`INT32`) {#SENS_EN_SF1XX}
 
-Lightware SF1xx/SF20/LW20 laser rangefinder (i2c).
+Lightware laser rangefinder (i2c).
 
 **Values:**
 
@@ -35781,6 +35848,26 @@ Configure on which serial port to run VectorNav (VN-100, VN-200, VN-300).
 | Reboot  | minValue | maxValue | increment | default | unit |
 | ------- | -------- | -------- | --------- | ------- | ---- |
 | &check; |          |          |           | 0       |
+
+### SF1XX_ROT (`INT32`) {#SF1XX_ROT}
+
+Lightware laser rangefinder Rotation.
+
+Distance sensor orientation as MAV_SENSOR_ORIENTATION enum.
+Applies to all models supported by SENS_EN_SF1XX.
+
+**Values:**
+
+- `0`: Forward
+- `2`: Right
+- `4`: Backward
+- `6`: Left
+- `24`: Upward
+- `25`: Downward
+
+| Reboot  | minValue | maxValue | increment | default | unit |
+| ------- | -------- | -------- | --------- | ------- | ---- |
+| &check; | 0        | 25       |           | 25      |
 
 ### SF45_ORIENT_CFG (`INT32`) {#SF45_ORIENT_CFG}
 
@@ -42610,7 +42697,7 @@ Gyro filter settings.
 
 ### SF1XX_MODE (`INT32`) {#SF1XX_MODE}
 
-Lightware SF1xx/SF20/LW20 Operation Mode.
+Lightware laser rangefinder Operation Mode.
 
 **Values:**
 
