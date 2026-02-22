@@ -47,6 +47,8 @@ using namespace time_literals;
 namespace rover_lawnmower
 {
 
+ModuleBase::Descriptor RoverLawnmower::desc{task_spawn, custom_command, print_usage};
+
 RoverLawnmower::RoverLawnmower() :
 	ModuleParams(nullptr),
 	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::rate_ctrl)
@@ -208,8 +210,8 @@ int RoverLawnmower::task_spawn(int argc, char *argv[])
 	RoverLawnmower *instance = new RoverLawnmower();
 
 	if (instance) {
-		_object.store(instance);
-		_task_id = task_id_is_work_queue;
+		desc.object.store(instance);
+		desc.task_id = task_id_is_work_queue;
 
 		if (instance->init()) {
 			return PX4_OK;
@@ -220,8 +222,8 @@ int RoverLawnmower::task_spawn(int argc, char *argv[])
 	}
 
 	delete instance;
-	_object.store(nullptr);
-	_task_id = -1;
+	desc.object.store(nullptr);
+	desc.task_id = -1;
 
 	return PX4_ERROR;
 }
@@ -240,7 +242,7 @@ int RoverLawnmower::print_usage(const char *reason)
 	PRINT_MODULE_DESCRIPTION(
 		R"DESCR_STR(
 ### Description
-Rover Lawnmower module.
+Rover lawnmower module.
 )DESCR_STR");
 
 	PRINT_MODULE_USAGE_NAME("rover_lawnmower", "controller");
@@ -251,7 +253,7 @@ Rover Lawnmower module.
 
 extern "C" __EXPORT int rover_lawnmower_main(int argc, char *argv[])
 {
-	return RoverLawnmower::main(argc, argv);
+	return ModuleBase::main(RoverLawnmower::desc, argc, argv);
 }
 
 }

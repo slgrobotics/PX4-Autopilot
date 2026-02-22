@@ -66,12 +66,11 @@ void DifferentialPosControl::updatePosControl()
 		pure_pursuit_status.timestamp = timestamp;
 
 		if (distance_to_target > _param_nav_acc_rad.get() || _arrival_speed > FLT_EPSILON) {
-			float speed_setpoint{_cruising_speed};
-
 			if (_param_ro_decel_limit.get() > FLT_EPSILON && _param_ro_jerk_limit.get() > FLT_EPSILON) {
-				speed_setpoint = math::min(math::trajectory::computeMaxSpeedFromDistance(_param_ro_jerk_limit.get(),
+				_speed_setpoint = math::min(math::trajectory::computeMaxSpeedFromDistance(_param_ro_jerk_limit.get(),
 							   _param_ro_decel_limit.get(), distance_to_target, fabsf(_arrival_speed)), _cruising_speed);
 			}
+		}
 
 		if (isArrivalFast || distance_to_target > _param_nav_acc_rad.get()) {
 

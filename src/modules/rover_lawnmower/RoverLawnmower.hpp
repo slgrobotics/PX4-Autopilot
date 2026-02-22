@@ -88,10 +88,12 @@ public:
 };
 */
 
-class RoverLawnmower : public ModuleBase<RoverLawnmower>, public ModuleParams,
+class RoverLawnmower : public ModuleBase, public ModuleParams,
 	public px4::ScheduledWorkItem
 {
 public:
+	static Descriptor desc;
+
 	/**
 	 * @brief Constructor for RoverLawnmower
 	 */
