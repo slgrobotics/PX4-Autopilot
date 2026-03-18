@@ -91,13 +91,13 @@ set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
 
 **Key variables:**
 
-| Variable | Purpose |
-|---|---|
-| `CPACK_DEBIAN_ARCHITECTURE` | Target architecture. Set explicitly for cross-compiled boards since `dpkg --print-architecture` reports the build host, not the target. |
-| `CPACK_DEBIAN_PACKAGE_NAME` | Package name as it appears in `dpkg -l`. |
-| `CPACK_DEBIAN_FILE_NAME` | Output `.deb` filename. |
-| `CPACK_DEBIAN_PACKAGE_DEPENDS` | Runtime dependencies (comma-separated, Debian format). |
-| `CPACK_DEBIAN_PACKAGE_SHLIBDEPS` | Set to `OFF` for cross-compiled boards where `dpkg-shlibdeps` cannot inspect target binaries. |
+| Variable                         | Purpose                                                                                                                                 |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `CPACK_DEBIAN_ARCHITECTURE`      | Target architecture. Set explicitly for cross-compiled boards since `dpkg --print-architecture` reports the build host, not the target. |
+| `CPACK_DEBIAN_PACKAGE_NAME`      | Package name as it appears in `dpkg -l`.                                                                                                |
+| `CPACK_DEBIAN_FILE_NAME`         | Output `.deb` filename.                                                                                                                 |
+| `CPACK_DEBIAN_PACKAGE_DEPENDS`   | Runtime dependencies (comma-separated, Debian format).                                                                                  |
+| `CPACK_DEBIAN_PACKAGE_SHLIBDEPS` | Set to `OFF` for cross-compiled boards where `dpkg-shlibdeps` cannot inspect target binaries.                                           |
 
 ### Step 2: Install Rules (install.cmake)
 
@@ -251,16 +251,16 @@ boards/modalai/voxl2/
 
 The resulting `.deb` installs:
 
-| Path | Contents |
-|---|---|
-| `/usr/bin/px4` | Apps processor PX4 binary |
-| `/usr/bin/px4-alias.sh` | Module alias script |
-| `/usr/bin/voxl-px4` | Startup wrapper |
-| `/usr/bin/voxl-px4-start` | Module startup script |
-| `/usr/lib/rfsa/adsp/libpx4.so` | DSP firmware (from SLPI build) |
-| `/etc/modalai/*.config` | Board configuration files |
-| `/etc/systemd/system/voxl-px4.service` | Systemd service |
-| `/data/px4/etc/extras/*.json.xz` | Component metadata |
+| Path                                   | Contents                       |
+| -------------------------------------- | ------------------------------ |
+| `/usr/bin/px4`                         | Apps processor PX4 binary      |
+| `/usr/bin/px4-alias.sh`                | Module alias script            |
+| `/usr/bin/voxl-px4`                    | Startup wrapper                |
+| `/usr/bin/voxl-px4-start`              | Module startup script          |
+| `/usr/lib/rfsa/adsp/libpx4.so`         | DSP firmware (from SLPI build) |
+| `/etc/modalai/*.config`                | Board configuration files      |
+| `/etc/systemd/system/voxl-px4.service` | Systemd service                |
+| `/data/px4/etc/extras/*.json.xz`       | Component metadata             |
 
 ## CI Integration
 
@@ -278,11 +278,11 @@ On tagged releases, `.deb` files are uploaded to both S3 and GitHub Releases.
 
 The `.deb` version is derived from `PX4_GIT_TAG` using Debian-compatible formatting:
 
-| Git Tag | Debian Version | Notes |
-|---|---|---|
-| `v1.17.0` | `1.17.0` | Stable release |
-| `v1.17.0-beta1` | `1.17.0~beta1` | Pre-release (`~` sorts before release) |
-| `v1.17.0-alpha1-42-gabcdef` | `1.17.0~alpha1.42.gabcdef` | Development build |
+| Git Tag                     | Debian Version             | Notes                                  |
+| --------------------------- | -------------------------- | -------------------------------------- |
+| `v1.17.0`                   | `1.17.0`                   | Stable release                         |
+| `v1.17.0-beta1`             | `1.17.0~beta1`             | Pre-release (`~` sorts before release) |
+| `v1.17.0-alpha1-42-gabcdef` | `1.17.0~alpha1.42.gabcdef` | Development build                      |
 
 The `~` prefix in Debian versioning ensures pre-releases sort lower than the final release: `1.17.0~beta1 < 1.17.0`.
 
