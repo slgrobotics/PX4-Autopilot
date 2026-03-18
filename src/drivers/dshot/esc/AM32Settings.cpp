@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2020 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2026 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,55 +31,55 @@
  *
  ****************************************************************************/
 
-/**
- * Multi GPS Blending Control Mask.
- *
- * Set bits in the following positions to set which GPS accuracy metrics will be used to calculate the blending weight. Set to zero to disable and always used first GPS instance.
- * 0 : Set to true to use speed accuracy
- * 1 : Set to true to use horizontal position accuracy
- * 2 : Set to true to use vertical position accuracy
- *
- * @group Sensors
- * @min 0
- * @max 7
- * @bit 0 use speed accuracy
- * @bit 1 use hpos accuracy
- * @bit 2 use vpos accuracy
- */
-PARAM_DEFINE_INT32(SENS_GPS_MASK, 7);
+#include "AM32Settings.h"
+#include "../DShotCommon.h"
+#include <px4_platform_common/log.h>
 
-/**
- * Multi GPS Blending Time Constant
- *
- * Sets the longest time constant that will be applied to the calculation of GPS position and height offsets used to correct data from multiple GPS data for steady state position differences.
- *
- *
- * @group Sensors
- * @min 1.0
- * @max 100.0
- * @unit s
- * @decimal 1
- */
-PARAM_DEFINE_FLOAT(SENS_GPS_TAU, 10.0f);
+static constexpr int RESPONSE_SIZE = EEPROM_SIZE + 1; // 48B data + 1B CRC
 
-/**
- * Multi GPS primary instance
- *
- * When no blending is active, this defines the preferred GPS receiver instance.
- * The GPS selection logic waits until the primary receiver is available to
- * send data to the EKF even if a secondary instance is already available.
- * The secondary instance is then only used if the primary one times out.
- *
- * Accepted values:
- * -1 : Auto (equal priority for all instances)
- * 0 : Main serial GPS instance
- * 1 : Secondary serial GPS instance
- * 2-127 : UAVCAN module node ID
- *
- * This parameter has no effect if blending is active.
- *
- * @group Sensors
- * @min -1
- * @max 127
- */
-PARAM_DEFINE_INT32(SENS_GPS_PRIME, 0);
+uORB::Publication<esc_eeprom_read_s> AM32Settings::_esc_eeprom_read_pub{ORB_ID(esc_eeprom_read)};
+
+AM32Settings::AM32Settings(int index)
+	: _esc_index(index)
+{}
+
+int AM32Settings::getExpectedResponseSize()
+{
+	return RESPONSE_SIZE;
+}
+
+void AM32Settings::publish_latest()
+{
+	esc_eeprom_read_s data = {};
+	data.timestamp = hrt_absolute_time();
+	data.firmware = 1; // ESC_FIRMWARE_AM32
+	data.index = _esc_index;
+	memcpy(data.data, &_eeprom_data, sizeof(_eeprom_data));
+	data.length = sizeof(_eeprom_data);
+	_esc_eeprom_read_pub.publish(data);
+}
+
+bool AM32Settings::decodeInfoResponse(const uint8_t *buf, int size)
+{
+	if (size != RESPONSE_SIZE) {
+		return false;
+	}
+
+	uint8_t checksum = crc8(buf, EEPROM_SIZE);
+	uint8_t checksum_data = buf[EEPROM_SIZE];
+
+	if (checksum != checksum_data) {
+		PX4_WARN("Command Response checksum failed!");
+		return false;
+	}
+
+	PX4_DEBUG("Successfully received AM32 settings from ESC%d", _esc_index + 1);
+
+	// Store data for retrieval later if requested
+	memcpy(&_eeprom_data, buf, EEPROM_SIZE);
+
+	// Publish data immediately
+	publish_latest();
+
+	return true;
+}

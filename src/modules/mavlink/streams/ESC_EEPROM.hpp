@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2020-2023 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2026 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,42 +31,59 @@
  *
  ****************************************************************************/
 
-/**
- * @file fw_roll_controller.h
- * Definition of a simple roll P controller.
- */
+#ifndef ESC_EEPROM_HPP
+#define ESC_EEPROM_HPP
 
-#ifndef FW_ROLL_CONTROLLER_H
-#define FW_ROLL_CONTROLLER_H
+#include <uORB/topics/esc_eeprom_read.h>
 
-class RollController
+class MavlinkStreamEscEeprom : public MavlinkStream
 {
 public:
-	RollController() = default;
-	~RollController() = default;
+	static MavlinkStream *new_instance(Mavlink *mavlink) { return new MavlinkStreamEscEeprom(mavlink); }
 
-	/**
-	 * @brief Calculates both euler and body roll rate setpoints.
-	 *
-	 * @param roll_setpoint roll setpoint [rad]
-	 * @param euler_yaw_rate_setpoint euler yaw rate setpoint [rad/s]
-	 * @param roll estimated roll [rad]
-	 * @param pitch estimated pitch [rad]
-	 * @return Roll body rate setpoint [rad/s]
-	 */
-	float control_roll(float roll_setpoint, float euler_yaw_rate_setpoint, float roll, float pitch);
+	static constexpr const char *get_name_static() { return "ESC_EEPROM"; }
+	static constexpr uint16_t get_id_static() { return MAVLINK_MSG_ID_ESC_EEPROM; }
 
-	void set_time_constant(float time_constant) { _tc = time_constant; }
-	void set_max_rate(float max_rate) { _max_rate = max_rate; }
+	const char *get_name() const override { return get_name_static(); }
+	uint16_t get_id() override { return get_id_static(); }
 
-	float get_euler_rate_setpoint() { return _euler_rate_setpoint; }
-	float get_body_rate_setpoint() { return _body_rate_setpoint; }
+	unsigned get_size() override
+	{
+		return _esc_eeprom_read_sub.advertised() ? MAVLINK_MSG_ID_ESC_EEPROM_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES : 0;
+	}
 
 private:
-	float _tc{};
-	float _max_rate{};
-	float _euler_rate_setpoint{};
-	float _body_rate_setpoint{};
+	explicit MavlinkStreamEscEeprom(Mavlink *mavlink) : MavlinkStream(mavlink) {}
+
+	uORB::Subscription _esc_eeprom_read_sub{ORB_ID(esc_eeprom_read)};
+
+	bool emit_message(bool force)
+	{
+		esc_eeprom_read_s eeprom = {};
+
+		if (_esc_eeprom_read_sub.update(&eeprom) || force) {
+			mavlink_esc_eeprom_t msg = {};
+			msg.firmware = eeprom.firmware;
+			msg.esc_index = eeprom.index;
+			msg.msg_index = 0;
+			msg.msg_count = 1;
+			size_t copy_len = eeprom.length < sizeof(eeprom.data) ? eeprom.length : sizeof(eeprom.data);
+			memcpy(msg.data, eeprom.data, copy_len);
+			msg.length = copy_len;
+
+			mavlink_msg_esc_eeprom_send_struct(_mavlink->get_channel(), &msg);
+
+			return true;
+		}
+
+		return false;
+	}
+
+	bool send() override
+	{
+		return emit_message(false);
+	}
+
 };
 
-#endif // FW_ROLL_CONTROLLER_H
+#endif // ESC_EEPROM_HPP

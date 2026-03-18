@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2020-2023 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2026 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,7 +12,7 @@
  *    notice, this list of conditions and the following disclaimer in
  *    the documentation and/or other materials provided with the
  *    distribution.
- * 3. Neither the name ECL nor the names of its contributors may be
+ * 3. Neither the name PX4 nor the names of its contributors may be
  *    used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -31,34 +31,27 @@
  *
  ****************************************************************************/
 
-/**
- * @file fw_roll_controller.cpp
- * Implementation of a simple roll P controller.
- */
+#pragma once
 
-#include "fw_roll_controller.h"
-#include <float.h>
-#include <lib/geo/geo.h>
-#include <mathlib/mathlib.h>
+#include "ESCSettingsInterface.h"
+#include <uORB/Publication.hpp>
+#include <uORB/topics/esc_eeprom_read.h>
 
-float RollController::control_roll(float roll_setpoint, float euler_yaw_rate_setpoint, float roll, float pitch)
+static constexpr int EEPROM_SIZE = 48;
+
+class AM32Settings : public ESCSettingsInterface
 {
-	/* Do not calculate control signal with bad inputs */
-	if (!(PX4_ISFINITE(roll_setpoint) &&
-	      PX4_ISFINITE(euler_yaw_rate_setpoint) &&
-	      PX4_ISFINITE(pitch) &&
-	      PX4_ISFINITE(roll))) {
+public:
+	AM32Settings(int index);
 
-		return _body_rate_setpoint;
-	}
+	int getExpectedResponseSize() override;
+	bool decodeInfoResponse(const uint8_t *buf, int size) override;
 
-	const float roll_error = roll_setpoint - roll;
-	_euler_rate_setpoint = roll_error / _tc;
+	void publish_latest() override;
 
-	/* Transform setpoint to body angular rates (jacobian) */
-	const float roll_body_rate_setpoint_raw = _euler_rate_setpoint - sinf(pitch) *
-			euler_yaw_rate_setpoint;
-	_body_rate_setpoint = math::constrain(roll_body_rate_setpoint_raw, -_max_rate, _max_rate);
+private:
+	int _esc_index{};
+	uint8_t _eeprom_data[EEPROM_SIZE] {};
 
-	return _body_rate_setpoint;
-}
+	static uORB::Publication<esc_eeprom_read_s> _esc_eeprom_read_pub;
+};

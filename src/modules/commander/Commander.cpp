@@ -1603,6 +1603,7 @@ Commander::handle_command(const vehicle_command_s &cmd)
 	case vehicle_command_s::VEHICLE_CMD_DO_GIMBAL_MANAGER_PITCHYAW:
 	case vehicle_command_s::VEHICLE_CMD_DO_GIMBAL_MANAGER_CONFIGURE:
 	case vehicle_command_s::VEHICLE_CMD_CONFIGURE_ACTUATOR:
+	case vehicle_command_s::VEHICLE_CMD_ESC_REQUEST_EEPROM:
 	case vehicle_command_s::VEHICLE_CMD_REQUEST_MESSAGE:
 	case vehicle_command_s::VEHICLE_CMD_DO_WINCH:
 	case vehicle_command_s::VEHICLE_CMD_DO_GRIPPER:
@@ -1668,10 +1669,6 @@ void Commander::handleCommandsFromModeExecutors()
 unsigned Commander::handleCommandActuatorTest(const vehicle_command_s &cmd)
 {
 	if (isArmed() || (_safety.isButtonAvailable() && !_safety.isSafetyOff())) {
-		return vehicle_command_ack_s::VEHICLE_CMD_RESULT_DENIED;
-	}
-
-	if (_param_com_mot_test_en.get() != 1) {
 		return vehicle_command_ack_s::VEHICLE_CMD_RESULT_DENIED;
 	}
 

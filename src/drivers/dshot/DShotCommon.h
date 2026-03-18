@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2020-2023 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2026 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,44 +31,63 @@
  *
  ****************************************************************************/
 
-/**
- * @file fw_pitch_controller.h
- * Definition of a simple pitch P controller.
- */
+#pragma once
 
-#ifndef FW_PITCH_CONTROLLER_H
-#define FW_PITCH_CONTROLLER_H
+#include <drivers/drv_hrt.h>
+#include <board_config.h>
+#include <uORB/topics/esc_status.h>
 
-class PitchController
-{
-public:
-	PitchController() = default;
-	~PitchController() = default;
+#if !defined(DIRECT_PWM_OUTPUT_CHANNELS)
+#  error "board_config.h needs to define DIRECT_PWM_OUTPUT_CHANNELS"
+#endif
 
-	/**
-	 * @brief Calculates both euler and body pitch rate setpoints.
-	 *
-	 * @param pitch_setpoint pitch setpoint [rad]
-	 * @param euler_yaw_rate_setpoint euler yaw rate setpoint [rad/s]
-	 * @param roll estimated roll [rad]
-	 * @param pitch estimated pitch [rad]
-	 * @return Pitch body rate setpoint [rad/s]
-	 */
-	float control_pitch(float pitch_setpoint, float euler_yaw_rate_setpoint, float roll, float pitch);
+static constexpr int DSHOT_MAXIMUM_CHANNELS = DIRECT_PWM_OUTPUT_CHANNELS;
 
-	void set_time_constant(float time_constant) { _tc = time_constant; }
-	void set_max_rate_pos(float max_rate_pos) { _max_rate_pos = max_rate_pos; }
-	void set_max_rate_neg(float max_rate_neg) { _max_rate_neg = max_rate_neg; }
+// Motor-indexed arrays use this — bounded by both hardware channels and protocol limit
+static constexpr int DSHOT_MAX_MOTORS = DSHOT_MAXIMUM_CHANNELS < esc_status_s::CONNECTED_ESC_MAX
+					? DSHOT_MAXIMUM_CHANNELS : esc_status_s::CONNECTED_ESC_MAX;
 
-	float get_euler_rate_setpoint() { return _euler_rate_setpoint; }
-	float get_body_rate_setpoint() { return _body_rate_setpoint; }
-
-private:
-	float _tc{};
-	float _max_rate_pos{};
-	float _max_rate_neg{};
-	float _euler_rate_setpoint{};
-	float _body_rate_setpoint{};
+enum class TelemetrySource {
+	Serial = 0,
+	BDShot = 1,
 };
 
-#endif // FW_PITCH_CONTROLLER_H
+struct EscData {
+	int motor_index;       // Motor index 0..(CONNECTED_ESC_MAX-1)
+	hrt_abstime timestamp; // Sample time
+	TelemetrySource source;
+
+	float temperature;     // [C]
+	float voltage;         // [V]
+	float current;         // [A]
+	int32_t erpm;          // [eRPM]
+};
+
+enum class TelemetryStatus {
+	NotStarted = 0,
+	NotReady = 1,
+	Ready = 2,
+	Timeout = 3,
+	ParseError = 4,
+};
+
+inline uint8_t crc8(const uint8_t *buf, unsigned len)
+{
+	auto update_crc8 = [](uint8_t crc, uint8_t crc_seed) {
+		uint8_t crc_u = crc ^ crc_seed;
+
+		for (unsigned i = 0; i < 8; ++i) {
+			crc_u = (crc_u & 0x80) ? 0x7 ^ (crc_u << 1) : (crc_u << 1);
+		}
+
+		return crc_u;
+	};
+
+	uint8_t crc = 0;
+
+	for (unsigned i = 0; i < len; ++i) {
+		crc = update_crc8(buf[i], crc);
+	}
+
+	return crc;
+}

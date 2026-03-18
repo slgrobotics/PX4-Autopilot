@@ -4202,6 +4202,9 @@ Custom PWM rates can be used by directly setting any value >0.
 
 **Values:**
 
+- `-8`: BDShot150
+- `-7`: BDShot300
+- `-6`: BDShot600
 - `-5`: DShot150
 - `-4`: DShot300
 - `-3`: DShot600
@@ -5499,7 +5502,7 @@ Note that non-motor outputs might already be active in prearm state if COM_PREAR
 
 | Reboot | minValue | maxValue | increment | default | unit |
 | ------ | -------- | -------- | --------- | ------- | ---- |
-| &nbsp; | 128      | 128      |           | 128     |      |
+| &nbsp; | 127      | 127      |           | 127     |      |
 
 ### RBCLW_DIS2 (`INT32`) {#RBCLW_DIS2}
 
@@ -5513,7 +5516,7 @@ Note that non-motor outputs might already be active in prearm state if COM_PREAR
 
 | Reboot | minValue | maxValue | increment | default | unit |
 | ------ | -------- | -------- | --------- | ------- | ---- |
-| &nbsp; | 128      | 128      |           | 128     |      |
+| &nbsp; | 127      | 127      |           | 127     |      |
 
 ### RBCLW_FAIL1 (`INT32`) {#RBCLW_FAIL1}
 
@@ -5701,7 +5704,7 @@ Maxmimum output value (when not disarmed).
 
 | Reboot | minValue | maxValue | increment | default | unit |
 | ------ | -------- | -------- | --------- | ------- | ---- |
-| &nbsp; | 128      | 256      |           | 256     |      |
+| &nbsp; | 127      | 254      |           | 254     |      |
 
 ### RBCLW_MAX2 (`INT32`) {#RBCLW_MAX2}
 
@@ -5713,7 +5716,7 @@ Maxmimum output value (when not disarmed).
 
 | Reboot | minValue | maxValue | increment | default | unit |
 | ------ | -------- | -------- | --------- | ------- | ---- |
-| &nbsp; | 128      | 256      |           | 256     |      |
+| &nbsp; | 127      | 254      |           | 254     |      |
 
 ### RBCLW_MIN1 (`INT32`) {#RBCLW_MIN1}
 
@@ -5725,7 +5728,7 @@ Minimum output value (when not disarmed).
 
 | Reboot | minValue | maxValue | increment | default | unit |
 | ------ | -------- | -------- | --------- | ------- | ---- |
-| &nbsp; | 1        | 128      |           | 1       |      |
+| &nbsp; | 0        | 127      |           | 0       |      |
 
 ### RBCLW_MIN2 (`INT32`) {#RBCLW_MIN2}
 
@@ -5737,7 +5740,7 @@ Minimum output value (when not disarmed).
 
 | Reboot | minValue | maxValue | increment | default | unit |
 | ------ | -------- | -------- | --------- | ------- | ---- |
-| &nbsp; | 1        | 128      |           | 1       |      |
+| &nbsp; | 0        | 127      |           | 0       |      |
 
 ### RBCLW_REV (`INT32`) {#RBCLW_REV}
 
@@ -18849,17 +18852,6 @@ By default disabled for safety reasons
 | ------ | -------- | -------- | --------- | ------------ | ---- |
 | &nbsp; |          |          |           | Disabled (0) |      |
 
-### COM_MOT_TEST_EN (`INT32`) {#COM_MOT_TEST_EN}
-
-Enable Actuator Testing.
-
-If set, enables the actuator test interface via MAVLink (ACTUATOR_TEST), that
-allows spinning the motors and moving the servos for testing purposes.
-
-| Reboot | minValue | maxValue | increment | default     | unit |
-| ------ | -------- | -------- | --------- | ----------- | ---- |
-| &nbsp; |          |          |           | Enabled (1) |      |
-
 ### COM_OBC_LOSS_T (`FLOAT`) {#COM_OBC_LOSS_T}
 
 Time-out to wait when onboard computer connection is lost before warning about loss connection.
@@ -19105,7 +19097,7 @@ Note: Only has an effect on multicopters, and VTOLs in multicopter mode.
 Stick override threshold.
 
 If COM_RC_OVERRIDE is enabled and the joystick input is moved more than this threshold
-the autopilot the pilot takes over control.
+the pilot takes over control.
 
 | Reboot | minValue | maxValue | increment | default | unit |
 | ------ | -------- | -------- | --------- | ------- | ---- |
@@ -19510,17 +19502,32 @@ When mixer outputs 1000 or value inside DSHOT 3D deadband, DShot 0 is sent.
 | ------ | -------- | -------- | --------- | ------------ | ---- |
 | &nbsp; |          |          |           | Disabled (0) |      |
 
-### DSHOT_BIDIR_EN (`INT32`) {#DSHOT_BIDIR_EN}
+### DSHOT_BIDIR_EDT (`INT32`) {#DSHOT_BIDIR_EDT}
 
-Enable bidirectional DShot.
+Enable Extended DShot Telemetry.
 
-This parameter enables bidirectional DShot which provides RPM feedback.
-Note that this requires ESCs that support bidirectional DSHot, e.g. BlHeli32.
-This is not the same as DShot telemetry which requires an additional serial connection.
+This parameter enables Extended DShot Telemetry which allows transmission of
+additional telemetry within the eRPM frame. The EDT data is interleaved with
+the eRPM frames at a low rate.
 
 | Reboot  | minValue | maxValue | increment | default      | unit |
 | ------- | -------- | -------- | --------- | ------------ | ---- |
 | &check; |          |          |           | Disabled (0) |      |
+
+### DSHOT_ESC_TYPE (`INT32`) {#DSHOT_ESC_TYPE}
+
+ESC Type.
+
+The ESC firmware type
+
+**Values:**
+
+- `0`: Unknown
+- `1`: AM32
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; |          |          |           | 0       |      |
 
 ### DSHOT_MIN (`FLOAT`) {#DSHOT_MIN}
 
@@ -19533,6 +19540,174 @@ armed.
 | Reboot | minValue | maxValue | increment | default | unit |
 | ------ | -------- | -------- | --------- | ------- | ---- |
 | &nbsp; | 0        | 1        | 0.01      | 0.055   | norm |
+
+### DSHOT_MOT_POL1 (`INT32`) {#DSHOT_MOT_POL1}
+
+Number of magnetic poles of motor 1.
+
+Number of magnetic poles for motor 1.
+Required to compute RPM from the eRPM returned by ESC telemetry.
+Either get the number from the motor spec sheet or count the magnets
+on the bell of the motor (not the stator magnets).
+Typical motors for 5 inch props have 14 poles.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 2        | 400      |           | 14      |      |
+
+### DSHOT_MOT_POL10 (`INT32`) {#DSHOT_MOT_POL10}
+
+Number of magnetic poles of motor 10.
+
+Number of magnetic poles for motor 10.
+Required to compute RPM from the eRPM returned by ESC telemetry.
+Either get the number from the motor spec sheet or count the magnets
+on the bell of the motor (not the stator magnets).
+Typical motors for 5 inch props have 14 poles.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 2        | 400      |           | 14      |      |
+
+### DSHOT_MOT_POL11 (`INT32`) {#DSHOT_MOT_POL11}
+
+Number of magnetic poles of motor 11.
+
+Number of magnetic poles for motor 11.
+Required to compute RPM from the eRPM returned by ESC telemetry.
+Either get the number from the motor spec sheet or count the magnets
+on the bell of the motor (not the stator magnets).
+Typical motors for 5 inch props have 14 poles.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 2        | 400      |           | 14      |      |
+
+### DSHOT_MOT_POL12 (`INT32`) {#DSHOT_MOT_POL12}
+
+Number of magnetic poles of motor 12.
+
+Number of magnetic poles for motor 12.
+Required to compute RPM from the eRPM returned by ESC telemetry.
+Either get the number from the motor spec sheet or count the magnets
+on the bell of the motor (not the stator magnets).
+Typical motors for 5 inch props have 14 poles.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 2        | 400      |           | 14      |      |
+
+### DSHOT_MOT_POL2 (`INT32`) {#DSHOT_MOT_POL2}
+
+Number of magnetic poles of motor 2.
+
+Number of magnetic poles for motor 2.
+Required to compute RPM from the eRPM returned by ESC telemetry.
+Either get the number from the motor spec sheet or count the magnets
+on the bell of the motor (not the stator magnets).
+Typical motors for 5 inch props have 14 poles.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 2        | 400      |           | 14      |      |
+
+### DSHOT_MOT_POL3 (`INT32`) {#DSHOT_MOT_POL3}
+
+Number of magnetic poles of motor 3.
+
+Number of magnetic poles for motor 3.
+Required to compute RPM from the eRPM returned by ESC telemetry.
+Either get the number from the motor spec sheet or count the magnets
+on the bell of the motor (not the stator magnets).
+Typical motors for 5 inch props have 14 poles.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 2        | 400      |           | 14      |      |
+
+### DSHOT_MOT_POL4 (`INT32`) {#DSHOT_MOT_POL4}
+
+Number of magnetic poles of motor 4.
+
+Number of magnetic poles for motor 4.
+Required to compute RPM from the eRPM returned by ESC telemetry.
+Either get the number from the motor spec sheet or count the magnets
+on the bell of the motor (not the stator magnets).
+Typical motors for 5 inch props have 14 poles.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 2        | 400      |           | 14      |      |
+
+### DSHOT_MOT_POL5 (`INT32`) {#DSHOT_MOT_POL5}
+
+Number of magnetic poles of motor 5.
+
+Number of magnetic poles for motor 5.
+Required to compute RPM from the eRPM returned by ESC telemetry.
+Either get the number from the motor spec sheet or count the magnets
+on the bell of the motor (not the stator magnets).
+Typical motors for 5 inch props have 14 poles.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 2        | 400      |           | 14      |      |
+
+### DSHOT_MOT_POL6 (`INT32`) {#DSHOT_MOT_POL6}
+
+Number of magnetic poles of motor 6.
+
+Number of magnetic poles for motor 6.
+Required to compute RPM from the eRPM returned by ESC telemetry.
+Either get the number from the motor spec sheet or count the magnets
+on the bell of the motor (not the stator magnets).
+Typical motors for 5 inch props have 14 poles.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 2        | 400      |           | 14      |      |
+
+### DSHOT_MOT_POL7 (`INT32`) {#DSHOT_MOT_POL7}
+
+Number of magnetic poles of motor 7.
+
+Number of magnetic poles for motor 7.
+Required to compute RPM from the eRPM returned by ESC telemetry.
+Either get the number from the motor spec sheet or count the magnets
+on the bell of the motor (not the stator magnets).
+Typical motors for 5 inch props have 14 poles.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 2        | 400      |           | 14      |      |
+
+### DSHOT_MOT_POL8 (`INT32`) {#DSHOT_MOT_POL8}
+
+Number of magnetic poles of motor 8.
+
+Number of magnetic poles for motor 8.
+Required to compute RPM from the eRPM returned by ESC telemetry.
+Either get the number from the motor spec sheet or count the magnets
+on the bell of the motor (not the stator magnets).
+Typical motors for 5 inch props have 14 poles.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 2        | 400      |           | 14      |      |
+
+### DSHOT_MOT_POL9 (`INT32`) {#DSHOT_MOT_POL9}
+
+Number of magnetic poles of motor 9.
+
+Number of magnetic poles for motor 9.
+Required to compute RPM from the eRPM returned by ESC telemetry.
+Either get the number from the motor spec sheet or count the magnets
+on the bell of the motor (not the stator magnets).
+Typical motors for 5 inch props have 14 poles.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 2        | 400      |           | 14      |      |
 
 ### DSHOT_TEL_CFG (`INT32`) {#DSHOT_TEL_CFG}
 
@@ -19558,20 +19733,6 @@ Configure on which serial port to run DShot Driver.
 | Reboot  | minValue | maxValue | increment | default | unit |
 | ------- | -------- | -------- | --------- | ------- | ---- |
 | &check; |          |          |           | 0       |      |
-
-### MOT_POLE_COUNT (`INT32`) {#MOT_POLE_COUNT}
-
-Number of magnetic poles of the motors.
-
-Specify the number of magnetic poles of the motors.
-It is required to compute the RPM value from the eRPM returned with the ESC telemetry.
-
-Either get the number from the motor spec sheet or count the magnets on the bell of the motor (not the stator magnets).
-Typical motors for 5 inch props have 14 poles.
-
-| Reboot | minValue | maxValue | increment | default | unit |
-| ------ | -------- | -------- | --------- | ------- | ---- |
-| &nbsp; |          |          |           | 14      |      |
 
 ## EKF2
 
@@ -20308,16 +20469,6 @@ Set bits in the following positions to enable: 0 : Longitude and latitude fusion
 | ------ | -------- | -------- | --------- | ------- | ---- |
 | &nbsp; | 0        | 15       |           | 7       |      |
 
-### EKF2_GPS_DELAY (`FLOAT`) {#EKF2_GPS_DELAY}
-
-GPS measurement delay relative to IMU measurement.
-
-GPS measurement delay relative to IMU measurement if PPS time correction is not available/enabled (PPS_CAP_ENABLE).
-
-| Reboot  | minValue | maxValue | increment | default | unit |
-| ------- | -------- | -------- | --------- | ------- | ---- |
-| &check; | 0        | 300      |           | 110     | ms   |
-
 ### EKF2_GPS_MODE (`INT32`) {#EKF2_GPS_MODE}
 
 Fusion reset mode.
@@ -20332,36 +20483,6 @@ Automatic: reset on fusion timeout if no other source of position is available. 
 | Reboot | minValue | maxValue | increment | default | unit |
 | ------ | -------- | -------- | --------- | ------- | ---- |
 | &nbsp; |          |          |           | 0       |      |
-
-### EKF2_GPS_POS_X (`FLOAT`) {#EKF2_GPS_POS_X}
-
-X position of GPS antenna in body frame.
-
-Forward (roll) axis with origin relative to vehicle centre of gravity
-
-| Reboot | minValue | maxValue | increment | default | unit |
-| ------ | -------- | -------- | --------- | ------- | ---- |
-| &nbsp; |          |          |           | 0.0     | m    |
-
-### EKF2_GPS_POS_Y (`FLOAT`) {#EKF2_GPS_POS_Y}
-
-Y position of GPS antenna in body frame.
-
-Right (pitch) axis with origin relative to vehicle centre of gravity
-
-| Reboot | minValue | maxValue | increment | default | unit |
-| ------ | -------- | -------- | --------- | ------- | ---- |
-| &nbsp; |          |          |           | 0.0     | m    |
-
-### EKF2_GPS_POS_Z (`FLOAT`) {#EKF2_GPS_POS_Z}
-
-Z position of GPS antenna in body frame.
-
-Down (yaw) axis with origin relative to vehicle centre of gravity
-
-| Reboot | minValue | maxValue | increment | default | unit |
-| ------ | -------- | -------- | --------- | ------- | ---- |
-| &nbsp; |          |          |           | 0.0     | m    |
 
 ### EKF2_GPS_P_GATE (`FLOAT`) {#EKF2_GPS_P_GATE}
 
@@ -37197,14 +37318,129 @@ Configure on which serial port to run FT Technologies Digital Wind Sensor (seria
 | ------- | -------- | -------- | --------- | ------- | ---- |
 | &check; |          |          |           | 0       |      |
 
+### SENS_GPS0_DELAY (`INT32`) {#SENS_GPS0_DELAY}
+
+GPS 0 measurement delay.
+
+GPS measurement delay relative to IMU measurements.
+Matched to physical GPS receiver via SENS_GPS0_ID.
+Only applied when the GPS driver does not provide its own
+timestamp_sample correction.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 0        | 300      |           | 110     | ms   |
+
+### SENS_GPS0_ID (`INT32`) {#SENS_GPS0_ID}
+
+GPS 0 device ID.
+
+Device ID of the GPS receiver for antenna offset slot 0.
+Set to 0 to disable this slot. When all slots are 0, offsets are
+matched by uORB instance index (only reliable for serial GPS).
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; |          |          |           | 0       |      |
+
+### SENS_GPS0_OFFX (`FLOAT`) {#SENS_GPS0_OFFX}
+
+GPS 0 antenna X position.
+
+Forward axis relative to vehicle centre of gravity.
+Matched to physical GPS receiver via SENS_GPS0_ID.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; |          |          |           | 0.0     | m    |
+
+### SENS_GPS0_OFFY (`FLOAT`) {#SENS_GPS0_OFFY}
+
+GPS 0 antenna Y position.
+
+Right axis relative to vehicle centre of gravity.
+Matched to physical GPS receiver via SENS_GPS0_ID.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; |          |          |           | 0.0     | m    |
+
+### SENS_GPS0_OFFZ (`FLOAT`) {#SENS_GPS0_OFFZ}
+
+GPS 0 antenna Z position.
+
+Down axis relative to vehicle centre of gravity.
+Matched to physical GPS receiver via SENS_GPS0_ID.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; |          |          |           | 0.0     | m    |
+
+### SENS_GPS1_DELAY (`INT32`) {#SENS_GPS1_DELAY}
+
+GPS 1 measurement delay.
+
+GPS measurement delay relative to IMU measurements.
+Matched to physical GPS receiver via SENS_GPS1_ID.
+Only applied when the GPS driver does not provide its own
+timestamp_sample correction.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 0        | 300      |           | 110     | ms   |
+
+### SENS_GPS1_ID (`INT32`) {#SENS_GPS1_ID}
+
+GPS 1 device ID.
+
+Device ID of the GPS receiver for antenna offset slot 1.
+Set to 0 to disable this slot. When all slots are 0, offsets are
+matched by uORB instance index (only reliable for serial GPS).
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; |          |          |           | 0       |      |
+
+### SENS_GPS1_OFFX (`FLOAT`) {#SENS_GPS1_OFFX}
+
+GPS 1 antenna X position.
+
+Forward axis relative to vehicle centre of gravity.
+Matched to physical GPS receiver via SENS_GPS1_ID.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; |          |          |           | 0.0     | m    |
+
+### SENS_GPS1_OFFY (`FLOAT`) {#SENS_GPS1_OFFY}
+
+GPS 1 antenna Y position.
+
+Right axis relative to vehicle centre of gravity.
+Matched to physical GPS receiver via SENS_GPS1_ID.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; |          |          |           | 0.0     | m    |
+
+### SENS_GPS1_OFFZ (`FLOAT`) {#SENS_GPS1_OFFZ}
+
+GPS 1 antenna Z position.
+
+Down axis relative to vehicle centre of gravity.
+Matched to physical GPS receiver via SENS_GPS1_ID.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; |          |          |           | 0.0     | m    |
+
 ### SENS_GPS_MASK (`INT32`) {#SENS_GPS_MASK}
 
 Multi GPS Blending Control Mask.
 
-Set bits in the following positions to set which GPS accuracy metrics will be used to calculate the blending weight. Set to zero to disable and always used first GPS instance.
-0 : Set to true to use speed accuracy
-1 : Set to true to use horizontal position accuracy
-2 : Set to true to use vertical position accuracy
+Set bits in the following positions to set which GPS accuracy metrics will
+be used to calculate the blending weight. Set to zero to disable and always
+used first GPS instance.
 
 **Bitmask:**
 
@@ -37225,11 +37461,7 @@ The GPS selection logic waits until the primary receiver is available to
 send data to the EKF even if a secondary instance is already available.
 The secondary instance is then only used if the primary one times out.
 
-Accepted values:
--1 : Auto (equal priority for all instances)
-0 : Main serial GPS instance
-1 : Secondary serial GPS instance
-2-127 : UAVCAN module node ID
+To select a DroneCAN GPS, set this to the node ID.
 
 This parameter has no effect if blending is active.
 
@@ -37241,7 +37473,9 @@ This parameter has no effect if blending is active.
 
 Multi GPS Blending Time Constant.
 
-Sets the longest time constant that will be applied to the calculation of GPS position and height offsets used to correct data from multiple GPS data for steady state position differences.
+Sets the longest time constant that will be applied to the calculation of GPS
+position and height offsets used to correct data from multiple GPS data for
+steady state position differences.
 
 | Reboot | minValue | maxValue | increment | default | unit |
 | ------ | -------- | -------- | --------- | ------- | ---- |
