@@ -9994,6 +9994,48 @@ When set to -1 (default), the value depends on the function (see UAVCAN_EC_FUNC1
 | ------ | -------- | -------- | --------- | ------- | ---- |
 | &nbsp; | -1       | 8191     |           | -1      |      |
 
+### UAVCAN_EC_FAIL10 (`INT32`) {#UAVCAN_EC_FAIL10}
+
+<Badge type="warning" text="This parameter is only present on some boards." />
+
+UAVCAN ESC 10 Failsafe Value.
+
+This is the output value that is set when in failsafe mode.
+
+When set to -1 (default), the value depends on the function (see UAVCAN_EC_FUNC10).
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | -1       | 8191     |           | -1      |      |
+
+### UAVCAN_EC_FAIL11 (`INT32`) {#UAVCAN_EC_FAIL11}
+
+<Badge type="warning" text="This parameter is only present on some boards." />
+
+UAVCAN ESC 11 Failsafe Value.
+
+This is the output value that is set when in failsafe mode.
+
+When set to -1 (default), the value depends on the function (see UAVCAN_EC_FUNC11).
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | -1       | 8191     |           | -1      |      |
+
+### UAVCAN_EC_FAIL12 (`INT32`) {#UAVCAN_EC_FAIL12}
+
+<Badge type="warning" text="This parameter is only present on some boards." />
+
+UAVCAN ESC 12 Failsafe Value.
+
+This is the output value that is set when in failsafe mode.
+
+When set to -1 (default), the value depends on the function (see UAVCAN_EC_FUNC12).
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | -1       | 8191     |           | -1      |      |
+
 ### UAVCAN_EC_FAIL2 (`INT32`) {#UAVCAN_EC_FAIL2}
 
 <Badge type="warning" text="This parameter is only present on some boards." />
@@ -10092,6 +10134,20 @@ When set to -1 (default), the value depends on the function (see UAVCAN_EC_FUNC8
 | ------ | -------- | -------- | --------- | ------- | ---- |
 | &nbsp; | -1       | 8191     |           | -1      |      |
 
+### UAVCAN_EC_FAIL9 (`INT32`) {#UAVCAN_EC_FAIL9}
+
+<Badge type="warning" text="This parameter is only present on some boards." />
+
+UAVCAN ESC 9 Failsafe Value.
+
+This is the output value that is set when in failsafe mode.
+
+When set to -1 (default), the value depends on the function (see UAVCAN_EC_FUNC9).
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | -1       | 8191     |           | -1      |      |
+
 ### UAVCAN_EC_FUNC1 (`INT32`) {#UAVCAN_EC_FUNC1}
 
 <Badge type="warning" text="This parameter is only present on some boards." />
@@ -10099,6 +10155,228 @@ When set to -1 (default), the value depends on the function (see UAVCAN_EC_FUNC8
 UAVCAN ESC 1 Output Function.
 
 Select what should be output on UAVCAN ESC 1.
+
+The default failsafe value is set according to the selected function:
+
+- 'Min' for ConstantMin
+- 'Max' for ConstantMax
+- 'Max' for Parachute
+- ('Max'+'Min')/2 for Servos
+- 'Disarmed' for the rest
+
+**Values:**
+
+- `0`: Disabled
+- `1`: Constant Min
+- `2`: Constant Max
+- `101`: Motor 1
+- `102`: Motor 2
+- `103`: Motor 3
+- `104`: Motor 4
+- `105`: Motor 5
+- `106`: Motor 6
+- `107`: Motor 7
+- `108`: Motor 8
+- `109`: Motor 9
+- `110`: Motor 10
+- `111`: Motor 11
+- `112`: Motor 12
+- `201`: Servo 1
+- `202`: Servo 2
+- `203`: Servo 3
+- `204`: Servo 4
+- `205`: Servo 5
+- `206`: Servo 6
+- `207`: Servo 7
+- `208`: Servo 8
+- `301`: Peripheral via Actuator Set 1
+- `302`: Peripheral via Actuator Set 2
+- `303`: Peripheral via Actuator Set 3
+- `304`: Peripheral via Actuator Set 4
+- `305`: Peripheral via Actuator Set 5
+- `306`: Peripheral via Actuator Set 6
+- `400`: Landing Gear
+- `401`: Parachute
+- `402`: RC Roll
+- `403`: RC Pitch
+- `404`: RC Throttle
+- `405`: RC Yaw
+- `406`: RC Flaps
+- `407`: RC AUX 1
+- `408`: RC AUX 2
+- `409`: RC AUX 3
+- `410`: RC AUX 4
+- `411`: RC AUX 5
+- `412`: RC AUX 6
+- `420`: Gimbal Roll
+- `421`: Gimbal Pitch
+- `422`: Gimbal Yaw
+- `430`: Gripper
+- `440`: Landing Gear Wheel
+- `450`: IC Engine Ignition
+- `451`: IC Engine Throttle
+- `452`: IC Engine Choke
+- `453`: IC Engine Starter
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; |          |          |           | 0       |      |
+
+### UAVCAN_EC_FUNC10 (`INT32`) {#UAVCAN_EC_FUNC10}
+
+<Badge type="warning" text="This parameter is only present on some boards." />
+
+UAVCAN ESC 10 Output Function.
+
+Select what should be output on UAVCAN ESC 10.
+
+The default failsafe value is set according to the selected function:
+
+- 'Min' for ConstantMin
+- 'Max' for ConstantMax
+- 'Max' for Parachute
+- ('Max'+'Min')/2 for Servos
+- 'Disarmed' for the rest
+
+**Values:**
+
+- `0`: Disabled
+- `1`: Constant Min
+- `2`: Constant Max
+- `101`: Motor 1
+- `102`: Motor 2
+- `103`: Motor 3
+- `104`: Motor 4
+- `105`: Motor 5
+- `106`: Motor 6
+- `107`: Motor 7
+- `108`: Motor 8
+- `109`: Motor 9
+- `110`: Motor 10
+- `111`: Motor 11
+- `112`: Motor 12
+- `201`: Servo 1
+- `202`: Servo 2
+- `203`: Servo 3
+- `204`: Servo 4
+- `205`: Servo 5
+- `206`: Servo 6
+- `207`: Servo 7
+- `208`: Servo 8
+- `301`: Peripheral via Actuator Set 1
+- `302`: Peripheral via Actuator Set 2
+- `303`: Peripheral via Actuator Set 3
+- `304`: Peripheral via Actuator Set 4
+- `305`: Peripheral via Actuator Set 5
+- `306`: Peripheral via Actuator Set 6
+- `400`: Landing Gear
+- `401`: Parachute
+- `402`: RC Roll
+- `403`: RC Pitch
+- `404`: RC Throttle
+- `405`: RC Yaw
+- `406`: RC Flaps
+- `407`: RC AUX 1
+- `408`: RC AUX 2
+- `409`: RC AUX 3
+- `410`: RC AUX 4
+- `411`: RC AUX 5
+- `412`: RC AUX 6
+- `420`: Gimbal Roll
+- `421`: Gimbal Pitch
+- `422`: Gimbal Yaw
+- `430`: Gripper
+- `440`: Landing Gear Wheel
+- `450`: IC Engine Ignition
+- `451`: IC Engine Throttle
+- `452`: IC Engine Choke
+- `453`: IC Engine Starter
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; |          |          |           | 0       |      |
+
+### UAVCAN_EC_FUNC11 (`INT32`) {#UAVCAN_EC_FUNC11}
+
+<Badge type="warning" text="This parameter is only present on some boards." />
+
+UAVCAN ESC 11 Output Function.
+
+Select what should be output on UAVCAN ESC 11.
+
+The default failsafe value is set according to the selected function:
+
+- 'Min' for ConstantMin
+- 'Max' for ConstantMax
+- 'Max' for Parachute
+- ('Max'+'Min')/2 for Servos
+- 'Disarmed' for the rest
+
+**Values:**
+
+- `0`: Disabled
+- `1`: Constant Min
+- `2`: Constant Max
+- `101`: Motor 1
+- `102`: Motor 2
+- `103`: Motor 3
+- `104`: Motor 4
+- `105`: Motor 5
+- `106`: Motor 6
+- `107`: Motor 7
+- `108`: Motor 8
+- `109`: Motor 9
+- `110`: Motor 10
+- `111`: Motor 11
+- `112`: Motor 12
+- `201`: Servo 1
+- `202`: Servo 2
+- `203`: Servo 3
+- `204`: Servo 4
+- `205`: Servo 5
+- `206`: Servo 6
+- `207`: Servo 7
+- `208`: Servo 8
+- `301`: Peripheral via Actuator Set 1
+- `302`: Peripheral via Actuator Set 2
+- `303`: Peripheral via Actuator Set 3
+- `304`: Peripheral via Actuator Set 4
+- `305`: Peripheral via Actuator Set 5
+- `306`: Peripheral via Actuator Set 6
+- `400`: Landing Gear
+- `401`: Parachute
+- `402`: RC Roll
+- `403`: RC Pitch
+- `404`: RC Throttle
+- `405`: RC Yaw
+- `406`: RC Flaps
+- `407`: RC AUX 1
+- `408`: RC AUX 2
+- `409`: RC AUX 3
+- `410`: RC AUX 4
+- `411`: RC AUX 5
+- `412`: RC AUX 6
+- `420`: Gimbal Roll
+- `421`: Gimbal Pitch
+- `422`: Gimbal Yaw
+- `430`: Gripper
+- `440`: Landing Gear Wheel
+- `450`: IC Engine Ignition
+- `451`: IC Engine Throttle
+- `452`: IC Engine Choke
+- `453`: IC Engine Starter
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; |          |          |           | 0       |      |
+
+### UAVCAN_EC_FUNC12 (`INT32`) {#UAVCAN_EC_FUNC12}
+
+<Badge type="warning" text="This parameter is only present on some boards." />
+
+UAVCAN ESC 12 Output Function.
+
+Select what should be output on UAVCAN ESC 12.
 
 The default failsafe value is set according to the selected function:
 
@@ -10684,11 +10962,121 @@ The default failsafe value is set according to the selected function:
 | ------ | -------- | -------- | --------- | ------- | ---- |
 | &nbsp; |          |          |           | 0       |      |
 
+### UAVCAN_EC_FUNC9 (`INT32`) {#UAVCAN_EC_FUNC9}
+
+<Badge type="warning" text="This parameter is only present on some boards." />
+
+UAVCAN ESC 9 Output Function.
+
+Select what should be output on UAVCAN ESC 9.
+
+The default failsafe value is set according to the selected function:
+
+- 'Min' for ConstantMin
+- 'Max' for ConstantMax
+- 'Max' for Parachute
+- ('Max'+'Min')/2 for Servos
+- 'Disarmed' for the rest
+
+**Values:**
+
+- `0`: Disabled
+- `1`: Constant Min
+- `2`: Constant Max
+- `101`: Motor 1
+- `102`: Motor 2
+- `103`: Motor 3
+- `104`: Motor 4
+- `105`: Motor 5
+- `106`: Motor 6
+- `107`: Motor 7
+- `108`: Motor 8
+- `109`: Motor 9
+- `110`: Motor 10
+- `111`: Motor 11
+- `112`: Motor 12
+- `201`: Servo 1
+- `202`: Servo 2
+- `203`: Servo 3
+- `204`: Servo 4
+- `205`: Servo 5
+- `206`: Servo 6
+- `207`: Servo 7
+- `208`: Servo 8
+- `301`: Peripheral via Actuator Set 1
+- `302`: Peripheral via Actuator Set 2
+- `303`: Peripheral via Actuator Set 3
+- `304`: Peripheral via Actuator Set 4
+- `305`: Peripheral via Actuator Set 5
+- `306`: Peripheral via Actuator Set 6
+- `400`: Landing Gear
+- `401`: Parachute
+- `402`: RC Roll
+- `403`: RC Pitch
+- `404`: RC Throttle
+- `405`: RC Yaw
+- `406`: RC Flaps
+- `407`: RC AUX 1
+- `408`: RC AUX 2
+- `409`: RC AUX 3
+- `410`: RC AUX 4
+- `411`: RC AUX 5
+- `412`: RC AUX 6
+- `420`: Gimbal Roll
+- `421`: Gimbal Pitch
+- `422`: Gimbal Yaw
+- `430`: Gripper
+- `440`: Landing Gear Wheel
+- `450`: IC Engine Ignition
+- `451`: IC Engine Throttle
+- `452`: IC Engine Choke
+- `453`: IC Engine Starter
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; |          |          |           | 0       |      |
+
 ### UAVCAN_EC_MAX1 (`INT32`) {#UAVCAN_EC_MAX1}
 
 <Badge type="warning" text="This parameter is only present on some boards." />
 
 UAVCAN ESC 1 Maximum Value.
+
+Maxmimum output value (when not disarmed).
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 0        | 8191     |           | 8191    |      |
+
+### UAVCAN_EC_MAX10 (`INT32`) {#UAVCAN_EC_MAX10}
+
+<Badge type="warning" text="This parameter is only present on some boards." />
+
+UAVCAN ESC 10 Maximum Value.
+
+Maxmimum output value (when not disarmed).
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 0        | 8191     |           | 8191    |      |
+
+### UAVCAN_EC_MAX11 (`INT32`) {#UAVCAN_EC_MAX11}
+
+<Badge type="warning" text="This parameter is only present on some boards." />
+
+UAVCAN ESC 11 Maximum Value.
+
+Maxmimum output value (when not disarmed).
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 0        | 8191     |           | 8191    |      |
+
+### UAVCAN_EC_MAX12 (`INT32`) {#UAVCAN_EC_MAX12}
+
+<Badge type="warning" text="This parameter is only present on some boards." />
+
+UAVCAN ESC 12 Maximum Value.
 
 Maxmimum output value (when not disarmed).
 
@@ -10780,11 +11168,59 @@ Maxmimum output value (when not disarmed).
 | ------ | -------- | -------- | --------- | ------- | ---- |
 | &nbsp; | 0        | 8191     |           | 8191    |      |
 
+### UAVCAN_EC_MAX9 (`INT32`) {#UAVCAN_EC_MAX9}
+
+<Badge type="warning" text="This parameter is only present on some boards." />
+
+UAVCAN ESC 9 Maximum Value.
+
+Maxmimum output value (when not disarmed).
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 0        | 8191     |           | 8191    |      |
+
 ### UAVCAN_EC_MIN1 (`INT32`) {#UAVCAN_EC_MIN1}
 
 <Badge type="warning" text="This parameter is only present on some boards." />
 
 UAVCAN ESC 1 Minimum Value.
+
+Minimum output value (when not disarmed).
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 0        | 8191     |           | 1       |      |
+
+### UAVCAN_EC_MIN10 (`INT32`) {#UAVCAN_EC_MIN10}
+
+<Badge type="warning" text="This parameter is only present on some boards." />
+
+UAVCAN ESC 10 Minimum Value.
+
+Minimum output value (when not disarmed).
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 0        | 8191     |           | 1       |      |
+
+### UAVCAN_EC_MIN11 (`INT32`) {#UAVCAN_EC_MIN11}
+
+<Badge type="warning" text="This parameter is only present on some boards." />
+
+UAVCAN ESC 11 Minimum Value.
+
+Minimum output value (when not disarmed).
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 0        | 8191     |           | 1       |      |
+
+### UAVCAN_EC_MIN12 (`INT32`) {#UAVCAN_EC_MIN12}
+
+<Badge type="warning" text="This parameter is only present on some boards." />
+
+UAVCAN ESC 12 Minimum Value.
 
 Minimum output value (when not disarmed).
 
@@ -10876,6 +11312,18 @@ Minimum output value (when not disarmed).
 | ------ | -------- | -------- | --------- | ------- | ---- |
 | &nbsp; | 0        | 8191     |           | 1       |      |
 
+### UAVCAN_EC_MIN9 (`INT32`) {#UAVCAN_EC_MIN9}
+
+<Badge type="warning" text="This parameter is only present on some boards." />
+
+UAVCAN ESC 9 Minimum Value.
+
+Minimum output value (when not disarmed).
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 0        | 8191     |           | 1       |      |
+
 ### UAVCAN_EC_REV (`INT32`) {#UAVCAN_EC_REV}
 
 <Badge type="warning" text="This parameter is only present on some boards." />
@@ -10895,10 +11343,14 @@ Note: this is only useful for servos.
 - `5`: UAVCAN ESC 6
 - `6`: UAVCAN ESC 7
 - `7`: UAVCAN ESC 8
+- `8`: UAVCAN ESC 9
+- `9`: UAVCAN ESC 10
+- `10`: UAVCAN ESC 11
+- `11`: UAVCAN ESC 12
 
 | Reboot | minValue | maxValue | increment | default | unit |
 | ------ | -------- | -------- | --------- | ------- | ---- |
-| &nbsp; | 0        | 255      |           | 0       |      |
+| &nbsp; | 0        | 4095     |           | 0       |      |
 
 ### UAVCAN_SV_DIS1 (`INT32`) {#UAVCAN_SV_DIS1}
 
