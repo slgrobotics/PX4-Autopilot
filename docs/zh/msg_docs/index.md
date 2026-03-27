@@ -85,6 +85,8 @@ Graphs showing how these are used [can be found here](../middleware/uorb_graph.m
 - [DistanceSensorModeChangeRequest](DistanceSensorModeChangeRequest.md)
 - [DronecanNodeStatus](DronecanNodeStatus.md)
 - [Ekf2Timestamps](Ekf2Timestamps.md) — this message contains the (relative) timestamps of the sensor inputs used by EKF2. It can be used for reproducible replay.
+- [EscEepromRead](EscEepromRead.md)
+- [EscEepromWrite](EscEepromWrite.md)
 - [EscReport](EscReport.md)
 - [EscStatus](EscStatus.md)
 - [EstimatorAidSource1d](EstimatorAidSource1d.md)
