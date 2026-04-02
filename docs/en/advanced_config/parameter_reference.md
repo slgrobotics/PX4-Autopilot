@@ -21790,6 +21790,32 @@ EKF2 selector maximum accumulated velocity threshold for comparing accelerometer
 | ------ | -------- | -------- | --------- | ------- | ---- |
 | &nbsp; |          |          |           | 2.0     | m/s  |
 
+### EKF2_SENS_EN (`INT32`) {#EKF2_SENS_EN}
+
+Sensor fusion enable bitmask.
+
+Bitmask to control which sensor fusion sources are enabled. Sources whose bit is cleared will be disabled. Only applied while disarmed. For in-flight changes use the MAVLink command VEHICLE_CMD_ESTIMATOR_SENSOR_ENABLE or the individual CTRL params (e.g. EKF2_GPS_CTRL, EKF2_BARO_CTRL).
+
+**Bitmask:**
+
+- `0`: GNSS 0
+- `1`: GNSS 1
+- `2`: Optical flow
+- `3`: External vision
+- `4`: Aux global position 0
+- `5`: Aux global position 1
+- `6`: Aux global position 2
+- `7`: Aux global position 3
+- `8`: Barometer
+- `9`: Range finder
+- `10`: Magnetometer
+- `11`: Airspeed
+- `12`: Ranging beacon
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 0        | 8191     |           | 8191    |      |
+
 ### EKF2_SYNT_MAG_Z (`INT32`) {#EKF2_SYNT_MAG_Z}
 
 Enable synthetic magnetometer Z component measurement.
@@ -23104,6 +23130,26 @@ This increment is added to TRIM_YAW when airspeed is FW_AIRSPD_MIN.
 | ------ | -------- | -------- | --------- | ------- | ---- |
 | &nbsp; | -0.5     | 0.5      | 0.01      | 0.0     |      |
 
+### FW_FLAPS_MAN (`INT32`) {#FW_FLAPS_MAN}
+
+Flap input in manual flight.
+
+Chose source for manual setting of flaps in manual flight modes.
+
+**Values:**
+
+- `0`: Disabled
+- `1`: Aux1
+- `2`: Aux2
+- `3`: Aux3
+- `4`: Aux4
+- `5`: Aux5
+- `6`: Flaps channel
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; |          |          |           | 0       |      |
+
 ### FW_GC_EN (`INT32`) {#FW_GC_EN}
 
 Enable rate gain compression.
@@ -23264,6 +23310,10 @@ Chose source for manual setting of spoilers in manual flight modes.
 - `0`: Disabled
 - `1`: Flaps channel
 - `2`: Aux1
+- `3`: Aux2
+- `4`: Aux3
+- `5`: Aux4
+- `6`: Aux5
 
 | Reboot | minValue | maxValue | increment | default | unit |
 | ------ | -------- | -------- | --------- | ------- | ---- |
