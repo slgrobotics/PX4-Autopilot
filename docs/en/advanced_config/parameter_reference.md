@@ -17716,9 +17716,9 @@ Negative values are ignored and will cause the measured current to be used.
 The default value of 0 disables the overwrite, in which case the measured value
 is always used.
 
-| Reboot  | minValue | maxValue | increment | default | unit |
-| ------- | -------- | -------- | --------- | ------- | ---- |
-| &check; |          |          |           | 0       |      |
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; |          |          |           | 0       |      |
 
 ### BAT1_N_CELLS (`INT32`) {#BAT1_N_CELLS}
 
@@ -17894,9 +17894,9 @@ Negative values are ignored and will cause the measured current to be used.
 The default value of 0 disables the overwrite, in which case the measured value
 is always used.
 
-| Reboot  | minValue | maxValue | increment | default | unit |
-| ------- | -------- | -------- | --------- | ------- | ---- |
-| &check; |          |          |           | 0       |      |
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; |          |          |           | 0       |      |
 
 ### BAT2_N_CELLS (`INT32`) {#BAT2_N_CELLS}
 
@@ -18035,6 +18035,22 @@ Defines the capacity of battery 3 in mAh.
 | Reboot  | minValue | maxValue | increment | default | unit |
 | ------- | -------- | -------- | --------- | ------- | ---- |
 | &check; | -1.0     | 100000   | 50        | -1.0    | mAh  |
+
+### BAT3_I_OVERWRITE (`FLOAT`) {#BAT3_I_OVERWRITE}
+
+Battery 3 idle current overwrite.
+
+This parameter allows to overwrite the current measured during
+idle (unarmed) state with a user-defined constant value (expressed in amperes).
+When the system is armed, the measured current is used. This is useful
+because on certain ESCs current measurements are inaccurate in case of no load.
+Negative values are ignored and will cause the measured current to be used.
+The default value of 0 disables the overwrite, in which case the measured value
+is always used.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; |          |          |           | 0       |      |
 
 ### BAT3_N_CELLS (`INT32`) {#BAT3_N_CELLS}
 
