@@ -1,6 +1,6 @@
 - [Introduction](index.md)
   - [Basic Concepts](getting_started/px4_basic_concepts.md)
-
+- [Try PX4 (Simulation)](simulation/px4_simulation_quickstart.md)
 - [Multicopters](frames_multicopter/index.md)
   - [Features](features_mc/index.md)
     - [Flight Modes](flight_modes_mc/index.md)
@@ -323,6 +323,7 @@
         - [RFD900 (SiK) Telemetry Radio](telemetry/rfd900_telemetry.md)
         - [ThunderFly TFSIK01 Telemetry Radio](telemetry/tfsik_telemetry.md)
         - [HolyBro (SIK) Telemetry Radio](telemetry/holybro_sik_radio.md)
+        - [HolyBro SiK Long Range Telemetry Radio](telemetry/holybro_sik_longrange.md)
       - [Telemetry Wifi](telemetry/telemetry_wifi.md)
         - [ESP8266 WiFi Module](telemetry/esp8266_wifi_module.md)
         - [ESP32 WiFi Module](telemetry/esp32_wifi_module.md)
@@ -473,6 +474,7 @@
       - [Worlds](sim_gazebo_classic/worlds.md)
       - [Multi-Vehicle Sim](sim_gazebo_classic/multi_vehicle_simulation.md)
     - [Simulate Failsafes](simulation/failsafes.md)
+    - [Pre-built Packages](simulation/px4_sitl_prebuilt_packages.md)
   - [Hardware](hardware/index.md)
     - [Flight Controller Reference Design](hardware/reference_design.md)
     - [Manufacturer’s Board Support Guide](hardware/board_support_guide.md)
