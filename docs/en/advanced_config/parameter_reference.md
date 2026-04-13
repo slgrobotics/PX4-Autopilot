@@ -33744,23 +33744,13 @@ If set to 1, add an ID to the log, which uniquely identifies the vehicle
 
 ### SIM_BAT_DRAIN (`FLOAT`) {#SIM_BAT_DRAIN}
 
-Simulator Battery drain interval.
+Simulated battery full-discharge time.
+
+Time in seconds for the simulated battery to drain from 100% to 0% while armed. Set to 0 to disable the battery simulator entirely (useful when battery state is provided externally, e.g. via MAVLink).
 
 | Reboot | minValue | maxValue | increment | default | unit |
 | ------ | -------- | -------- | --------- | ------- | ---- |
-| &nbsp; | 1        | 86400    | 1         | 60      | s    |
-
-### SIM_BAT_ENABLE (`INT32`) {#SIM_BAT_ENABLE}
-
-Simulator Battery enabled.
-
-Enable or disable the internal battery simulation. This is useful
-when the battery is simulated externally and interfaced with PX4
-through MAVLink for example.
-
-| Reboot | minValue | maxValue | increment | default     | unit |
-| ------ | -------- | -------- | --------- | ----------- | ---- |
-| &nbsp; |          |          |           | Enabled (1) |      |
+| &nbsp; | 0        |          | 1         | 60      | s    |
 
 ### SIM_BAT_MIN_PCT (`FLOAT`) {#SIM_BAT_MIN_PCT}
 
