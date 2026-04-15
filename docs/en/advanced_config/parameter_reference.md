@@ -23394,6 +23394,26 @@ Yaw rate proportional gain.
 
 ## Failure Detector
 
+### FD_ALT_LOSS (`FLOAT`) {#FD_ALT_LOSS}
+
+Altitude loss threshold for termination and parachute deployment.
+
+Maximum altitude loss below the setpoint allowed before the vehicle terminates and deploys the parachute. Set to 0 to disable.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 0.0      | 200.0    | 0.5       | 0.0     | m    |
+
+### FD_ALT_LOSS_T (`FLOAT`) {#FD_ALT_LOSS_T}
+
+Altitude loss failure trigger time.
+
+Seconds that the altitude loss threshold must be exceeded before the failure is declared.
+
+| Reboot | minValue | maxValue | increment | default | unit |
+| ------ | -------- | -------- | --------- | ------- | ---- |
+| &nbsp; | 0.02     | 5.0      |           | 1.0     | s    |
+
 ### FD_EXT_ATS_EN (`INT32`) {#FD_EXT_ATS_EN}
 
 Enable PWM input from external ATS for failsafe.
@@ -28479,20 +28499,6 @@ control is reset.
 | ------ | -------- | -------- | --------- | ------- | ---- |
 | &nbsp; | 1        | 250      |           | 5       | s    |
 
-### MAV_SIGN_CFG (`INT32`) {#MAV_SIGN_CFG}
-
-MAVLink protocol signing.
-
-**Values:**
-
-- `0`: Message signing disabled
-- `1`: Signing enabled except on USB
-- `2`: Signing always enabled
-
-| Reboot | minValue | maxValue | increment | default | unit |
-| ------ | -------- | -------- | --------- | ------- | ---- |
-| &nbsp; |          |          |           | 0       |      |
-
 ### MAV_SIK_RADIO_ID (`INT32`) {#MAV_SIK_RADIO_ID}
 
 MAVLink SiK Radio ID.
@@ -33054,9 +33060,9 @@ Return mode destination and flight path (home location, rally point, mission lan
 
 - `0`: Return to closest safe point (home or rally point) via direct path.
 - `1`: Return to closest safe point other than home (mission landing pattern or rally point), via direct path. If no mission landing or rally points are defined return home via direct path. Always choose closest safe landing point if vehicle is a VTOL in hover mode.
-- `2`: Return to a planned mission landing, if available, using the mission path, else return to home via the reverse mission path. Do not consider rally points.
+- `2`: Return to a planned mission landing, if available, using the mission path while skipping DO_JUMP and other non-position mission items, else return to home via the reverse mission path with the same traversal rules. Do not consider rally points.
 - `3`: Return via direct path to closest destination: home, start of mission landing pattern or safe point. If the destination is a mission landing pattern, follow the pattern to land.
-- `4`: Return to the planned mission landing, or to home via the reverse mission path, whichever is closer by counting waypoints. Do not consider rally points.
+- `4`: Return to the planned mission landing, or to home via the reverse mission path, whichever is estimated to be closer using mission item indices. Skip DO_JUMP and other non-position mission items while following either mission path. Do not consider rally points.
 - `5`: Return directly to safe landing point (do not consider mission landing and Home)
 
 | Reboot | minValue | maxValue | increment | default | unit |

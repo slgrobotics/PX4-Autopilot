@@ -18,15 +18,6 @@ parameters:
       min: 1
       max: 250
       reboot_required: true
-    MAV_SIGN_CFG:
-      description:
-        short: MAVLink protocol signing
-      type: enum
-      values:
-        0: Message signing disabled
-        1: Signing enabled except on USB
-        2: Signing always enabled
-      default: 0
     MAV_PROTO_VER:
       description:
         short: MAVLink protocol version
