@@ -261,6 +261,7 @@ MS5611::collect()
 	const hrt_abstime now = hrt_absolute_time();
 	static constexpr hrt_abstime correction = MS5611_CONVERSION_INTERVAL - MS5611_OSR1024_CONVERSION_TIME / 2;
 	const hrt_abstime timestamp_sample = (now > correction) ? (now - correction) : now;
+#ifdef REALDEV
 	int ret = _interface->read(0, (void *)&raw, 0);
 
 	if (ret < 0) {
