@@ -18662,17 +18662,18 @@ The default allows to arm the vehicle without a valid mission.
 
 ### COM_ARM_ODID (`INT32`) {#COM_ARM_ODID}
 
-Enable Drone ID system detection and health check.
+Open Drone ID system check and in-flight failsafe.
 
-This check detects if the Open Drone ID system is missing.
-Depending on the value of the parameter, the check can be
-disabled, warn only or deny arming.
+Actions other than warning also prevent arming.
 
 **Values:**
 
 - `0`: Disabled
 - `1`: Warning only
-- `2`: Enforce Open Drone ID system presence
+- `2`: Error only
+- `3`: Return
+- `4`: Land
+- `5`: Terminate
 
 | Reboot | minValue | maxValue | increment | default | unit |
 | ------ | -------- | -------- | --------- | ------- | ---- |
