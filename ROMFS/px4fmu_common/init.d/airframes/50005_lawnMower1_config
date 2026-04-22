@@ -74,9 +74,6 @@ param set-default SENS_MAG_MODE 0
 param set-default EKF2_MULTI_IMU 2
 param set-default EKF2_MULTI_MAG 2
 
-# wait for 5 seconds to declare GPS healthy:
-param set-default EKF2_REQ_GPS_H 5.0
-
 # Rovers don't have airspeed sensors:
 #param set-default SYS_HAS_NUM_ASPD 0
 
@@ -203,22 +200,41 @@ param set-default EKF2_HGT_REF 1
 param set-default EKF2_GPS_CTRL 15
 param set-default EKF2_REQ_FIX 5
 
-# For dual RTK GPS heading:
-#    - 0 when Moving Base antenna is behind the main Rover GPS antenna,
-#    - 180 when Moving Base antenna is in front of the Rover GPS antenna:
-param set-default GPS_YAW_OFFSET 0
+# ======================== GPS Hardware ====================================
+# see src/drivers/gps/params.yaml
+#     docs/en/advanced_config/parameter_reference.md
+#     https://docs.px4.io/main/en/advanced_config/parameter_reference#gps
+#
+# GPS_DUMP_COMM:     Log GPS communication data (default 0)
+# GPS_UBX_DYNMODEL:  u-blox GPS dynamic platform model (4 - Automotive)
+# GPS_UBX_DGNSS_TO:  u-blox GPS DGNSS timeout (default 0 - use u-blox default timeout)
+# GPS_UBX_MIN_CNO:   u-blox GPS minimum satellite signal level for navigation. Default 0 (use u-blox default)
+# GPS_UBX_MIN_ELEV:  u-blox GPS minimum satellite elevation angle. Default 0 (use u-blox default)
+# GPS_UBX_RATE:      output rate of u-blox GPS receivers (protocol v27+) F9P can in theory do up to 20Hz, realistically 5-7Hz. Default 0 (5Hz for F9P).
+# GPS_SAT_INFO:      Enable publication of satellite info (ORB_ID(satellite_info)) if possible (default 0, disabled)
+# GPS_UBX_MODE:      1: Heading (Rover with Moving Base UART1 connected to Autopilot, UART2 connected to Moving Base)
+# GPS_UBX_BAUD2:     baudrate for the F9P's UART2 port (RTCM corrections)
+# GPS_UBX_CFG_INTF:  I2C u-blox protocol configuration (default 0)
+# GPS_UBX_PPK:       Post-processed Kinematics (PPK) - default: 0
+# GPS_UBX_JAM_DET:   default: 1
+# GPS_CFG_WIPE:      Wipes the flash config of UBX modules (default 0)
+# GPS_YAW_OFFSET:    Heading/Yaw offset for dual antenna GPS.
+# GPS_1_PROTOCOL:    1=UBX  6-=NMEA  0=auto-detect
+# GPS_2_PROTOCOL:
+# GPS_1_GNSS:        bitmask for GNSS constellations
+# GPS_2_GNSS:
 
-# For dual RTK GPS set position, heading and velocity noise low:
-param set-default EKF2_GPS_P_NOISE 0.05
-param set-default EKF2_GPS_V_NOISE 0.1
-#param set-default EKF2_HEAD_NOISE 0.01 - this goes to mag fusing, not GPS
+# set GPS protocol to UBX (1, default) NMEA (6) or auto-detect (0):
+param set-default GPS_1_PROTOCOL 1
+param set-default GPS_2_PROTOCOL 1
+# wipe GPS FLASH config, if any, to ensure it is in a known state:
+param set-default GPS_CFG_WIPE 1
 
-# Adjust other GPS related parameters for better EKF2 operation:
-#param set-default EKF2_GPS_DELAY 110
-#param set-default EKF2_GPS_POS_X 0
-#param set-default EKF2_GPS_POS_Y 0
-param set-default EKF2_GPS_POS_Z 0.5
-#param set-default EKF2_TAU_POS 0.25
+# Automotive model:
+param set-default GPS_UBX_DYNMODEL 4
+
+# if left default=0, will be 5 Hz
+#param set-default GPS_UBX_RATE 8
 
 # Disable all but GNSS constellations (Glonass, Galileo...) for faster rate (not very stable RTK fix):
 #param set-default GPS_1_GNSS 1
@@ -237,12 +253,30 @@ param set-default GPS_2_GNSS 19
 # This also affects UART2 on the Rover GPS, but this is OK.
 param set-default GPS_UBX_MODE 1
 param set-default GPS_UBX_BAUD2 57600
+
+# For dual RTK GPS heading:
+#    - 0 when Moving Base antenna is behind the main Rover GPS antenna,
+#    - 180 when Moving Base antenna is in front of the Rover GPS antenna:
+param set-default GPS_YAW_OFFSET 0
+
+# ======================================================================
+
 # Disable GPS blending, always use Main GPS:
 param set-default SENS_GPS_MASK 0
 param set-default SENS_GPS_PRIME 0
 
-# Automotive model:
-param set-default GPS_UBX_DYNMODEL 4
+# For dual RTK GPS set position, heading and velocity noise low:
+param set-default EKF2_GPS_P_NOISE 0.05
+param set-default EKF2_GPS_V_NOISE 0.1
+#param set-default EKF2_HEAD_NOISE 0.01 - this goes to mag fusing, not GPS
+
+# Adjust other GPS related parameters for better EKF2 operation:
+#param set-default EKF2_GPS_DELAY 110
+#param set-default EKF2_GPS_POS_X 0
+#param set-default EKF2_GPS_POS_Y 0
+param set-default EKF2_GPS_POS_Z 0.5
+#param set-default EKF2_TAU_POS 0.25
+
 # We can drive in manual mode when GPS check fails:
 param set-default COM_ARM_WO_GPS 1
 
@@ -262,6 +296,8 @@ param set-default EKF2_ABL_GYRLIM 1.0
 param set-default EKF2_GSF_TAS 0
 param set-default EKF2_MAG_CHECK 0
 param set-default EKF2_GPS_CHECK 0
+# wait for 5 seconds to declare GPS healthy:
+param set-default EKF2_REQ_GPS_H 5.0
 
 # Disable auto-calibration of Gyro and Accel and related functions:
 param set-default SENS_IMU_AUTOCAL 0
@@ -292,9 +328,15 @@ param set-default CA_AIRFRAME 6
 # mark motors as bi-directional here for each channel (bitmask):
 param set-default CA_R_REV 3
 
-# set PWM output parameters:
+# ===================== set PWM output parameters: =============================
 
+param set-default PCA9685_EN_BUS 1
+param set-default PCA9685_I2C_ADDR 64
+
+# Bitmask to reverse PWM output direction, bit 0 - channel 1, bit 1 - channel 2, etc.:
 #param set-default PCA9685_REV 0
+# how often to send update events via I2C. Default 50Hz, can be increased to 100Hz for better response, but may cause I2C overload:
+#param set-default PCA9685_SCHD_HZ 50
 
 # "Motors" - PCA9685 servo channels 1 (Right) and 2 (Left)
 # Option with CA: mixing INDEX_YAW and INDEX_THROTTLE (vehicle_torque_setpoint and vehicle_thrust_setpoint) to "Motor 1" and "Motor 2":
@@ -349,6 +391,8 @@ param set-default PCA9685_DIS7 1500
 param set-default PCA9685_FUNC8 208
 param set-default PCA9685_DIS8 1500
 
+# ======================================================================
+
 # set R/C -> MAIN mappings:
 
 # RC "mode 2" channels: ailerons: 1  pitch: 2  throttle: 3  rudder: 4
@@ -400,9 +444,6 @@ param set-default CBRK_SUPPLY_CHK 894281
 #
 # see src1/Firmware/build/emlid_navio2_default/platforms/posix/apps.cpp
 #
-
-# if needed, set GPS protocol to UBX (1, default) NMEA (6) or auto-detect (0):
-#param set-default GPS_1_PROTOCOL 6
 
 # start BN-880 (UBLOX M8N) GPS. It was configured for 5Hz using u-center on Windows:
 #gps start -d /dev/ttyUSB0 -b 115200 -p ubx
