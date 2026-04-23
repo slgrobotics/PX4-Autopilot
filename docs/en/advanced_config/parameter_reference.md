@@ -33642,7 +33642,7 @@ When enabled, logging will not start from boot if battery power is not detected 
 
 Maximum number of log directories to keep.
 
-If there are more log directories than this value, the system will delete the oldest directories during startup. In addition, the system will delete old logs if there is not enough free space left. The minimum amount is 300 MB. If this is set to 0, old directories will only be removed if the free space falls below the minimum. Note: this does not apply to mission log files.
+If greater than 0, the oldest log directories are deleted at log start to keep the total directory count at or below this value. This cleanup is orthogonal to the free-space cleanup driven by SDLOG_ROTATE and SDLOG_MAX_SIZE, and is useful for capping log usage by count independent of available disk size (e.g. in SITL). A value of 0 disables this count-based cleanup.
 
 | Reboot  | minValue | maxValue | increment | default | unit |
 | ------- | -------- | -------- | --------- | ------- | ---- |
@@ -33667,6 +33667,16 @@ Selects the key in keystore, used for encrypting the log. When using a symmetric
 | Reboot | minValue | maxValue | increment | default | unit |
 | ------ | -------- | -------- | --------- | ------- | ---- |
 | &nbsp; | 0        | 255      |           | 2       |      |
+
+### SDLOG_MAX_SIZE (`INT32`) {#SDLOG_MAX_SIZE}
+
+Maximum log file size.
+
+Maximum size of a single log file in megabytes. When reached, the log file is closed and a new one is started. This value is also added to the cleanup threshold (see SDLOG_ROTATE) to reserve headroom for the next log file. A value of 0 disables both file rotation and the cleanup reservation. Must stay below the FAT32 file size limit of 4 GiB.
+
+| Reboot  | minValue | maxValue | increment | default | unit |
+| ------- | -------- | -------- | --------- | ------- | ---- |
+| &check; | 0        | 4095     |           | 1024    |      |
 
 ### SDLOG_MISSION (`INT32`) {#SDLOG_MISSION}
 
@@ -33726,6 +33736,16 @@ This integer bitmask controls the set and rates of logged topics. The default al
 | Reboot  | minValue | maxValue | increment | default | unit |
 | ------- | -------- | -------- | --------- | ------- | ---- |
 | &check; | 0        | 4095     |           | 1       |      |
+
+### SDLOG_ROTATE (`INT32`) {#SDLOG_ROTATE}
+
+Maximum disk usage percentage.
+
+Maximum percentage of disk space that logs may occupy during operation, including while writing a new log file. For example, a value of 90 means at least 10% of disk is always kept free, even while writing. A value of 100 lets logs fill the disk completely. A value of 0 disables space-based cleanup entirely. At log start, oldest logs are deleted as needed to maintain this guarantee, accounting for the next file write of up to SDLOG_MAX_SIZE. Cleanup always happens at log start (not boot) so logs can be downloaded via FTP before deletion.
+
+| Reboot  | minValue | maxValue | increment | default | unit |
+| ------- | -------- | -------- | --------- | ------- | ---- |
+| &check; | 0        | 100      |           | 90      |      |
 
 ### SDLOG_UTC_OFFSET (`INT32`) {#SDLOG_UTC_OFFSET}
 
@@ -38983,19 +39003,6 @@ The usb port on the sensor indicates 180deg, opposite usb is forward facing
 | Reboot  | minValue | maxValue | increment | default | unit |
 | ------- | -------- | -------- | --------- | ------- | ---- |
 | &check; |          |          |           | 0       |      |
-
-### SIM_ARSPD_FAIL (`INT32`) {#SIM_ARSPD_FAIL}
-
-Dynamically simulate failure of airspeed sensor instance.
-
-**Values:**
-
-- `0`: Disabled
-- `1`: Enabled
-
-| Reboot  | minValue | maxValue | increment | default | unit |
-| ------- | -------- | -------- | --------- | ------- | ---- |
-| &check; | 0        | 1        |           | 0       |      |
 
 ### VN_MODE (`INT32`) {#VN_MODE}
 
