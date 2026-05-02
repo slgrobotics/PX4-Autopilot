@@ -3235,7 +3235,7 @@ void MavlinkReceiver::handle_message_open_drone_id_system(
 	open_drone_id_system_s odid_system{};
 	memset(&odid_system, 0, sizeof(odid_system));
 
-	odid_system.timestamp = hrt_absolute_time();
+	odid_system.timestamp = odid_module.timestamp;
 	memcpy(odid_system.id_or_mac, odid_module.id_or_mac, sizeof(odid_system.id_or_mac));
 	odid_system.operator_location_type = odid_module.operator_location_type;
 	odid_system.classification_type = odid_module.classification_type;
