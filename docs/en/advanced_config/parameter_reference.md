@@ -28892,21 +28892,11 @@ FD_ACT_LOW_OFF and FD_ACT_HIGH_OFF offset the threshold from that slope.
 | ------ | -------- | -------- | --------- | ------- | ---- | --------- |
 | &nbsp; | 0.0      | 50.0     | 1         | 35.0    | A/%  | &nbsp;    |
 
-### MOTFAIL_HIGH_OFF (`FLOAT`) {#MOTFAIL_HIGH_OFF}
+### MOTFAIL_OFF (`FLOAT`) {#MOTFAIL_OFF}
 
-Overcurrent motor failure limit offset.
+Under/over-current motor failure limit offset.
 
-threshold = FD_ACT_MOT_C2T \* thrust + FD_ACT_HIGH_OFF
-
-| Reboot | minValue | maxValue | increment | default | unit | Read-Only |
-| ------ | -------- | -------- | --------- | ------- | ---- | --------- |
-| &nbsp; | 0        | 30       | 1         | 10.0    | A    | &nbsp;    |
-
-### MOTFAIL_LOW_OFF (`FLOAT`) {#MOTFAIL_LOW_OFF}
-
-Undercurrent motor failure limit offset.
-
-threshold = FD_ACT_MOT_C2T \* thrust - FD_ACT_LOW_OFF
+Check is triggered if `abs(FD_ACT_MOT_C2T * thrust - FD_ACT_OFF)` is above this value.
 
 | Reboot | minValue | maxValue | increment | default | unit | Read-Only |
 | ------ | -------- | -------- | --------- | ------- | ---- | --------- |

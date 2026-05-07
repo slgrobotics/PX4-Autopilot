@@ -250,8 +250,8 @@ uint16_t EscChecks::checkMotorStatus(const Context &context, Report &reporter, c
 				thrust = fabsf(actuator_motors.control[actuator_function_index]);
 			}
 
-			bool current_too_low = current < (thrust * _param_motfail_c2t.get()) - _param_motfail_low_off.get();
-			bool current_too_high = current > (thrust * _param_motfail_c2t.get()) + _param_motfail_high_off.get();
+			bool current_too_low = current < (thrust * _param_motfail_c2t.get()) - _param_motfail_off.get();
+			bool current_too_high = current > (thrust * _param_motfail_c2t.get()) + _param_motfail_off.get();
 
 			_esc_undercurrent_hysteresis[i].set_hysteresis_time_from(false, _param_motfail_time.get() * 1_s);
 			_esc_overcurrent_hysteresis[i].set_hysteresis_time_from(false, _param_motfail_time.get() * 1_s);
