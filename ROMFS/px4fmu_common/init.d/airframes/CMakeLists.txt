@@ -148,6 +148,7 @@ if(CONFIG_MODULES_ROVER_DIFFERENTIAL)
 		50001_aion_robotics_r1_rover
 		50005_lawnMower1_config
 		50005_lawnMower1_config.post
+		50002_hiwonder_tracked
 	)
 endif()
 
@@ -157,6 +158,7 @@ if(CONFIG_MODULES_ROVER_ACKERMANN)
 		51000_generic_rover_ackermann
 		51001_axial_scx10_2_trail_honcho
 		51002_nxp_b3rb
+		51003_hiwonder_ackermann
 	)
 endif()
 
@@ -164,6 +166,7 @@ if(CONFIG_MODULES_ROVER_MECANUM)
 	px4_add_romfs_files(
 		# [52000, 52999] Mecanum rovers
 		52000_generic_rover_mecanum
+		52001_hiwonder_mecanum
 	)
 endif()
 
