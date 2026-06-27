@@ -379,6 +379,7 @@ MS5611::collect()
 		raw = 1013.25f;
 
 		_last_pressure = raw - myrand;		/* in millibar */
+		int32_t P = _last_pressure * 100;	/* convert to Pa */
 #endif // REALDEV
 
 		// publish
