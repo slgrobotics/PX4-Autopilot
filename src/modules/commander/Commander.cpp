@@ -837,6 +837,9 @@ Commander::Commander() :
 
 	updateParameters();
 
+	// Apply the configured boot flight mode before the first run
+	_user_mode_intention.change((uint8_t)_param_com_fltmode_boot.get(), ModeChangeSource::User, false, true);
+
 	_failsafe.setOnNotifyUserCallback(&Commander::onFailsafeNotifyUserTrampoline, this);
 	_auto_disarm_killed.set_hysteresis_time_from(false, 5_s);
 }
@@ -868,14 +871,9 @@ Commander::handle_command(const vehicle_command_s &cmd)
 			// to not require navigator and command to receive / process
 			// the data at the exact same time.
 
-			const uint32_t change_mode_flags = uint32_t(cmd.param2);
-			const bool mode_switch_not_requested = (change_mode_flags & 1) == 0;
-			const bool unsupported_bits_set = (change_mode_flags & ~1) != 0;
+			const bool change_mode_requested = (uint32_t(cmd.param2) & 1) != 0;
 
-			if (mode_switch_not_requested || unsupported_bits_set) {
-				answer_command(cmd, vehicle_command_ack_s::VEHICLE_CMD_RESULT_UNSUPPORTED);
-
-			} else {
+			if (change_mode_requested) {
 				// If already in course mode, stay in course mode (navigator handles any altitude update)
 				// Only switch to loiter if a specific lat/lon target is given, or we are not in course mode.
 				const bool has_position_target = PX4_ISFINITE(cmd.param5) && PX4_ISFINITE(cmd.param6);
@@ -891,13 +889,21 @@ Commander::handle_command(const vehicle_command_s &cmd)
 					printRejectMode(target_state);
 					cmd_result = vehicle_command_ack_s::VEHICLE_CMD_RESULT_TEMPORARILY_REJECTED;
 				}
+
+			} else if (_vehicle_status.nav_state == vehicle_status_s::NAVIGATION_STATE_AUTO_LOITER) {
+				// No mode switch requested: reposition the current hold setpoint in place.
+				cmd_result = vehicle_command_ack_s::VEHICLE_CMD_RESULT_ACCEPTED;
+
+			} else {
+				// Supported, but no mode switch requested and not in hold: nothing to act on.
+				cmd_result = vehicle_command_ack_s::VEHICLE_CMD_RESULT_DENIED;
 			}
 		}
 		break;
 
 	case vehicle_command_s::VEHICLE_CMD_DO_CHANGE_ALTITUDE: {
 			// Accept only in modes where the navigator handles altitude changes in-place.
-			// No mode switching: if the current mode doesn't support it, deny.
+			// No mode switching: if the current mode doesn't support it, temporarily reject.
 			const uint8_t nav_state = _vehicle_status.nav_state;
 
 			if (nav_state == vehicle_status_s::NAVIGATION_STATE_GUIDED_COURSE
@@ -905,7 +911,7 @@ Commander::handle_command(const vehicle_command_s &cmd)
 				cmd_result = vehicle_command_ack_s::VEHICLE_CMD_RESULT_ACCEPTED;
 
 			} else {
-				cmd_result = vehicle_command_ack_s::VEHICLE_CMD_RESULT_DENIED;
+				cmd_result = vehicle_command_ack_s::VEHICLE_CMD_RESULT_TEMPORARILY_REJECTED;
 			}
 		}
 		break;
@@ -3150,13 +3156,6 @@ void Commander::manualControlCheck()
 				}
 			}
 
-		} else {
-			const bool is_mavlink = (manual_control_setpoint.data_source > manual_control_setpoint_s::SOURCE_RC);
-
-			// if there's never been a mode change force position control as initial state
-			if (!_user_mode_intention.everHadModeChange() && (is_mavlink || !_mode_switch_mapped)) {
-				_user_mode_intention.change(vehicle_status_s::NAVIGATION_STATE_POSCTL, ModeChangeSource::User, false, true);
-			}
 		}
 	}
 }

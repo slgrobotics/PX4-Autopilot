@@ -3,7 +3,7 @@
 <img src="../../assets/site/position_fixed.svg" title="Position required (e.g. GPS)" width="30px" />
 
 _Guided Course mode_ maintains a constant ground track (course), altitude, and airspeed without any manual stick input.
-The operator controls the vehicle entirely via [GCS commands](#in-flight-commands), making it the guided equivalent of [Position mode](../flight_modes_fw/position.md).
+The operator controls the vehicle entirely using [GCS commands](#supported-commands), making it the guided equivalent of [Position mode](../flight_modes_fw/position.md).
 
 :::tip
 This mode is suited to situations where an operator wants to guide a fixed-wing vehicle from a GCS without manual control.
@@ -52,7 +52,7 @@ Longitudinal control targets the altitude and airspeed from the setpoint.
 Guided Course is classified as an `AUTO` mode for failsafe purposes.
 The following failsafe exception parameters apply:
 
-| Параметр                                                                                                             | Bit                               | Effect when set                                                   |
+| Parameter                                                                                                            | Bit                               | Effect when set                                                   |
 | -------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ----------------------------------------------------------------- |
 | [COM_RCL_EXCEPT](../advanced_config/parameter_reference.md#COM_RCL_EXCEPT) | 1 (Auto modes) | RC loss does not trigger a failsafe in this mode. |
 | [COM_DLL_EXCEPT](../advanced_config/parameter_reference.md#COM_DLL_EXCEPT) | 1 (Auto modes) | GCS connection loss does not trigger a failsafe.  |
@@ -65,7 +65,7 @@ It is strongly recommended to either leave the datalink failsafe active or ensur
 
 ## Параметри
 
-| Параметр                                                                                                             | Опис                                                                                                                            |
+| Parameter                                                                                                            | Опис                                                                                                                            |
 | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | [FW_AIRSPD_TRIM](../advanced_config/parameter_reference.md#FW_AIRSPD_TRIM) | Default cruise airspeed used on activation and when `MAV_CMD_DO_CHANGE_SPEED` is sent with value ≤ 0.           |
 | [FW_AIRSPD_MIN](../advanced_config/parameter_reference.md#FW_AIRSPD_MIN)   | Minimum airspeed. Commanded airspeed is clamped to this value.                                  |
