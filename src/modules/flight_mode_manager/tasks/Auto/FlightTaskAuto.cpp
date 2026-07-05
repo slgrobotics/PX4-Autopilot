@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2018-2023 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2018-2026 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,6 +40,9 @@
 
 using namespace matrix;
 
+// First meter after lift-off prioritises altitude over horizontal tracking.
+static constexpr float kTakeoffClimbPriorityHeight = 1.0f; // [m]
+
 bool FlightTaskAuto::activate(const trajectory_setpoint_s &last_setpoint)
 {
 	bool ret = FlightTask::activate(last_setpoint);
@@ -74,6 +77,8 @@ bool FlightTaskAuto::activate(const trajectory_setpoint_s &last_setpoint)
 	_updateTrajConstraints();
 	_is_emergency_braking_active = false;
 	_time_last_cruise_speed_override = 0;
+	_takeoff_locked_xy.setNaN();
+	_takeoff_liftoff_z = NAN;
 
 	return ret;
 }
@@ -84,6 +89,8 @@ void FlightTaskAuto::reActivate()
 
 	// On ground, reset acceleration and velocity to zero
 	_position_smoothing.reset({0.f, 0.f, 0.f}, {0.f, 0.f, 0.7f}, _position);
+	_takeoff_locked_xy.setNaN();
+	_takeoff_liftoff_z = NAN;
 }
 
 bool FlightTaskAuto::updateInitialize()
@@ -93,6 +100,7 @@ bool FlightTaskAuto::updateInitialize()
 	_sub_home_position.update();
 	_sub_vehicle_status.update();
 	_position_setpoint_triplet_sub.update();
+	_takeoff_status_sub.update();
 #if defined(CONFIG_MODULES_VISION_TARGET_ESTIMATOR) && CONFIG_MODULES_VISION_TARGET_ESTIMATOR
 	_prec_land_status_sub.update();
 #endif // CONFIG_MODULES_VISION_TARGET_ESTIMATOR
@@ -156,6 +164,18 @@ bool FlightTaskAuto::update()
 		// Simple waypoint navigation: go to xyz target, with standard limitations
 		_position_setpoint = _triplet_current;
 		_velocity_setpoint.setNaN();
+
+		if (_type == WaypointType::takeoff) {
+			if (_takeoff_status_sub.get().takeoff_state < takeoff_status_s::TAKEOFF_STATE_FLIGHT) {
+				_takeoff_locked_xy = Vector2f(_position);
+			}
+
+			if (_takeoff_locked_xy.isAllFinite()) {
+				_position_setpoint(0) = _takeoff_locked_xy(0);
+				_position_setpoint(1) = _takeoff_locked_xy(1);
+			}
+		}
+
 		break;
 	}
 
@@ -171,6 +191,19 @@ bool FlightTaskAuto::update()
 					       && !_yaw_sp_aligned;
 	const bool force_zero_velocity_setpoint = should_wait_for_yaw_align || _is_emergency_braking_active;
 	_updateTrajConstraints();
+
+	if (_type == WaypointType::takeoff) {
+		if (_takeoff_status_sub.get().takeoff_state < takeoff_status_s::TAKEOFF_STATE_FLIGHT) {
+			_takeoff_liftoff_z = _position(2);
+			_position_smoothing.forceSetPosition({_position(0), _position(1), NAN});
+		}
+
+		if (!PX4_ISFINITE(_takeoff_liftoff_z)
+		    || (_takeoff_liftoff_z - _position(2)) < kTakeoffClimbPriorityHeight) {
+			_position_smoothing.forceSetVelocity({_velocity(0), _velocity(1), NAN});
+		}
+	}
+
 	PositionSmoothing::PositionSmoothingSetpoints smoothed_setpoints;
 	_position_smoothing.generateSetpoints(
 		_position,
@@ -710,6 +743,7 @@ void FlightTaskAuto::_updateTrajConstraints()
 {
 	// update params of the position smoothing
 	_position_smoothing.setMaxAllowedHorizontalError(_param_mpc_xy_err_max.get());
+	_position_smoothing.setMaxAllowedVerticalError(_param_mpc_z_err_max.get());
 	_position_smoothing.setVerticalAcceptanceRadius(_param_nav_mc_alt_rad.get());
 	_position_smoothing.setCruiseSpeed(_mc_cruise_speed);
 	_position_smoothing.setHorizontalTrajectoryGain(_param_mpc_xy_traj_p.get());

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2018-2023 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2018-2026 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -48,6 +48,7 @@
 #include <uORB/topics/prec_land_status.h>
 #endif // CONFIG_MODULES_VISION_TARGET_ESTIMATOR
 #include <uORB/topics/vehicle_status.h>
+#include <uORB/topics/takeoff_status.h>
 #include <lib/geo/geo.h>
 #include <lib/mathlib/math/filter/AlphaFilter.hpp>
 #include <lib/motion_planning/HeadingSmoothing.hpp>
@@ -128,6 +129,7 @@ protected:
 #endif // CONFIG_MODULES_VISION_TARGET_ESTIMATOR
 	uORB::SubscriptionData<home_position_s>			_sub_home_position {ORB_ID(home_position)};
 	uORB::SubscriptionData<vehicle_status_s>		_sub_vehicle_status{ORB_ID(vehicle_status)};
+	uORB::SubscriptionData<takeoff_status_s>		_takeoff_status_sub{ORB_ID(takeoff_status)};
 
 	float _target_acceptance_radius{0.0f}; /**< Acceptances radius of the target */
 
@@ -163,6 +165,7 @@ protected:
 					(ParamFloat<px4::params::MPC_JERK_AUTO>) _param_mpc_jerk_auto,
 					(ParamFloat<px4::params::MPC_XY_TRAJ_P>) _param_mpc_xy_traj_p,
 					(ParamFloat<px4::params::MPC_XY_ERR_MAX>) _param_mpc_xy_err_max,
+					(ParamFloat<px4::params::MPC_Z_ERR_MAX>) _param_mpc_z_err_max,
 					(ParamFloat<px4::params::MPC_LAND_SPEED>) _param_mpc_land_speed,
 					(ParamFloat<px4::params::MPC_LAND_CRWL>) _param_mpc_land_crwl,
 					(ParamInt<px4::params::MPC_LAND_RC_HELP>) _param_mpc_land_rc_help,
@@ -178,6 +181,8 @@ protected:
 
 private:
 	matrix::Vector2f _lock_position_xy{NAN, NAN}; /**< if no valid triplet is received, lock positition to current position */
+	matrix::Vector2f _takeoff_locked_xy{NAN, NAN}; /**< lift-off XY tracked during the takeoff ramp and frozen at FLIGHT to keep the climb vertical */
+	float _takeoff_liftoff_z{NAN}; /**< lift-off altitude (NED z), frozen at FLIGHT */
 	bool _yaw_lock{false}; /**< if within acceptance radius, lock yaw to current yaw */
 
 	matrix::Vector3f _triplet_previous; ///< previous waypoint in triplet from navigator
