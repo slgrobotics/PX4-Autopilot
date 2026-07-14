@@ -67,6 +67,69 @@ namespace navigator
 Navigator *g_navigator;
 }
 
+#if CONFIG_NAVIGATOR_ADSB_FAKE_TRAFFIC
+namespace
+{
+int print_fake_traffic_usage(const char *reason = nullptr)
+{
+	if (reason) {
+		PX4_WARN("%s\n", reason);
+	}
+
+	PX4_INFO_RAW("Usage:\n");
+	PX4_INFO_RAW("  navigator fake_traffic [mode]\n");
+	PX4_INFO_RAW("  navigator fake_traffic stop\n");
+	PX4_INFO_RAW("  navigator fake_traffic help\n");
+	PX4_INFO_RAW("\n");
+	PX4_INFO_RAW("Modes:\n");
+	PX4_INFO_RAW("  unique_ids   identifier fallback checks\n");
+	PX4_INFO_RAW("  escalation   one target getting closer\n");
+	PX4_INFO_RAW("  spam_same    repeated updates for one target\n");
+	PX4_INFO_RAW("  spam_new     many new targets\n");
+	PX4_INFO_RAW("  flags        invalid velocity-flag case\n");
+	PX4_INFO_RAW("  queue_fill   3 batches of ORB_QUEUE_LENGTH\n");
+	PX4_INFO_RAW("\n");
+	PX4_INFO_RAW("Warning: fake traffic runs through the normal DAA pipeline and can trigger configured actions.\n");
+	return 0;
+}
+
+bool parse_fake_traffic_mode(const char *mode_name, DetectAndAvoid::FakeTraffMode &mode)
+{
+	if (!strcmp(mode_name, "unique_ids")) {
+		mode = DetectAndAvoid::FakeTraffMode::kUniqueIds;
+		return true;
+	}
+
+	if (!strcmp(mode_name, "escalation")) {
+		mode = DetectAndAvoid::FakeTraffMode::kEscalation;
+		return true;
+	}
+
+	if (!strcmp(mode_name, "spam_same")) {
+		mode = DetectAndAvoid::FakeTraffMode::kSpamSame;
+		return true;
+	}
+
+	if (!strcmp(mode_name, "spam_new")) {
+		mode = DetectAndAvoid::FakeTraffMode::kSpamNew;
+		return true;
+	}
+
+	if (!strcmp(mode_name, "flags")) {
+		mode = DetectAndAvoid::FakeTraffMode::kFlags;
+		return true;
+	}
+
+	if (!strcmp(mode_name, "queue_fill")) {
+		mode = DetectAndAvoid::FakeTraffMode::kQueueFill;
+		return true;
+	}
+
+	return false;
+}
+} // namespace
+#endif // CONFIG_NAVIGATOR_ADSB_FAKE_TRAFFIC
+
 Navigator::Navigator() :
 	ModuleParams(nullptr),
 	_loop_perf(perf_alloc(PC_ELAPSED, "navigator")),
@@ -81,6 +144,9 @@ Navigator::Navigator() :
 	_precland(this),
 	_rtl(this),
 	_course(this)
+#if CONFIG_NAVIGATOR_ADSB
+	, _detect_and_avoid(this)
+#endif // CONFIG_NAVIGATOR_ADSB
 {
 	/* Create a list of our possible navigation types */
 	_navigation_mode_array[0] = &_mission;
@@ -115,6 +181,10 @@ Navigator::Navigator() :
 	_distance_sensor_mode_change_request_pub.get().request_on_off = distance_sensor_mode_change_request_s::REQUEST_OFF;
 	_distance_sensor_mode_change_request_pub.update();
 
+#if CONFIG_NAVIGATOR_ADSB
+	_detect_and_avoid.on_activation();
+#endif // CONFIG_NAVIGATOR_ADSB
+
 	reset_triplets();
 }
 
@@ -124,6 +194,9 @@ Navigator::~Navigator()
 	orb_unsubscribe(_local_pos_sub);
 	orb_unsubscribe(_mission_sub);
 	orb_unsubscribe(_vehicle_status_sub);
+#if CONFIG_NAVIGATOR_ADSB
+	_detect_and_avoid.on_inactivation();
+#endif // CONFIG_NAVIGATOR_ADSB
 }
 
 void Navigator::params_update()
@@ -143,11 +216,6 @@ void Navigator::params_update()
 	}
 
 	_mission.set_command_timeout(_param_mis_command_tout.get());
-#if CONFIG_NAVIGATOR_ADSB
-	_adsb_conflict.set_conflict_detection_params(_param_nav_traff_a_hor_ct.get(),
-			_param_nav_traff_a_ver.get(),
-			_param_nav_traff_collision_time.get(), _param_nav_traff_avoid.get());
-#endif // CONFIG_NAVIGATOR_ADSB
 }
 
 void Navigator::run()
@@ -996,6 +1064,70 @@ void Navigator::run()
 
 		_geofence.run();
 
+#if CONFIG_NAVIGATOR_GEOFENCE_AVOIDANCE
+
+		const bool fence_updated = _geofence.consumeFenceUpdated();
+		const float margin = geofence_avoidance_margin();
+
+		// Margin is baked into polygons, so a margin change requires rebuilding them.
+		const bool margin_changed = fabsf(margin - _last_geofence_avoidance_margin) > FLT_EPSILON;
+
+
+		using PlannerStatus = GeofenceAvoidancePlanner::Status;
+
+		if (fence_updated || margin_changed) {
+			_geofence_avoidance_planner.updateGraphFromGeofence(_geofence, margin);
+			const PlannerStatus planner_status = _geofence_avoidance_planner.status();
+			_last_geofence_avoidance_margin = margin;
+
+			// Add granularity with more status values / user messages if needed.
+
+			switch (planner_status) {
+			// Failure in building fence graph / path. Collapse to one generic user message. Add granularity if needed.
+			case PlannerStatus::BudgetExceeded: // TODO make this more specific now that it is more likely
+			case PlannerStatus::OutOfRange:
+			case PlannerStatus::Degenerate:
+			case PlannerStatus::DijkstraFailed:
+				mavlink_log_warning(&_mavlink_log_pub, "Geofence data invalid (code %d), RTL will fly directly\t",
+						    (int) planner_status);
+				events::send<uint8_t>(events::ID("rtl_avoidance_build_failed"), {events::Log::Warning, events::LogInternal::Info},
+						      "Geofence data invalid (code {1}), RTL will fly directly", (uint8_t)planner_status);
+				break;
+
+			default:
+				// Not an error, or reported elsewhere
+				break;
+			}
+
+		} else {
+
+			// Signal status values not related to updating geofence data. Reset status to not spam.
+			const PlannerStatus planner_status = _geofence_avoidance_planner.status();
+
+			if (planner_status == PlannerStatus::DestinationInvalid) {
+				mavlink_log_warning(&_mavlink_log_pub, "RTL destination invalid, not updating\t");
+				events::send(
+					events::ID("rtl_destination_invalid"),
+					events::LogLevels(events::Log::Warning, events::LogInternal::Info),
+					"RTL destination invalid, not updating"
+				);
+				_geofence_avoidance_planner.resetStatus();
+			}
+
+			if (planner_status == PlannerStatus::DestinationBreachesGeofence) {
+				mavlink_log_warning(&_mavlink_log_pub, "RTL destination breaches geofence, will fly directly\t");
+				events::send(
+					events::ID("rtl_destination_breaches"),
+					events::LogLevels(events::Log::Warning, events::LogInternal::Info),
+					"RTL destination breaches geofence, will fly directly"
+				);
+				_geofence_avoidance_planner.resetStatus();
+			}
+		}
+
+
+#endif // CONFIG_NAVIGATOR_GEOFENCE_AVOIDANCE
+
 		perf_end(_loop_perf);
 	}
 }
@@ -1127,6 +1259,9 @@ int Navigator::print_status()
 	PX4_INFO("Running");
 
 	_geofence.printStatus();
+#if CONFIG_NAVIGATOR_ADSB && !defined(CONSTRAINED_FLASH) && !defined(__PX4_NUTTX)
+	_detect_and_avoid.print_status();
+#endif // CONFIG_NAVIGATOR_ADSB && !CONSTRAINED_FLASH && !__PX4_NUTTX
 	return 0;
 }
 
@@ -1137,7 +1272,7 @@ void Navigator::publish_position_setpoint_triplet()
 	_pos_sp_triplet_updated = false;
 }
 
-float Navigator::get_default_acceptance_radius()
+float Navigator::get_default_acceptance_radius() const
 {
 	return _param_nav_acc_rad.get();
 }
@@ -1250,65 +1385,23 @@ void Navigator::load_fence_from_file(const char *filename)
 	_geofence.loadFromFile(filename);
 }
 
+#if CONFIG_NAVIGATOR_ADSB_FAKE_TRAFFIC
+void Navigator::run_fake_traffic(DetectAndAvoid::FakeTraffMode mode)
+{
+	_detect_and_avoid.run_fake_traffic(mode, get_global_position()->lat, get_global_position()->lon,
+					   get_global_position()->alt);
+}
+
+void Navigator::stop_fake_traffic()
+{
+	_detect_and_avoid.stop_fake_traffic();
+}
+#endif // CONFIG_NAVIGATOR_ADSB_FAKE_TRAFFIC
+
 #if CONFIG_NAVIGATOR_ADSB
-void Navigator::take_traffic_conflict_action()
-{
-
-	vehicle_command_s vehicle_command{};
-
-	switch (_adsb_conflict._conflict_detection_params.traffic_avoidance_mode) {
-
-	case 2: {
-			_rtl.set_return_alt_min(true);
-			vehicle_command.command = vehicle_command_s::VEHICLE_CMD_NAV_RETURN_TO_LAUNCH;
-			publish_vehicle_command(vehicle_command);
-			break;
-		}
-
-	case 3: {
-			vehicle_command.command = vehicle_command_s::VEHICLE_CMD_NAV_LAND;
-			publish_vehicle_command(vehicle_command);
-			break;
-
-		}
-
-	case 4: {
-
-			vehicle_command.command = vehicle_command_s::VEHICLE_CMD_NAV_LOITER_UNLIM;
-			publish_vehicle_command(vehicle_command);
-			break;
-
-		}
-	}
-}
-
-void Navigator::run_fake_traffic()
-{
-	_adsb_conflict.run_fake_traffic(get_global_position()->lat, get_global_position()->lon,
-					get_global_position()->alt);
-}
-
 void Navigator::check_traffic()
 {
-	if (_traffic_sub.updated()) {
-		_traffic_sub.copy(&_adsb_conflict._transponder_report);
-
-		uint16_t required_flags = transponder_report_s::PX4_ADSB_FLAGS_VALID_COORDS |
-					  transponder_report_s::PX4_ADSB_FLAGS_VALID_HEADING |
-					  transponder_report_s::PX4_ADSB_FLAGS_VALID_VELOCITY | transponder_report_s::PX4_ADSB_FLAGS_VALID_ALTITUDE;
-
-		if ((_adsb_conflict._transponder_report.flags & required_flags) == required_flags) {
-
-			_adsb_conflict.detect_traffic_conflict(get_global_position()->lat, get_global_position()->lon,
-							       get_global_position()->alt, _local_pos.vx, _local_pos.vy, _local_pos.vz);
-
-			if (_adsb_conflict.handle_traffic_conflict()) {
-				take_traffic_conflict_action();
-			}
-		}
-	}
-
-	_adsb_conflict.remove_expired_conflicts();
+	_detect_and_avoid.on_active();
 }
 #endif // CONFIG_NAVIGATOR_ADSB
 
@@ -1352,16 +1445,41 @@ int Navigator::custom_command(int argc, char *argv[])
 	if (!strcmp(argv[0], "fencefile")) {
 		get_instance<Navigator>(desc)->load_fence_from_file(GEOFENCE_FILENAME);
 		return 0;
+	}
 
-#if CONFIG_NAVIGATOR_ADSB
+#if CONFIG_NAVIGATOR_ADSB_FAKE_TRAFFIC
 
-	} else if (!strcmp(argv[0], "fake_traffic")) {
+	if (!strcmp(argv[0], "fake_traffic")) {
+		DetectAndAvoid::FakeTraffMode mode = DetectAndAvoid::FakeTraffMode::kUniqueIds;
 
-		get_instance<Navigator>(desc)->run_fake_traffic();
+		if (argc > 1) {
+			const char *const argument = argv[1];
+
+			if (!strcmp(argument, "help")) {
+				return print_fake_traffic_usage();
+			}
+
+			if (!strcmp(argument, "stop")) {
+				if (argc > 2) {
+					return print_fake_traffic_usage("fake_traffic stop takes no extra arguments");
+				}
+
+				get_instance<Navigator>(desc)->stop_fake_traffic();
+				PX4_INFO("DAA: fake traffic stopped");
+				return 0;
+			}
+
+			if (!parse_fake_traffic_mode(argument, mode)) {
+				return print_fake_traffic_usage("unknown fake_traffic mode");
+			}
+		}
+
+		get_instance<Navigator>(desc)->run_fake_traffic(mode);
 
 		return 0;
-#endif // CONFIG_NAVIGATOR_ADSB
 	}
+
+#endif // CONFIG_NAVIGATOR_ADSB_FAKE_TRAFFIC
 
 	return print_usage("unknown command");
 }
@@ -1610,6 +1728,26 @@ bool Navigator::geofence_allows_position(const vehicle_global_position_s &pos)
 	return true;
 }
 
+#if CONFIG_NAVIGATOR_GEOFENCE_AVOIDANCE
+float Navigator::geofence_avoidance_margin() const
+{
+	// These margins should be above the horizontal tracking error that can be expected for each vehicle type.
+	// If re-using the enlarged polygons for a predictive geofence failsafe feature, additionally ensure
+	// that the margin is large enough to turn around / stop / carry out the desired failsafe action in time.
+
+	if (_vstatus.is_vtol || _vstatus.vehicle_type == vehicle_status_s::VEHICLE_TYPE_FIXED_WING) {
+
+		// Use FW loiter radius even for VTOL in MC -- changing the
+		// margin on transition is confusing and RTLing in MC as a VTOL
+		// is a very rare edge case
+		return get_default_loiter_rad();
+	}
+
+	// MC, rover, unspecified
+	return 2.0f * get_default_acceptance_radius();
+}
+#endif // CONFIG_NAVIGATOR_GEOFENCE_AVOIDANCE
+
 void Navigator::preproject_stop_point(double &lat, double &lon)
 {
 	// For multirotors we need to account for the braking distance, otherwise the vehicle will overshoot and go back
@@ -1712,7 +1850,9 @@ controller.
 	PRINT_MODULE_USAGE_NAME("navigator", "controller");
 	PRINT_MODULE_USAGE_COMMAND("start");
 	PRINT_MODULE_USAGE_COMMAND_DESCR("fencefile", "load a geofence file from SD card, stored at etc/geofence.txt");
-	PRINT_MODULE_USAGE_COMMAND_DESCR("fake_traffic", "publishes 24 fake transponder_report_s uORB messages");
+#if CONFIG_NAVIGATOR_ADSB_FAKE_TRAFFIC
+	PRINT_MODULE_USAGE_COMMAND_DESCR("fake_traffic", "run synthetic DAA traffic; use 'navigator fake_traffic help'");
+#endif // CONFIG_NAVIGATOR_ADSB_FAKE_TRAFFIC
 	PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
 
 	return 0;

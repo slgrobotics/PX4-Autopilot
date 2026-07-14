@@ -172,13 +172,23 @@ Sets GPS longitudinal offset encoding
 
 ### ADSB_ICAO_ID (`INT32`) {#ADSB_ICAO_ID}
 
-ADSB-Out ICAO configuration.
+ADSB-Out ICAO ID.
 
-Defines the ICAO ID of the vehicle
+Vehicle ICAO ID. Use -1 to disable.
 
 | Reboot  | minValue | maxValue | increment | default | unit | Read-Only |
 | ------- | -------- | -------- | --------- | ------- | ---- | --------- |
-| &check; | -1       | 16777215 |           | 1194684 |      | &nbsp;    |
+| &check; | -1       | 16777215 |           | -1      |      | &nbsp;    |
+
+### ADSB_ICAO_ID_2 (`INT32`) {#ADSB_ICAO_ID_2}
+
+Secondary ownship ICAO ID.
+
+Optional second ownship ICAO ID used to filter self-detections. Use -1 to disable.
+
+| Reboot  | minValue | maxValue | increment | default | unit | Read-Only |
+| ------- | -------- | -------- | --------- | ------- | ---- | --------- |
+| &check; | -1       | 16777215 |           | -1      |      | &nbsp;    |
 
 ### ADSB_ICAO_SPECL (`INT32`) {#ADSB_ICAO_SPECL}
 
@@ -22599,6 +22609,212 @@ Configure on which serial port to run DShot Driver.
 | ------- | -------- | -------- | --------- | ------- | ---- | --------- |
 | &check; |          |          |           | 0       |      | &nbsp;    |
 
+## Detect and Avoid
+
+### DAA_EN (`INT32`) {#DAA_EN}
+
+Enable DAA.
+
+**Values:**
+
+- `0`: Disabled
+- `1`: Enabled
+
+| Reboot | minValue | maxValue | increment | default     | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ----------- | ---- | --------- |
+| &nbsp; |          |          |           | Enabled (1) |      | &nbsp;    |
+
+### DAA_NOTIF_STATE (`INT32`) {#DAA_NOTIF_STATE}
+
+DAA status notification period.
+
+Time between notifications for the most urgent conflict. Set to 0 to disable the periodic status notification.
+
+| Reboot | minValue | maxValue | increment | default | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ------- | ---- | --------- |
+| &nbsp; | 0        | 600      |           | 20      | s    | &nbsp;    |
+
+### DAA_TRAFF_TOUT (`INT32`) {#DAA_TRAFF_TOUT}
+
+DAA stale conflict timeout.
+
+Conflict age before removal.
+
+| Reboot | minValue | maxValue | increment | default | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ------- | ---- | --------- |
+| &nbsp; | 1        | 120      |           | 20      | s    | &nbsp;    |
+
+## Detect and Avoid F3442 Standard
+
+### DAA_DFLT_VEL (`FLOAT`) {#DAA_DFLT_VEL}
+
+Default vertical speed of other aircraft.
+
+Used when DAA_EN_DFLT_VEL is enabled. Specific to the F3442 DAA standard.
+
+| Reboot | minValue | maxValue | increment | default | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ------- | ---- | --------- |
+| &nbsp; | 0        |          |           | 10.0    | m/s  | &nbsp;    |
+
+### DAA_EN_DFLT_VEL (`INT32`) {#DAA_EN_DFLT_VEL}
+
+Ignore reported vertical speed of other aircraft.
+
+Use DAA_DFLT_VEL instead of reported traffic vertical speed. Specific to the F3442 DAA standard.
+
+**Values:**
+
+- `0`: Disabled
+- `1`: Enabled
+
+| Reboot | minValue | maxValue | increment | default     | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ----------- | ---- | --------- |
+| &nbsp; |          |          |           | Enabled (1) |      | &nbsp;    |
+
+### DAA_LVL_CRIT_ACT (`INT32`) {#DAA_LVL_CRIT_ACT}
+
+Critical conflict action.
+
+Action requested when the critical conflict level is reached.
+Runtime changes apply on later conflict level transitions.
+Specific to the F3442 DAA standard.
+
+**Values:**
+
+- `0`: Disabled
+- `1`: Warn only
+- `2`: Return mode
+- `3`: Land mode
+- `4`: Position Hold mode
+- `5`: Terminate
+
+| Reboot | minValue | maxValue | increment | default | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ------- | ---- | --------- |
+| &nbsp; | 0        | 5        |           | 1       |      | &nbsp;    |
+
+### DAA_LVL_CRIT_HGT (`FLOAT`) {#DAA_LVL_CRIT_HGT}
+
+Critical conflict zone cylinder height (NMAC).
+
+Per-aircraft half-zone. Specific to the F3442 DAA standard.
+
+| Reboot | minValue | maxValue | increment | default | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ------- | ---- | --------- |
+| &nbsp; | 10       |          |           | 16.0    | m    | &nbsp;    |
+
+### DAA_LVL_CRIT_RAD (`FLOAT`) {#DAA_LVL_CRIT_RAD}
+
+Critical conflict zone cylinder radius (NMAC).
+
+Per-aircraft half-zone. Specific to the F3442 DAA standard.
+
+| Reboot | minValue | maxValue | increment | default | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ------- | ---- | --------- |
+| &nbsp; | 10       |          |           | 77.0    | m    | &nbsp;    |
+
+### DAA_LVL_HIGH_ACT (`INT32`) {#DAA_LVL_HIGH_ACT}
+
+High conflict action.
+
+Action requested when the high conflict level is reached.
+Runtime changes apply on later conflict level transitions.
+Specific to the F3442 DAA standard.
+
+**Values:**
+
+- `0`: Disabled
+- `1`: Warn only
+- `2`: Return mode
+- `3`: Land mode
+- `4`: Position Hold mode
+- `5`: Terminate
+
+| Reboot | minValue | maxValue | increment | default | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ------- | ---- | --------- |
+| &nbsp; | 0        | 5        |           | 1       |      | &nbsp;    |
+
+### DAA_LVL_HIGH_HGT (`FLOAT`) {#DAA_LVL_HIGH_HGT}
+
+High conflict zone cylinder height (WC).
+
+Per-aircraft half-zone. Specific to the F3442 DAA standard.
+
+| Reboot | minValue | maxValue | increment | default | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ------- | ---- | --------- |
+| &nbsp; | 10       |          |           | 39.0    | m    | &nbsp;    |
+
+### DAA_LVL_HIGH_RAD (`FLOAT`) {#DAA_LVL_HIGH_RAD}
+
+High conflict zone cylinder radius (WC).
+
+Per-aircraft half-zone. Specific to the F3442 DAA standard.
+
+| Reboot | minValue | maxValue | increment | default | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ------- | ---- | --------- |
+| &nbsp; | 10       |          |           | 305.0   | m    | &nbsp;    |
+
+### DAA_LVL_LOW_ACT (`INT32`) {#DAA_LVL_LOW_ACT}
+
+Low conflict action.
+
+Action requested when the low conflict level is reached.
+Runtime changes apply on later conflict level transitions.
+Specific to the F3442 DAA standard.
+
+**Values:**
+
+- `0`: Disabled
+- `1`: Warn only
+- `2`: Return mode
+- `3`: Land mode
+- `4`: Position Hold mode
+- `5`: Terminate
+
+| Reboot | minValue | maxValue | increment | default | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ------- | ---- | --------- |
+| &nbsp; | 0        | 5        |           | 1       |      | &nbsp;    |
+
+### DAA_LVL_LOW_TIME (`INT32`) {#DAA_LVL_LOW_TIME}
+
+Low conflict latency time.
+
+Expands well-clear bounds by aircraft speed times this value. Specific to the F3442 DAA standard.
+
+| Reboot | minValue | maxValue | increment | default | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ------- | ---- | --------- |
+| &nbsp; | 0        |          |           | 33      | s    | &nbsp;    |
+
+### DAA_LVL_MED_ACT (`INT32`) {#DAA_LVL_MED_ACT}
+
+Medium conflict action.
+
+Action requested when the medium conflict level is reached.
+Runtime changes apply on later conflict level transitions.
+Specific to the F3442 DAA standard.
+
+**Values:**
+
+- `0`: Disabled
+- `1`: Warn only
+- `2`: Return mode
+- `3`: Land mode
+- `4`: Position Hold mode
+- `5`: Terminate
+
+| Reboot | minValue | maxValue | increment | default | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ------- | ---- | --------- |
+| &nbsp; | 0        | 5        |           | 1       |      | &nbsp;    |
+
+### DAA_LVL_MED_TIME (`INT32`) {#DAA_LVL_MED_TIME}
+
+Medium conflict latency time.
+
+Expands NMAC bounds by aircraft speed times this value. Specific to the F3442 DAA standard.
+
+| Reboot | minValue | maxValue | increment | default | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ------- | ---- | --------- |
+| &nbsp; | 0        |          |           | 33      | s    | &nbsp;    |
+
 ## EKF2
 
 ### EKF2_ABIAS_INIT (`FLOAT`) {#EKF2_ABIAS_INIT}
@@ -29730,8 +29946,9 @@ by the innovation consistency test.
 
 1-sigma initial hover thrust uncertainty.
 
-Sets the number of standard deviations used
-by the innovation consistency test.
+Initial standard deviation of the hover thrust state estimate.
+Larger values allow the estimate to move farther from the initial
+hover thrust before process noise takes over.
 
 | Reboot | minValue | maxValue | increment | default | unit              | Read-Only |
 | ------ | -------- | -------- | --------- | ------- | ----------------- | --------- |
@@ -31734,10 +31951,10 @@ Set to a negative value to disable.
 
 ### NAV_TRAFF_AVOID (`INT32`) {#NAV_TRAFF_AVOID}
 
-Set traffic avoidance mode.
+Set traffic avoidance action.
 
-Enabling this will allow the system to respond
-to transponder data from e.g. ADSB transponders
+Action requested for a crosstrack traffic conflict.
+Runtime changes apply on later conflict level transitions.
 
 **Values:**
 
@@ -31746,16 +31963,17 @@ to transponder data from e.g. ADSB transponders
 - `2`: Return mode
 - `3`: Land mode
 - `4`: Position Hold mode
+- `5`: Terminate
 
 | Reboot | minValue | maxValue | increment | default | unit | Read-Only |
 | ------ | -------- | -------- | --------- | ------- | ---- | --------- |
-| &nbsp; |          |          |           | 1       |      | &nbsp;    |
+| &nbsp; | 0        | 5        |           | 1       |      | &nbsp;    |
 
 ### NAV_TRAFF_A_HOR (`FLOAT`) {#NAV_TRAFF_A_HOR}
 
-Set NAV TRAFFIC AVOID horizontal distance.
+Crosstrack conflict distance threshold.
 
-Defines a crosstrack horizontal distance
+Maximum absolute distance from the projected traffic track.
 
 | Reboot | minValue | maxValue | increment | default | unit | Read-Only |
 | ------ | -------- | -------- | --------- | ------- | ---- | --------- |
@@ -31763,7 +31981,7 @@ Defines a crosstrack horizontal distance
 
 ### NAV_TRAFF_A_VER (`FLOAT`) {#NAV_TRAFF_A_VER}
 
-Set NAV TRAFFIC AVOID vertical distance.
+Crosstrack vertical separation threshold.
 
 | Reboot | minValue | maxValue | increment | default | unit | Read-Only |
 | ------ | -------- | -------- | --------- | ------- | ---- | --------- |
@@ -31771,10 +31989,10 @@ Set NAV TRAFFIC AVOID vertical distance.
 
 ### NAV_TRAFF_COLL_T (`INT32`) {#NAV_TRAFF_COLL_T}
 
-Estimated time until collision.
+Crosstrack collision time threshold.
 
-Minimum acceptable time until collsion.
-Assumes constant speed over 3d distance.
+A conflict is raised when the time estimate is below this threshold.
+The estimate is the current 3D separation divided by the sum of the ownship and traffic speed magnitudes.
 
 | Reboot | minValue | maxValue  | increment | default | unit | Read-Only |
 | ------ | -------- | --------- | --------- | ------- | ---- | --------- |
@@ -32038,6 +32256,11 @@ Mount output mode.
 This is the protocol used between the autopilot and a connected gimbal.
 
 Recommended is the MAVLink gimbal protocol v2 if the gimbal supports it.
+
+In AUX mode, the gimbal (and hence the gimbal manager) is only made
+available if at least one output channel is assigned a gimbal
+roll/pitch/yaw output function (checked once at startup, so newly
+assigned output functions require a reboot).
 
 **Values:**
 
@@ -32443,9 +32666,8 @@ When piloting manually, this parameter is only used in MPC_POS_MODE Acceleration
 
 Maximum horizontal acceleration.
 
-MPC_POS_MODE
-1 just deceleration
-4 not used, use MPC_ACC_HOR instead
+With MPC_POS_MODE=0 it limits deceleration.
+With MPC_POS_MODE=4 it is unused (see MPC_ACC_HOR).
 
 | Reboot | minValue | maxValue | increment | default | unit  | Read-Only |
 | ------ | -------- | -------- | --------- | ------- | ----- | --------- |
@@ -36198,7 +36420,7 @@ Proportional gain for closed loop yaw controller.
 
 ### RD_TRANS_DRV_TRN (`FLOAT`) {#RD_TRANS_DRV_TRN}
 
-Yaw error threshhold to switch from driving to spot turning.
+Yaw error threshold to switch from driving to spot turning.
 
 This threshold is used for the state machine to switch from driving to turning based on the
 error between the desired and actual yaw. It is also used as the threshold whether the rover should come
@@ -36211,7 +36433,7 @@ line segments from prevWP-currWP and currWP-nextWP is smaller then 180 - RD_TRAN
 
 ### RD_TRANS_TRN_DRV (`FLOAT`) {#RD_TRANS_TRN_DRV}
 
-Yaw error threshhold to switch from spot turning to driving.
+Yaw error threshold to switch from spot turning to driving.
 
 This threshold is used for the state machine to switch from turning to driving based on the
 error between the desired and actual yaw.
@@ -39086,6 +39308,22 @@ which must be higher than the maximum ambient temperature.
 | ------- | -------- | -------- | --------- | ------- | ------- | --------- |
 | &check; | 0        | 85.0     |           | 55.0    | celcius | &nbsp;    |
 
+### HEATER1_TEMP_ACT (`FLOAT`) {#HEATER1_TEMP_ACT}
+
+If temperature drops below Activation_Threshold, it starts heating.
+
+The heater starts heating once the temperature drops below this activation threshold, and keeps
+heating until reset.
+
+The default (200): Since ambient temperature never reaches that high, on heater-start the temperature
+is always below the activation threshold and thus turn on the heater immediately.
+Lower this for heaters that should only run when actually needed (e.g. a pitot-tube heater to save power)
+e.g. 5 to only start heating once the temperature drops below 5°C.
+
+| Reboot  | minValue | maxValue | increment | default | unit    | Read-Only |
+| ------- | -------- | -------- | --------- | ------- | ------- | --------- |
+| &check; | -100.0   | 200.0    |           | 200.0   | celcius | &nbsp;    |
+
 ### HEATER1_TEMP_FF (`FLOAT`) {#HEATER1_TEMP_FF}
 
 Heater 1 controller feedforward value.
@@ -39176,6 +39414,22 @@ which must be higher than the maximum ambient temperature.
 | ------- | -------- | -------- | --------- | ------- | ------- | --------- |
 | &check; | 0        | 85.0     |           | 55.0    | celcius | &nbsp;    |
 
+### HEATER2_TEMP_ACT (`FLOAT`) {#HEATER2_TEMP_ACT}
+
+If temperature drops below Activation_Threshold, it starts heating.
+
+The heater starts heating once the temperature drops below this activation threshold, and keeps
+heating until reset.
+
+The default (200): Since ambient temperature never reaches that high, on heater-start the temperature
+is always below the activation threshold and thus turn on the heater immediately.
+Lower this for heaters that should only run when actually needed (e.g. a pitot-tube heater to save power)
+e.g. 5 to only start heating once the temperature drops below 5°C.
+
+| Reboot  | minValue | maxValue | increment | default | unit    | Read-Only |
+| ------- | -------- | -------- | --------- | ------- | ------- | --------- |
+| &check; | -100.0   | 200.0    |           | 200.0   | celcius | &nbsp;    |
+
 ### HEATER2_TEMP_FF (`FLOAT`) {#HEATER2_TEMP_FF}
 
 Heater 2 controller feedforward value.
@@ -39265,6 +39519,22 @@ which must be higher than the maximum ambient temperature.
 | Reboot  | minValue | maxValue | increment | default | unit    | Read-Only |
 | ------- | -------- | -------- | --------- | ------- | ------- | --------- |
 | &check; | 0        | 85.0     |           | 55.0    | celcius | &nbsp;    |
+
+### HEATER3_TEMP_ACT (`FLOAT`) {#HEATER3_TEMP_ACT}
+
+If temperature drops below Activation_Threshold, it starts heating.
+
+The heater starts heating once the temperature drops below this activation threshold, and keeps
+heating until reset.
+
+The default (200): Since ambient temperature never reaches that high, on heater-start the temperature
+is always below the activation threshold and thus turn on the heater immediately.
+Lower this for heaters that should only run when actually needed (e.g. a pitot-tube heater to save power)
+e.g. 5 to only start heating once the temperature drops below 5°C.
+
+| Reboot  | minValue | maxValue | increment | default | unit    | Read-Only |
+| ------- | -------- | -------- | --------- | ------- | ------- | --------- |
+| &check; | -100.0   | 200.0    |           | 200.0   | celcius | &nbsp;    |
 
 ### HEATER3_TEMP_FF (`FLOAT`) {#HEATER3_TEMP_FF}
 
