@@ -21625,6 +21625,7 @@ for definition of battery states.
 - `0`: Warning
 - `2`: Land mode
 - `3`: Return at critical level, land at emergency level
+- `4`: Return at critical level, terminate at emergency level
 
 | Reboot | minValue | maxValue | increment | default | unit | Read-Only |
 | ------ | -------- | -------- | --------- | ------- | ---- | --------- |
@@ -21790,6 +21791,27 @@ Warning only warns without preventing arming. Actions other than Warning also pr
 - `2`: Error
 - `3`: Return
 - `4`: Land
+
+| Reboot | minValue | maxValue | increment | default | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ------- | ---- | --------- |
+| &nbsp; |          |          |           | 0       |      | &nbsp;    |
+
+### COM_POS_FS_ACT (`INT32`) {#COM_POS_FS_ACT}
+
+Loss of position autonomous failsafe action.
+
+If no autonomous horizontal navigation is possible anymore should the vehicle attempt to
+descend blindly and land or terminate which can be preferable if there's a parachute and no pilot.
+
+Action to take when autonomous horizontal navigation is lost:
+
+- "Descend if possible" blind with potential drift and uncontrolled landing (risk of hitting obstacles)
+- "Terminate" can be preferred for unpiloted use with emergency parachute
+
+**Values:**
+
+- `0`: Descend if possible
+- `1`: Terminate
 
 | Reboot | minValue | maxValue | increment | default | unit | Read-Only |
 | ------ | -------- | -------- | --------- | ------- | ---- | --------- |
@@ -33911,6 +33933,35 @@ Can be set to increase the amount of integrator available to counteract disturba
 | Reboot | minValue | maxValue | increment | default | unit | Read-Only |
 | ------ | -------- | -------- | --------- | ------- | ---- | --------- |
 | &nbsp; | 0.0      |          | 0.01      | 0.3     |      | &nbsp;    |
+
+## NFS
+
+### NFS_EN (`INT32`) {#NFS_EN}
+
+Enable NFS mount.
+
+When enabled, mounts the NFS export at the configured mount point.
+Retries every 2 s until the server is reachable or the system is armed.
+
+**Values:**
+
+- `0`: Disabled
+- `1`: Enabled
+
+| Reboot  | minValue | maxValue | increment | default      | unit | Read-Only |
+| ------- | -------- | -------- | --------- | ------------ | ---- | --------- |
+| &check; |          |          |           | Disabled (0) |      | &nbsp;    |
+
+### NFS_IP (`INT32`) {#NFS_IP}
+
+NFS server IP address.
+
+IP address of the NFS server in int32 format.
+Same encoding as UXRCE_DDS_AG_IP: 10.41.10.1 maps to 170461697.
+
+| Reboot  | minValue | maxValue | increment | default   | unit | Read-Only |
+| ------- | -------- | -------- | --------- | --------- | ---- | --------- |
+| &check; |          |          |           | 170461697 |      | &nbsp;    |
 
 ## Neural Control
 

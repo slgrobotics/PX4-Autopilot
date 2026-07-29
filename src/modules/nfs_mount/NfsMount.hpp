@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2022 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2026 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,32 +33,34 @@
 
 #pragma once
 
-#include "../Common.hpp"
-
+#include <px4_platform_common/module.h>
+#include <px4_platform_common/module_params.h>
+#include <px4_platform_common/posix.h>
+#include <uORB/uORB.h>
 #include <uORB/Subscription.hpp>
-#include <uORB/SubscriptionMultiArray.hpp>
-#include <uORB/topics/battery_status.h>
-#include <uORB/topics/rtl_time_estimate.h>
+#include <uORB/topics/nfs_up.h>
+#include <uORB/topics/vehicle_status.h>
 
-class BatteryChecks : public HealthAndArmingCheckBase
+class NfsMount : public ModuleBase, public ModuleParams
 {
 public:
-	BatteryChecks() = default;
-	~BatteryChecks() = default;
+	NfsMount();
+	~NfsMount() override = default;
 
-	void checkAndReport(const Context &context, Report &reporter) override;
+	static ModuleBase::Descriptor desc;
+
+	static int task_spawn(int argc, char *argv[]);
+	static int custom_command(int argc, char *argv[]);
+	static int print_usage(const char *reason = nullptr);
+
+	void run() override;
 
 private:
-	void rtlEstimateCheck(const Context &context, Report &reporter, float worst_battery_time_s);
+	static int run_trampoline(int argc, char *argv[]);
 
-	uORB::SubscriptionMultiArray<battery_status_s, battery_status_s::MAX_INSTANCES> _battery_status_subs{ORB_ID::battery_status};
-	uORB::Subscription					_rtl_time_estimate_sub{ORB_ID(rtl_time_estimate)};
-	bool _last_armed{false};
-	bool _battery_connected_at_arming[battery_status_s::MAX_INSTANCES] {};
+	uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
 
-	DEFINE_PARAMETERS_CUSTOM_PARENT(HealthAndArmingCheckBase,
-					(ParamFloat<px4::params::COM_ARM_BAT_MIN>) _param_com_arm_bat_min,
-					(ParamInt<px4::params::CBRK_SUPPLY_CHK>) _param_cbrk_supply_chk,
-					(ParamInt<px4::params::COM_FLTT_LOW_ACT>) _param_com_fltt_low_act
-				       )
+	DEFINE_PARAMETERS(
+		(ParamInt<px4::params::NFS_IP>) _param_nfs_ip
+	)
 };
