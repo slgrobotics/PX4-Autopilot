@@ -89,8 +89,8 @@ void LawnmowerControl::updateLawnmowerControl(vehicle_control_mode_s vehicle_con
 	float gps_heading = PX4_ISFINITE(_location_metrics.gps_yaw) ? _location_metrics.gps_yaw : _location_metrics.gps_cog_rad;
 
 	adsbData adsbDataGps {
-		.emitter_type = transponder_report_s::ADSB_EMITTER_TYPE_UAV, // Emitter type, UAV
-		.squawk = 7400, // Squawk code, 4 digits, 0-4095 (7400=UAV). https://en.wikipedia.org/wiki/List_of_transponder_codes
+		.emitter_type = transponder_report_s::ADSB_EMITTER_TYPE_SERVICE_SURFACE, //ADSB_EMITTER_TYPE_UAV, // Emitter type, UAV - maybe ADSB_EMITTER_TYPE_SERVICE_SURFACE?
+		.squawk = 0, // Squawk code, 4 digits, 0-4095 (0=ground vehicle, 7400=UAV). https://en.wikipedia.org/wiki/List_of_transponder_codes
 		.callsign = "MYGPS", // Callsign, 8 characters max, null-terminated
 		.icao_address = 0x123456, // ICAO address, 24 bits, 0x000000 to 0xFFFFFF http://www.kloth.net/radio/icao24lookup.php
 		.tslc = 0.01f, // Time since last communication in seconds

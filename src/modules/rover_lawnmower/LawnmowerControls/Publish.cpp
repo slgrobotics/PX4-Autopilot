@@ -160,8 +160,9 @@ void LawnmowerControl::publishTransponderReport(const adsbData &data)
 			   transponder_report_s::PX4_ADSB_FLAGS_VALID_HEADING |
 			   transponder_report_s::PX4_ADSB_FLAGS_VALID_VELOCITY |
 			   transponder_report_s::PX4_ADSB_FLAGS_VALID_ALTITUDE |
-			   // Important: this report should be retransmitted via MAVLINK:
-			   transponder_report_s::PX4_ADSB_FLAGS_RETRANSLATE |
+			   // Important: this report can be marked simulated.
+			   // It causes Navigator Traffic Avoidance Module Bypass and QGroundControl shows it as a simulated vehicle on the map.
+			   transponder_report_s::PX4_ADSB_FLAGS_SIMULATED |
 			   transponder_report_s::PX4_ADSB_FLAGS_VALID_SQUAWK |
 			   // If this is a UAV, we do not have a callsign
 			   (transponder_report_s::ADSB_EMITTER_TYPE_UAV & data.emitter_type ?
