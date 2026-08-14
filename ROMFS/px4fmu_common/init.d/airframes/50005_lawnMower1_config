@@ -47,7 +47,6 @@ param set-default CBRK_SUPPLY_CHK 894281
 # Commander parameters - defaults for safe operation:
 param set-default COM_CPU_MAX -1.0
 param set-default COM_RC_IN_MODE 0
-param set-default COM_POSCTL_NAVL 1
 param set-default COM_POS_FS_EPH 20
 param set-default COM_POS_LOW_EPH -1.0
 
@@ -272,9 +271,9 @@ param set-default EKF2_GPS_V_NOISE 0.1
 
 # Adjust other GPS related parameters for better EKF2 operation:
 #param set-default EKF2_GPS_DELAY 110
-#param set-default EKF2_GPS_POS_X 0
-#param set-default EKF2_GPS_POS_Y 0
-param set-default EKF2_GPS_POS_Z 0.5
+param set-default SENS_GPS0_OFFX 0.0
+param set-default SENS_GPS0_OFFY 0.0
+param set-default SENS_GPS0_OFFZ 0.5
 #param set-default EKF2_TAU_POS 0.25
 
 # We can drive in manual mode when GPS check fails:
@@ -422,7 +421,6 @@ param set-default COM_FLTMODE6 3
 # Kill switch - PWM off, after 0 seconds - disarm (also kills when transmitter off)
 # that's the second upper switch from the left:
 param set-default RC_MAP_KILL_SW 8
-param set-default COM_KILL_DISARM 0
 
 # This is to mimic successful calibration - it is normally set by QGroundControl:
 param set-default RC_CHAN_CNT 6
