@@ -25749,6 +25749,18 @@ disables trim throttle and minimum airspeed compensation based on weight.
 | ------ | -------- | -------- | --------- | ------- | ---- | --------- |
 | &nbsp; |          |          | 0.5       | -1.0    | kg   | &nbsp;    |
 
+### WEIGHT_FUEL (`FLOAT`) {#WEIGHT_FUEL}
+
+Mass of a full fuel load.
+
+If set together with WEIGHT_BASE and WEIGHT_GROSS, the weight used for
+performance scaling is reduced by the burned fuel reported in the fuel tank status.
+Only a single fuel tank is supported. A zero or negative value disables fuel-based weight compensation.
+
+| Reboot | minValue | maxValue | increment | default | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ------- | ---- | --------- |
+| &nbsp; |          |          | 0.1       | -1.0    | kg   | &nbsp;    |
+
 ### WEIGHT_GROSS (`FLOAT`) {#WEIGHT_GROSS}
 
 Vehicle gross weight.
@@ -25756,6 +25768,7 @@ Vehicle gross weight.
 This is the actual weight of the vehicle at any time. This value will differ from WEIGHT_BASE in case weight was added
 or removed from the base weight. Examples are the addition of payloads or larger batteries. A zero or negative value
 disables trim throttle and minimum airspeed compensation based on weight.
+If fuel-based weight compensation is enabled (WEIGHT_FUEL), set this to the takeoff weight with a full fuel load.
 
 | Reboot | minValue | maxValue | increment | default | unit | Read-Only |
 | ------ | -------- | -------- | --------- | ------- | ---- | --------- |
@@ -26299,6 +26312,27 @@ WARNING: the failures can easily cause crashes and are to be used with caution!
 | ------- | -------- | -------- | --------- | ------------ | ---- | --------- |
 | &check; |          |          |           | Disabled (0) |      | &nbsp;    |
 
+### SYS_FAIL_GPS_JAM (`INT32`) {#SYS_FAIL_GPS_JAM}
+
+GPS Wrong-failure jamming state.
+
+GNSS jamming state reported by the addressed receiver while a GPS 'wrong'
+failure injection is active. The reported position is left untouched, so
+'Detected' simulates a receiver that still delivers a valid fix while
+reporting interference. Leave at 'Unchanged' to keep the simulated
+receiver's own jamming state.
+
+**Values:**
+
+- `0`: Unchanged
+- `1`: OK
+- `2`: Mitigated
+- `3`: Detected
+
+| Reboot | minValue | maxValue | increment | default | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ------- | ---- | --------- |
+| &nbsp; |          |          |           | 0       |      | &nbsp;    |
+
 ### SYS_FAIL_GPS_WRG (`INT32`) {#SYS_FAIL_GPS_WRG}
 
 GPS Wrong-failure fix type.
@@ -26737,7 +26771,8 @@ Baudrate applied to the receiver UART1 after the link is auto-detected.
 
 u-blox UART2 baudrate.
 
-Baudrate for the receiver UART2 port.
+Baudrate for the receiver UART2 port. Only applied by GPS_UBX_MODE 1, 2, 5, 6 and 7;
+the other modes leave UART2 untouched.
 
 | Reboot  | minValue | maxValue | increment | default | unit | Read-Only |
 | ------- | -------- | -------- | --------- | ------- | ---- | --------- |
@@ -26844,6 +26879,10 @@ F9P units are connected to each other.
 Modes 3 and 4 only require UART1 on each F9P connected to the Autopilot or Can Node. UART RX DMA is required.
 RTK is still possible with this setup.
 Mode 6 is intended for use with a ground control station (not necessarily an RTK correction base).
+Mode 7 turns UART2 into a diagnostic port: the receiver keeps serving the autopilot on UART1
+while UART2 outputs UBX at GPS_UBX_BAUD2 for u-center. Keep GPS_UBX_BAUD2 at 115200 or above,
+the diagnostic message set saturates a slower link. UBX input is left enabled on UART2, so
+anything attached there can also reconfigure the receiver.
 
 **Values:**
 
@@ -26854,10 +26893,11 @@ Mode 6 is intended for use with a ground control station (not necessarily an RTK
 - `4`: Moving Base (Moving Base UART1 Connected to Autopilot Or Can Node)
 - `5`: Rover with Static Base on UART2 (similar to Default, except coming in on UART2)
 - `6`: Ground Control Station (UART2 outputs NMEA)
+- `7`: u-center on UART2 (UART2 outputs UBX diagnostics)
 
 | Reboot  | minValue | maxValue | increment | default | unit | Read-Only |
 | ------- | -------- | -------- | --------- | ------- | ---- | --------- |
-| &check; | 0        | 6        |           | 0       |      | &nbsp;    |
+| &check; | 0        | 7        |           | 0       |      | &nbsp;    |
 
 ### GPS_UBX_PPK (`INT32`) {#GPS_UBX_PPK}
 
@@ -34122,9 +34162,21 @@ select the transmission standard.
 | ------- | -------- | -------- | --------- | ------- | ---- | --------- |
 | &check; |          |          |           | 0       |      | &nbsp;    |
 
-### OSD_CH_HEIGHT (`INT32`) {#OSD_CH_HEIGHT}
+### OSD_CH_POS_HOR (`INT32`) {#OSD_CH_POS_HOR}
 
-OSD Crosshairs Height.
+OSD Crosshairs Horizontal Position.
+
+Controls the horizontal position of the crosshair display.
+Resolution is limited by OSD to 15 discrete values. Negative
+values will display the crosshairs left of the center of the screen
+
+| Reboot | minValue | maxValue | increment | default | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ------- | ---- | --------- |
+| &nbsp; | -8       | 8        |           | 0       |      | &nbsp;    |
+
+### OSD_CH_POS_VER (`INT32`) {#OSD_CH_POS_VER}
+
+OSD Crosshairs Vertical Position.
 
 Controls the vertical position of the crosshair display.
 Resolution is limited by OSD to 15 discrete values. Negative
@@ -34190,21 +34242,21 @@ Configure / toggle support display options.
 - `4`: GPS_SATS
 - `5`: GPS_SPEED
 - `6`: HOME_DIST
-- `7`: HOME_DIR
-- `8`: MAIN_BATT_VOLTAGE
+- `7`: (unused) HOME_DIR
+- `8`: (unused) MAIN_BATT_VOLTAGE
 - `9`: CURRENT_DRAW
 - `10`: MAH_DRAWN
 - `11`: RSSI_VALUE
 - `12`: ALTITUDE
-- `13`: NUMERICAL_VARIO
+- `13`: (unused) NUMERICAL_VARIO
 - `14`: (unused) FLYMODE
 - `15`: (unused) ESC_TMP
-- `16`: (unused) PITCH_ANGLE
-- `17`: (unused) ROLL_ANGLE
+- `16`: PITCH_ANGLE
+- `17`: ROLL_ANGLE
 - `18`: CROSSHAIRS
 - `19`: AVG_CELL_VOLTAGE
 - `20`: (unused) HORIZON_SIDEBARS
-- `21`: POWER
+- `21`: (unused) POWER
 
 | Reboot | minValue | maxValue | increment | default | unit | Read-Only |
 | ------ | -------- | -------- | --------- | ------- | ---- | --------- |
