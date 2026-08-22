@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2024 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2017-2026 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,64 +31,56 @@
  *
  ****************************************************************************/
 
-#pragma once
+#include "DLVR.hpp"
 
-#include <px4_platform_common/i2c_spi_buses.h>
-#include <lib/drivers/magnetometer/PX4Magnetometer.hpp>
+#include <px4_platform_common/getopt.h>
+#include <px4_platform_common/module.h>
 
-// IIS2MDC Registers
-#define IIS2MDC_ADDR_CFG_REG_A  0x60
-#define IIS2MDC_ADDR_CFG_REG_B  0x61
-#define IIS2MDC_ADDR_CFG_REG_C  0x62
-#define IIS2MDC_ADDR_STATUS_REG 0x67
-#define IIS2MDC_ADDR_OUTX_L_REG 0x68
-#define IIS2MDC_ADDR_TEMP_OUT_L_REG 0x6E
-#define IIS2MDC_ADDR_WHO_AM_I   0x4F
-
-// IIS2MDC Definitions
-#define IIS2MDC_WHO_AM_I         0b01000000
-#define IIS2MDC_STATUS_REG_READY 0b00001000 // Zyxda: X, Y and Z all have new data
-// CFG_REG_A
-#define COMP_TEMP_EN    (1 << 7)
-#define MD_CONTINUOUS   (0 << 0)
-#define ODR_100         ((1 << 3) | (1 << 2))
-// CFG_REG_B
-#define OFF_CANC        (1 << 1)
-// CFG_REG_C
-#define BDU             (1 << 4)
-
-extern device::Device *IIS2MDC_I2C_interface(const I2CSPIDriverConfig &config);
-
-class IIS2MDC : public I2CSPIDriver<IIS2MDC>
+void DLVR::print_usage()
 {
-public:
-	IIS2MDC(device::Device *interface, const I2CSPIDriverConfig &config);
-	virtual ~IIS2MDC();
+	PRINT_MODULE_DESCRIPTION(
+		R"DESCR_STR(
+### Description
 
-	struct SensorData {
-		uint8_t xout0;
-		uint8_t xout1;
-		uint8_t yout0;
-		uint8_t yout1;
-		uint8_t zout0;
-		uint8_t zout1;
-	};
+I2C driver for _Amphenol All Sensors_ Digital Low Voltage R-Series (DLVR) pressure sensors
+(continuous-sampling variants only).
 
-	static I2CSPIDriverBase *instantiate(const I2CSPIDriverConfig &config, int runtime_instance);
-	static void print_usage();
+The driver is enabled for specific sensor-variants using the parameter "SENS_EN_DLVR".
+)DESCR_STR");
+	PRINT_MODULE_USAGE_NAME("dlvr", "driver");
+	PRINT_MODULE_USAGE_SUBCATEGORY("airspeed_sensor");
+	PRINT_MODULE_USAGE_COMMAND("start");
+	PRINT_MODULE_USAGE_PARAMS_I2C_SPI_DRIVER(true, false);
+	PRINT_MODULE_USAGE_PARAMS_I2C_ADDRESS(0x28);
+	PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
+}
 
-	int init();
-	void print_status() override;
+extern "C" int dlvr_main(int argc, char *argv[])
+{
+	using ThisDriver = DLVR;
+	BusCLIArguments cli{true, false};
+	cli.default_i2c_frequency = I2C_SPEED;
+	cli.i2c_address = I2C_ADDRESS_DEFAULT;
 
-	void RunImpl();
+	const char *verb = cli.parseDefaultArguments(argc, argv);
 
-private:
-	uint8_t read_register_block(SensorData *data);
-	uint8_t read_register(uint8_t reg);
-	void write_register(uint8_t reg, uint8_t value);
+	if (!verb) {
+		ThisDriver::print_usage();
+		return -1;
+	}
 
-	device::Device *_interface;
-	PX4Magnetometer _px4_mag;
-	perf_counter_t _sample_count;
-	perf_counter_t _comms_errors;
-};
+	BusInstanceIterator iterator(MODULE_NAME, cli, DRV_DIFF_PRESS_DEVTYPE_DLVR);
+
+	if (!strcmp(verb, "start")) {
+		return ThisDriver::module_start(cli, iterator);
+
+	} else if (!strcmp(verb, "stop")) {
+		return ThisDriver::module_stop(iterator);
+
+	} else if (!strcmp(verb, "status")) {
+		return ThisDriver::module_status(iterator);
+	}
+
+	ThisDriver::print_usage();
+	return -1;
+}

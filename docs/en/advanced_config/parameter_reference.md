@@ -26312,6 +26312,25 @@ WARNING: the failures can easily cause crashes and are to be used with caution!
 | ------- | -------- | -------- | --------- | ------------ | ---- | --------- |
 | &check; |          |          |           | Disabled (0) |      | &nbsp;    |
 
+### SYS_FAIL_BAT_LVL (`INT32`) {#SYS_FAIL_BAT_LVL}
+
+Battery failure injection severity.
+
+Battery warning level reported while a battery 'wrong' failure
+injection is active. The injected remaining charge is set just below
+the matching threshold (BAT_LOW_THR, BAT_CRIT_THR or
+BAT_EMERGEN_THR).
+
+**Values:**
+
+- `1`: Warn
+- `2`: Critical
+- `3`: Emergency
+
+| Reboot | minValue | maxValue | increment | default | unit | Read-Only |
+| ------ | -------- | -------- | --------- | ------- | ---- | --------- |
+| &nbsp; |          |          |           | 3       |      | &nbsp;    |
+
 ### SYS_FAIL_GPS_JAM (`INT32`) {#SYS_FAIL_GPS_JAM}
 
 GPS Wrong-failure jamming state.
@@ -26358,14 +26377,33 @@ better solution than the receiver really has.
 
 ### SYS_FAIL_RC_INST (`INT32`) {#SYS_FAIL_RC_INST}
 
-Instance failed by the RC switch.
+Instances failed by the RC switch.
 
-Which instance of SYS_FAIL_RC_UNIT the SYS_FAIL_RC_SRC trigger affects.
-1-based, or 0 for all instances (motor number for motors).
+Bitmask of instances of SYS_FAIL_RC_UNIT that the SYS_FAIL_RC_SRC trigger
+affects (bit 0 = instance 1, motor number for motors). 0 = all instances.
+
+**Bitmask:**
+
+- `0`: Instance 1
+- `1`: Instance 2
+- `2`: Instance 3
+- `3`: Instance 4
+- `4`: Instance 5
+- `5`: Instance 6
+- `6`: Instance 7
+- `7`: Instance 8
+- `8`: Instance 9
+- `9`: Instance 10
+- `10`: Instance 11
+- `11`: Instance 12
+- `12`: Instance 13
+- `13`: Instance 14
+- `14`: Instance 15
+- `15`: Instance 16
 
 | Reboot  | minValue | maxValue | increment | default | unit | Read-Only |
 | ------- | -------- | -------- | --------- | ------- | ---- | --------- |
-| &check; | 0        | 16       |           | 1       |      | &nbsp;    |
+| &check; | 0        | 65535    |           | 1       |      | &nbsp;    |
 
 ### SYS_FAIL_RC_MODE (`INT32`) {#SYS_FAIL_RC_MODE}
 
@@ -26429,6 +26467,7 @@ SYS_FAIL_RC_INST.
 - `8`: Airspeed
 - `100`: Battery
 - `101`: Motor
+- `107`: Traffic avoidance
 
 | Reboot  | minValue | maxValue | increment | default | unit | Read-Only |
 | ------- | -------- | -------- | --------- | ------- | ---- | --------- |
@@ -41145,6 +41184,37 @@ SMBUS Smart battery driver BQ40Z50 and BQ40Z80.
 | ------- | -------- | -------- | --------- | ------------ | ---- | --------- |
 | &check; |          |          |           | Disabled (0) |      | &nbsp;    |
 
+### SENS_EN_DLVR (`INT32`) {#SENS_EN_DLVR}
+
+Amphenol DLVR Low Voltage Digital Pressure Sensor Series.
+
+Enables the DLVR series. If set to 0, the sensor is disabled.
+If the driver is started manually while this parameter is 0,
+it will be treated as an L10D model by default.
+
+**Values:**
+
+- `0`: Sensor disabled
+- `1`: DLVR F50D
+- `2`: DLVR L01D
+- `3`: DLVR L02D
+- `4`: DLVR L05D
+- `5`: DLVR L10D
+- `6`: DLVR L20D
+- `7`: DLVR L30D
+- `8`: DLVR L60D
+- `9`: DLVR L01G
+- `10`: DLVR L02G
+- `11`: DLVR L05G
+- `12`: DLVR L10G
+- `13`: DLVR L20G
+- `14`: DLVR L30G
+- `15`: DLVR L60G
+
+| Reboot  | minValue | maxValue | increment | default | unit | Read-Only |
+| ------- | -------- | -------- | --------- | ------- | ---- | --------- |
+| &check; |          |          |           | 0       |      | &nbsp;    |
+
 ### SENS_EN_ETSASPD (`INT32`) {#SENS_EN_ETSASPD}
 
 Eagle Tree airspeed sensor (external I2C).
@@ -47138,7 +47208,7 @@ UAVCAN CAN bus bitrate.
 
 UAVCAN fuel tank fuel type.
 
-This parameter defines the type of fuel used in the vehicle's fuel tank.
+This parameter defines the type of fuel used in the vehicle's fuel tanks.
 
 0: Unknown
 1: Liquid (e.g., gasoline, diesel)
@@ -47154,11 +47224,31 @@ This parameter defines the type of fuel used in the vehicle's fuel tank.
 | ------- | -------- | -------- | --------- | ------- | ---- | --------- |
 | &check; | 0        | 2        |           | 1       |      | &nbsp;    |
 
-### UAVCAN_ECU_MAXF (`FLOAT`) {#UAVCAN_ECU_MAXF}
+### UAVCAN_ECU_MAXF1 (`FLOAT`) {#UAVCAN_ECU_MAXF1}
 
-UAVCAN fuel tank maximum capacity.
+Fuel tank 1 maximum capacity.
 
-This parameter defines the maximum fuel capacity of the vehicle's fuel tank.
+Maximum fuel capacity of fuel tank 1.
+
+| Reboot  | minValue | maxValue | increment | default | unit   | Read-Only |
+| ------- | -------- | -------- | --------- | ------- | ------ | --------- |
+| &check; | 0.0      | 100000.0 | 0.1       | 15.0    | liters | &nbsp;    |
+
+### UAVCAN_ECU_MAXF2 (`FLOAT`) {#UAVCAN_ECU_MAXF2}
+
+Fuel tank 2 maximum capacity.
+
+Maximum fuel capacity of fuel tank 2.
+
+| Reboot  | minValue | maxValue | increment | default | unit   | Read-Only |
+| ------- | -------- | -------- | --------- | ------- | ------ | --------- |
+| &check; | 0.0      | 100000.0 | 0.1       | 15.0    | liters | &nbsp;    |
+
+### UAVCAN_ECU_MAXF3 (`FLOAT`) {#UAVCAN_ECU_MAXF3}
+
+Fuel tank 3 maximum capacity.
+
+Maximum fuel capacity of fuel tank 3.
 
 | Reboot  | minValue | maxValue | increment | default | unit   | Read-Only |
 | ------- | -------- | -------- | --------- | ------- | ------ | --------- |
@@ -47207,6 +47297,14 @@ starve other nodes on the bus.
 | Reboot  | minValue | maxValue | increment | default | unit | Read-Only |
 | ------- | -------- | -------- | --------- | ------- | ---- | --------- |
 | &check; | 1        | 255      |           | 255     |      | &nbsp;    |
+
+### UAVCAN_ESC_RTMAX (`INT32`) {#UAVCAN_ESC_RTMAX}
+
+Maximum UAVCAN ESC output rate.
+
+| Reboot  | minValue | maxValue | increment | default | unit | Read-Only |
+| ------- | -------- | -------- | --------- | ------- | ---- | --------- |
+| &check; | 1        | 1000     |           | 400     | Hz   | &nbsp;    |
 
 ### UAVCAN_LGT_FN0 (`INT32`) {#UAVCAN_LGT_FN0}
 
@@ -47278,7 +47376,7 @@ This determines which physical LED responds to commands for this light slot.
 
 UAVCAN Navigation light operating mode.
 
-This parameter defines the minimum condition under which the system will command
+Minimum condition under which the system will command
 Navigation lights to turn on. Affects lights with functions: Anti-collision, Colored Navigation Lights or Hybrid lights.
 
 For hybrid functions (StatusOrAntiCollision, etc.), the light
@@ -47375,7 +47473,7 @@ uavcan::equipment::gnss::RTCMStream
 
 UAVCAN rangefinder maximum range.
 
-This parameter defines the maximum valid range for a rangefinder connected via UAVCAN.
+Maximum valid range for a rangefinder connected via UAVCAN.
 
 | Reboot | minValue | maxValue | increment | default | unit | Read-Only |
 | ------ | -------- | -------- | --------- | ------- | ---- | --------- |
@@ -47385,7 +47483,7 @@ This parameter defines the maximum valid range for a rangefinder connected via U
 
 UAVCAN rangefinder minimum range.
 
-This parameter defines the minimum valid range for a rangefinder connected via UAVCAN.
+Minimum valid range for a rangefinder connected via UAVCAN.
 
 | Reboot | minValue | maxValue | increment | default | unit | Read-Only |
 | ------ | -------- | -------- | --------- | ------- | ---- | --------- |
@@ -47641,6 +47739,14 @@ uavcan::equipment::range_sensor::Measurement
 | Reboot  | minValue | maxValue | increment | default      | unit | Read-Only |
 | ------- | -------- | -------- | --------- | ------------ | ---- | --------- |
 | &check; |          |          |           | Disabled (0) |      | &nbsp;    |
+
+### UAVCAN_SV_RTMAX (`INT32`) {#UAVCAN_SV_RTMAX}
+
+Maximum UAVCAN servo output rate.
+
+| Reboot  | minValue | maxValue | increment | default | unit | Read-Only |
+| ------- | -------- | -------- | --------- | ------- | ---- | --------- |
+| &check; | 1        | 400      |           | 50      | Hz   | &nbsp;    |
 
 ### UAVCAN_TRACE_EN (`INT32`) {#UAVCAN_TRACE_EN}
 
@@ -49097,12 +49203,12 @@ VTX table channel 1-16
 
 VTX device.
 
-Specific VTX device useful for workarounds and optimizations
+Specific VTX model, only used to enable device-specific workarounds.
+Leave at Generic unless your VTX is listed.
 
 **Values:**
 
-- `0`: SmartAudio v1, v2, v2.1 Protocol
-- `100`: Tramp Protocol
+- `0`: Generic
 - `5120`: Peak THOR T67
 - `10240`: Rush MAX SOLO
 
@@ -49185,6 +49291,22 @@ VTX transmission power level 1-16
 | Reboot | minValue | maxValue | increment | default | unit | Read-Only |
 | ------ | -------- | -------- | --------- | ------- | ---- | --------- |
 | &nbsp; |          |          |           | 0       |      | &nbsp;    |
+
+### VTX_PROTOCOL (`INT32`) {#VTX_PROTOCOL}
+
+VTX protocol.
+
+Wire protocol used to communicate with the VTX. Select the protocol
+listed in the manual of your VTX.
+
+**Values:**
+
+- `0`: SmartAudio v1, v2, v2.1
+- `100`: Tramp
+
+| Reboot  | minValue | maxValue | increment | default | unit | Read-Only |
+| ------- | -------- | -------- | --------- | ------- | ---- | --------- |
+| &check; |          |          |           | 0       |      | &nbsp;    |
 
 ### VTX_SER_CFG (`INT32`) {#VTX_SER_CFG}
 

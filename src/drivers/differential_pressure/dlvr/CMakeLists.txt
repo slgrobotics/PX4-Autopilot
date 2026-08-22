@@ -1,6 +1,6 @@
 ############################################################################
 #
-#   Copyright (c) 2019-2026 PX4 Development Team. All rights reserved.
+#   Copyright (c) 2015-2026 PX4 Development Team. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -32,13 +32,15 @@
 ############################################################################
 
 px4_add_module(
-	MODULE drivers__barometer__bmp388
-	MAIN bmp388
+	MODULE drivers__differential_pressure__dlvr
+	MAIN dlvr
+	COMPILE_FLAGS
 	SRCS
-		bmp388.cpp
-		bmp388.h
-		bmp388_main.cpp
+		dlvr_main.cpp
+		DLVR.cpp
+		DLVR.hpp
+	MODULE_CONFIG
+		module.yaml
 	DEPENDS
-		drivers_barometer
 		px4_work_queue
 	)
