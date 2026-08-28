@@ -537,6 +537,7 @@ private:
 	uint64_t _time_last_hor_vel_fuse{0};	///< time the last fusion of horizontal velocity measurements was performed (uSec)
 	uint64_t _time_last_ver_vel_fuse{0};	///< time the last fusion of verticalvelocity measurements was performed (uSec)
 	uint64_t _time_last_heading_fuse{0};
+	uint64_t _time_heading_fusion_start{0};	///< start of the current uninterrupted period of heading observation fusion, while yaw was set manually (uSec)
 	uint64_t _time_last_terrain_fuse{0};
 
 	LatLonAlt _last_known_gpos{};
@@ -777,6 +778,7 @@ private:
 	void resetHorizontalPositionTo(const Vector2f &new_pos, const Vector2f &new_horz_pos_var);
 
 	Vector2f getLocalHorizontalPosition() const;
+	LatLonAlt localToGlobalPosition(const Vector2f &pos_ne) const;
 
 	Vector2f computeDeltaHorizontalPosition(const double &new_latitude, const double &new_longitude) const;
 	void updateHorizontalPositionResetStatus(const Vector2f &delta);
@@ -795,7 +797,9 @@ private:
 					     const float observation, const float observation_variance, const float innovation_gate = 1.f) const;
 
 	// horizontal and vertical position fusion
+	bool fuseHorizontalPositionCore(estimator_aid_source2d_s &pos_aid_src);
 	bool fuseHorizontalPosition(estimator_aid_source2d_s &pos_aid_src);
+	bool fuseFakeHorizontalPosition(estimator_aid_source2d_s &pos_aid_src);
 	bool fuseVerticalPosition(estimator_aid_source1d_s &hgt_aid_src);
 
 	// 2d & 3d velocity fusion
@@ -879,6 +883,8 @@ private:
 
 	// Control the filter fusion modes
 	void controlFusionModes(const imuSample &imu_delayed);
+
+	void updateYawManualValidity();
 
 #if defined(CONFIG_EKF2_EXTERNAL_VISION)
 	// control fusion of external vision observations
@@ -976,6 +982,7 @@ private:
 	void controlMagFusion(const imuSample &imu_sample);
 
 	bool checkHaglYawResetReq() const;
+	bool isHeadingResetToMagAllowed() const;
 
 	void resetMagHeading(const Vector3f &mag);
 	void resetMagStates(const Vector3f &mag, bool reset_heading = true);
